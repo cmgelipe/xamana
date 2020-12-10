@@ -10,21 +10,32 @@
     </h:head>
     <h:body>
         <h:form id="f1">
-            <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+            <br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
             <div style="text-align: center">
-            <p:selectOneMenu value="#{bd.tipoBD}">
-                <f:selectItem itemLabel="Selecciona tu gestor" itemValue="" noSelectionOption="true" />
-                <f:selectItem itemLabel="MySQL" itemValue="a" />
-                <f:selectItem itemLabel="Postgres-XL" itemValue="b" />
-                <f:selectItem itemLabel="PostgreSQL" itemValue="b" />
-                <f:selectItem itemLabel="MongoDB" itemValue="c" />
-            </p:selectOneMenu><br/>
-            <br />
-            <p:commandButton value="Configuración" action="#{bd.configuracion()}" update="f2:d1" />
+                <h:graphicImage name="text12.png"  width="35%"/><br />
+                <p:selectOneMenu value="#{bd.obj.tipoBD}">
+                    <f:selectItem itemLabel="Selecciona tu gestor" itemValue="" noSelectionOption="true" />
+                    <f:selectItem itemLabel="MySQL" itemValue="a" />
+                    <f:selectItem itemLabel="Postgres-XL" itemValue="b" />
+                    <f:selectItem itemLabel="PostgreSQL" itemValue="c" />
+                    <f:selectItem itemLabel="MongoDB" itemValue="d" />
+                </p:selectOneMenu><br/>
+                <br />
+                <p:commandButton value="Conexión" action="#{bd.configuracion()}" update="f2:d1" />
             </div>
         </h:form>
         <h:form id="f2">
-            <p:dialog header="Configuración" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
+            <p:dialog header="Configurar conexión" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
+                <p:panelGrid columns="2">
+                    <p:outputLabel value="Dirección de la base de datos" />
+                    <p:inputText value="#{bd.obj.dirbd}"/>
+                    <p:outputLabel value="Usuario administrador de la base de datos" />
+                    <p:inputText value="#{bd.obj.usubd}"/>
+                    <p:outputLabel value="Contraseña" />
+                    <p:password value="#{bd.obj.passbd}" />
+                    <p:outputLabel value="Nombre de la tabla a fragmentar" />
+                    <p:inputText value="#{bd.obj.tabla.nombre}"/>
+                </p:panelGrid>
                 <p:commandButton value="Probar conexión" action="#{bd.probarConexion()}" update="f2:btnGenerar"/>
                 <p:commandButton value="Cancelar"  action="#{bd.cancelarConf()}" update="f2:d1"/>
                 <p:commandButton id="btnGenerar" value="Generar esquema" rendered="#{bd.bbotonfragmentar}" action="#{bd.generarEsquema()}" />
