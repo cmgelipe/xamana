@@ -21,6 +21,7 @@ public final class AccesoDatosPG implements Serializable{
     private static String sUrl = null;  // sUrl de conexión
     private static String sUsr = null; // Usuario
     private static String sPwd = null;  // Contraseña
+    
     private java.sql.Connection oConexion;  // La conexión
     
    public AccesoDatosPG() throws Exception {
@@ -29,8 +30,8 @@ public final class AccesoDatosPG implements Serializable{
         sUsr = "hrrb_ee";
         sPwd = "Password123";
     }
-   public AccesoDatosPG(String url, String usr, String pwd) throws Exception {
-        sUrl = "jdbc:postgresql://"+url;//"jdbc:mysql://localhost/Master";
+   public AccesoDatosPG(String url, String nomdb, String usr, String pwd) throws Exception {
+        sUrl = "jdbc:postgresql://"+url+"//"+nomdb;//"jdbc:mysql://localhost/Master";
         sUsr = usr;//"root";
         sPwd = pwd;//"sunny_4teamo";
     }

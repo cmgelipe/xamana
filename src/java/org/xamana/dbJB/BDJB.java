@@ -21,6 +21,7 @@ public class BDJB implements Serializable {
     private bd obj = new bd();
     private boolean bconfig = false;
     private boolean bbotonfragmentar = false;
+    private boolean bdatosincorrectos=false;
 
     /**
      * Creates a new instance of BD
@@ -37,11 +38,23 @@ public class BDJB implements Serializable {
     }
 
     public void probarConexion() {
-        
+        System.out.println("prueba " +obj.getTipoBD());
+        if(obj.conexionexterna()){
+            this.bbotonfragmentar=true;
+            this.bconfig=false;
+            this.bdatosincorrectos=false;
+        }else{
+            this.bbotonfragmentar=false;
+            this.bconfig=false;
+            this.bdatosincorrectos=true;
+        }
     }
 
     public void generarEsquema() {
-
+        this.bbotonfragmentar=false;
+    }
+    public void revisarDatos() {
+        this.bdatosincorrectos=false;
     }
 
     /**
@@ -84,6 +97,20 @@ public class BDJB implements Serializable {
      */
     public void setObj(bd obj) {
         this.obj = obj;
+    }
+
+    /**
+     * @return the bdatosincorrectos
+     */
+    public boolean isBdatosincorrectos() {
+        return bdatosincorrectos;
+    }
+
+    /**
+     * @param bdatosincorrectos the bdatosincorrectos to set
+     */
+    public void setBdatosincorrectos(boolean bdatosincorrectos) {
+        this.bdatosincorrectos = bdatosincorrectos;
     }
 
 }

@@ -9,7 +9,7 @@
         <h:outputStylesheet name="style.css"/>
     </h:head>
     <h:body>
-        <h:form id="f1">
+        <h:form id="f2">
             <br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
             <div style="text-align: center">
                 <h:graphicImage name="text12.png"  width="35%"/><br />
@@ -21,24 +21,33 @@
                     <f:selectItem itemLabel="MongoDB" itemValue="d" />
                 </p:selectOneMenu><br/>
                 <br />
-                <p:commandButton value="Conexión" action="#{bd.configuracion()}" update="f2:d1" />
+                <p:commandButton ajax="false" value="Conexión" action="#{bd.configuracion}" update="f2:d1" />
             </div>
-        </h:form>
-        <h:form id="f2">
+     
+            <p:growl id="mensajes"  showDetail="true" />
             <p:dialog header="Configurar conexión" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
                 <p:panelGrid columns="2">
                     <p:outputLabel value="Dirección de la base de datos" />
-                    <p:inputText value="#{bd.obj.dirbd}"/>
+                    <p:inputText value="#{bd.obj.dirbd}" placeholder="#.#.#.#:#" required="true"/>
+                    <p:outputLabel value="Nombre de la base de datos" />
+                    <p:inputText value="#{bd.obj.nombd}" required="true"/>
                     <p:outputLabel value="Usuario administrador de la base de datos" />
-                    <p:inputText value="#{bd.obj.usubd}"/>
-                    <p:outputLabel value="Contraseña" />
-                    <p:password value="#{bd.obj.passbd}" />
+                    <p:inputText value="#{bd.obj.usubd}" title="Para MongoDB, si la autenticación esta deshabilitada, este campo y el siguiente no son obligatorios"/>
+                    <p:outputLabel value="Contraseña"/>
+                    <p:password value="#{bd.obj.passbd}" title="Si la base de datos no tiene contraseña, este campo no es obligatorio" />
                     <p:outputLabel value="Nombre de la tabla a fragmentar" />
-                    <p:inputText value="#{bd.obj.tabla.nombre}"/>
+                    <p:inputText value="#{bd.obj.tabla.nombre}" title="Para MongoDB la colección a fragmentar" required="true"/>
                 </p:panelGrid>
-                <p:commandButton value="Probar conexión" action="#{bd.probarConexion()}" update="f2:btnGenerar"/>
+                <p:commandButton ajax="false" value="Probar conexión" action="#{bd.probarConexion()}" update="f2:dl2 f2:d1 f2:dl3 f2:mensajes"/>
                 <p:commandButton value="Cancelar"  action="#{bd.cancelarConf()}" update="f2:d1"/>
-                <p:commandButton id="btnGenerar" value="Generar esquema" rendered="#{bd.bbotonfragmentar}" action="#{bd.generarEsquema()}" />
+            </p:dialog>
+            <p:dialog id="dl2" header="Información" visible="#{bd.bbotonfragmentar}">
+                <h:outputText value="La conexión fue exitosa, ahora usted configurará detalles para llevar a cabo la fragmentación." />
+                <p:commandButton value="Configurar fragmentación" action="#{bd.generarEsquema()}" update="f2:dl2" />
+            </p:dialog>
+            <p:dialog id="dl3" header="Información" visible="#{bd.bdatosincorrectos}">
+                <h:outputText value="La conexión no fue exitosa. Revise sus datos."/>
+                <p:commandButton value="Revisar" action="#{bd.revisarDatos()}" update="f2:dl3" />
             </p:dialog>
         </h:form>
     </h:body>
