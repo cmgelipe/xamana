@@ -23,7 +23,7 @@ public class bd implements Serializable {
 
     public boolean conexionexterna() {
         boolean res = false;
-        System.out.println(TipoBD);
+        
         if (TipoBD.compareTo("a") == 0) {
             try {
                 accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);

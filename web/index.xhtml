@@ -21,13 +21,15 @@
                     <f:selectItem itemLabel="MongoDB" itemValue="d" />
                 </p:selectOneMenu><br/>
                 <br />
-                <p:commandButton value="Conexión" action="#{bd.configuracion()}" update="f2:d1" />
+                <p:commandButton ajax="false" value="Conexión" action="#{bd.configuracion()}" update="f2:d1" />
             </div>
         </h:form>
         <h:form id="f2">
             <p:growl id="mensajes"  showDetail="true" />
+            <h:inputHidden value="#{bd.obj.tipoBD}" />
             <p:dialog header="Configurar conexión" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
                 <p:panelGrid columns="2">
+                    
                     <p:outputLabel value="Dirección de la base de datos" />
                     <p:inputText value="#{bd.obj.dirbd}" placeholder="#.#.#.#:#" required="true"/>
                     <p:outputLabel value="Nombre de la base de datos" />
@@ -39,14 +41,14 @@
                     <p:outputLabel value="Nombre de la tabla a fragmentar" />
                     <p:inputText value="#{bd.obj.tabla.nombre}" title="Para MongoDB la colección a fragmentar" required="true"/>
                 </p:panelGrid>
-                <p:commandButton ajax="false" value="Probar conexión" action="#{bd.probarConexion()}" update="f2:dl2 f2:d1 f2:dl3 f2:mensajes"/>
+                <p:commandButton value="Probar conexión" action="#{bd.probarConexion()}" update="f2:dl2 f2:d1 f2:dl3 f2:mensajes"/>
                 <p:commandButton value="Cancelar"  action="#{bd.cancelarConf()}" update="f2:d1"/>
             </p:dialog>
-            <p:dialog id="dl2" header="Información" visible="#{bd.bbotonfragmentar}">
+            <p:dialog id="dl2" header="Información" visible="#{bd.bbotonfragmentar}" modal="true">
                 <h:outputText value="La conexión fue exitosa, ahora usted configurará detalles para llevar a cabo la fragmentación." /><br />
                 <p:commandButton value="Configurar fragmentación" action="#{bd.configurarFragmentacion()}" update="f2:dl2" />
             </p:dialog>
-            <p:dialog id="dl3" header="Información" visible="#{bd.bdatosincorrectos}">
+            <p:dialog id="dl3" header="Información" visible="#{bd.bdatosincorrectos}" modal="true">
                 <h:outputText value="La conexión no fue exitosa. Revise sus datos."/><br />
                 <p:commandButton value="Revisar" action="#{bd.revisarDatos()}" update="f2:dl3" />
             </p:dialog>

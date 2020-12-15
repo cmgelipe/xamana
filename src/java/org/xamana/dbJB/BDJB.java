@@ -32,15 +32,15 @@ public class BDJB implements Serializable {
     }
 
     public void configuracion() {
-        System.out.println("prueba " +obj.getTipoBD());
         bconfig = true;
+        
     }
 
     public void cancelarConf() {
         bconfig = false;
     }
 
-    public void probarConexion() {
+    public String probarConexion() {
         
         if(obj.conexionexterna()){
             this.bbotonfragmentar=true;
@@ -51,6 +51,7 @@ public class BDJB implements Serializable {
             this.bconfig=false;
             this.bdatosincorrectos=true;
         }
+        return "index.xhtml";
     }
 
     public String configurarFragmentacion() {
