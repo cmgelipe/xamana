@@ -8,6 +8,7 @@ package org.xamana.dbJB;
 import javax.enterprise.context.SessionScoped;
 import java.io.Serializable;
 import javax.faces.bean.ManagedBean;
+import org.primefaces.model.file.UploadedFiles;
 import org.xamana.db.bd;
 
 /**
@@ -22,6 +23,7 @@ public class BDJB implements Serializable {
     private boolean bconfig = false;
     private boolean bbotonfragmentar = false;
     private boolean bdatosincorrectos=false;
+    private UploadedFiles files;
 
     /**
      * Creates a new instance of BD
@@ -30,6 +32,7 @@ public class BDJB implements Serializable {
     }
 
     public void configuracion() {
+        System.out.println("prueba " +obj.getTipoBD());
         bconfig = true;
     }
 
@@ -38,7 +41,7 @@ public class BDJB implements Serializable {
     }
 
     public void probarConexion() {
-        System.out.println("prueba " +obj.getTipoBD());
+        
         if(obj.conexionexterna()){
             this.bbotonfragmentar=true;
             this.bconfig=false;
@@ -50,8 +53,9 @@ public class BDJB implements Serializable {
         }
     }
 
-    public void generarEsquema() {
+    public String configurarFragmentacion() {
         this.bbotonfragmentar=false;
+        return "config.xhtml";
     }
     public void revisarDatos() {
         this.bdatosincorrectos=false;
@@ -111,6 +115,20 @@ public class BDJB implements Serializable {
      */
     public void setBdatosincorrectos(boolean bdatosincorrectos) {
         this.bdatosincorrectos = bdatosincorrectos;
+    }
+
+    /**
+     * @return the files
+     */
+    public UploadedFiles getFiles() {
+        return files;
+    }
+
+    /**
+     * @param files the files to set
+     */
+    public void setFiles(UploadedFiles files) {
+        this.files = files;
     }
 
 }

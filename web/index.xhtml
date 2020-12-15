@@ -9,7 +9,7 @@
         <h:outputStylesheet name="style.css"/>
     </h:head>
     <h:body>
-        <h:form id="f2">
+        <h:form id="f1">
             <br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
             <div style="text-align: center">
                 <h:graphicImage name="text12.png"  width="35%"/><br />
@@ -21,9 +21,10 @@
                     <f:selectItem itemLabel="MongoDB" itemValue="d" />
                 </p:selectOneMenu><br/>
                 <br />
-                <p:commandButton ajax="false" value="Conexión" action="#{bd.configuracion}" update="f2:d1" />
+                <p:commandButton value="Conexión" action="#{bd.configuracion()}" update="f2:d1" />
             </div>
-     
+        </h:form>
+        <h:form id="f2">
             <p:growl id="mensajes"  showDetail="true" />
             <p:dialog header="Configurar conexión" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
                 <p:panelGrid columns="2">
@@ -42,11 +43,11 @@
                 <p:commandButton value="Cancelar"  action="#{bd.cancelarConf()}" update="f2:d1"/>
             </p:dialog>
             <p:dialog id="dl2" header="Información" visible="#{bd.bbotonfragmentar}">
-                <h:outputText value="La conexión fue exitosa, ahora usted configurará detalles para llevar a cabo la fragmentación." />
-                <p:commandButton value="Configurar fragmentación" action="#{bd.generarEsquema()}" update="f2:dl2" />
+                <h:outputText value="La conexión fue exitosa, ahora usted configurará detalles para llevar a cabo la fragmentación." /><br />
+                <p:commandButton value="Configurar fragmentación" action="#{bd.configurarFragmentacion()}" update="f2:dl2" />
             </p:dialog>
             <p:dialog id="dl3" header="Información" visible="#{bd.bdatosincorrectos}">
-                <h:outputText value="La conexión no fue exitosa. Revise sus datos."/>
+                <h:outputText value="La conexión no fue exitosa. Revise sus datos."/><br />
                 <p:commandButton value="Revisar" action="#{bd.revisarDatos()}" update="f2:dl3" />
             </p:dialog>
         </h:form>

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.xamana.db;
 
 /**
@@ -10,6 +5,8 @@ package org.xamana.db;
  * @author pipe
  */
 public class Tabla {
+    private String tipoFragment;
+    private boolean CBIR;
     private String nombre;
 
     /**
@@ -24,5 +21,33 @@ public class Tabla {
      */
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    /**
+     * @return the tipoFragment
+     */
+    public String getTipoFragment() {
+        return tipoFragment;
+    }
+
+    /**
+     * @param tipoFragment the tipoFragment to set
+     */
+    public void setTipoFragment(String tipoFragment) {
+        this.tipoFragment = tipoFragment;
+    }
+
+    /**
+     * @return the CBIR
+     */
+    public boolean isCBIR() {
+        return CBIR;
+    }
+
+    /**
+     * @param CBIR the CBIR to set
+     */
+    public void setCBIR(boolean CBIR) {
+        this.CBIR = CBIR;
     }
 }
