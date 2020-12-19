@@ -6,9 +6,14 @@
       xmlns:f="http://xmlns.jcp.org/jsf/core">
     <h:head>
         <title>xamana</title>
-        <h:outputStylesheet name="style.css"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
     </h:head>
-    <h:body>
+    <h:body style="background-color: #3f3f3f">
         <h:form id="f1">
             <br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
             <div style="text-align: center">
@@ -45,11 +50,12 @@
                 <p:commandButton value="Cancelar"  action="#{bd.cancelarConf()}" update="f2:d1"/>
             </p:dialog>
             <p:dialog id="dl2" header="Información" visible="#{bd.bbotonfragmentar}" modal="true">
-                <h:outputText value="La conexión fue exitosa, ahora usted configurará detalles para llevar a cabo la fragmentación." /><br />
-                <p:commandButton value="Configurar fragmentación" action="#{bd.configurarFragmentacion()}" update="f2:dl2" />
+                <h:outputText value="La conexión fue exitosa, ahora usted configurará" /><br />
+                <h:outputText value="detalles para llevar a cabo la fragmentación." /><br /><br />
+                <p:commandButton ajax="false" value="Configurar fragmentación" action="#{bd.configurarFragmentacion()}" update="f2:dl2" />
             </p:dialog>
             <p:dialog id="dl3" header="Información" visible="#{bd.bdatosincorrectos}" modal="true">
-                <h:outputText value="La conexión no fue exitosa. Revise sus datos."/><br />
+                <h:outputText value="La conexión no fue exitosa. Revise sus datos."/><br /><br />
                 <p:commandButton value="Revisar" action="#{bd.revisarDatos()}" update="f2:dl3" />
             </p:dialog>
         </h:form>

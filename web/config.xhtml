@@ -12,23 +12,49 @@ and open the template in the editor.
     <h:head>
         <title>xamana</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <h:outputStylesheet name="style.css"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
     </h:head>
-    <h:body>
-        <h:form id="f1"enctype="multipart/form-data">
-            <p:panelGrid columns="2">
-                <p:outputLabel value="Tipo de fragmentación" />
-                <p:selectOneMenu value="#{bd.obj.tabla.tipoFragment}">
-                    <f:selectItem itemLabel="Selecciona una opción" noSelectionOption="true" />
-                    <f:selectItem itemLabel="Horizontal" itemValue="a" />
-                    <f:selectItem itemLabel="Vertical" itemValue="b" />
-                    <f:selectItem itemLabel="Híbrida" itemValue="c" />
-                </p:selectOneMenu>
-                <p:outputLabel value="CBIR" />
-                <p:selectBooleanButton value="#{bd.obj.tabla.CBIR}" onLabel="Si" offLabel="No" />
-                <p:outputLabel value="Archivos log" />
-                <p:fileUpload value="#{bd.files}" mode="simple" skinSimple="true" multiple="true" />
-            </p:panelGrid>
+    <h:body style="background-color: #3f3f3f">
+        <h:form id="f3" enctype="multipart/form-data" style="text-align: center">
+            <div style="text-align: center">
+                <p:panelGrid columns="2" style="margin: 0 auto; border: none">
+                    <p:outputLabel value="Tipo de fragmentación" />
+                    <p:selectOneMenu value="#{bd.obj.tabla.tipoFragment}">
+                        <f:selectItem itemLabel="Selecciona una opción" noSelectionOption="true" />
+                        <f:selectItem itemLabel="Horizontal" itemValue="a" />
+                        <f:selectItem itemLabel="Vertical" itemValue="b" />
+                        <f:selectItem itemLabel="Híbrida" itemValue="c" />
+                    </p:selectOneMenu>
+                    <p:outputLabel value="CBIR" />
+                    <p:selectBooleanButton value="#{bd.obj.tabla.CBIR}" onLabel="Si" offLabel="No" >
+                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file" />
+                    </p:selectBooleanButton>
+                    <p:outputLabel value="Archivos log" />
+                    <p:fileUpload id="file" value="#{bd.files}" disabled="#{bd.blog}" mode="simple" skinSimple="true" multiple="true" />
+                    
+                    <p:outputLabel value="Umbral de operaciones" />
+                    <h:outputText id="output" value="%#{sliderView.number2}" />
+                    <h:inputHidden id="txt2" value="#{sliderView.number4}" />
+                    <p:slider for="txt2" display="output" style="width: 200px" displayTemplate="%{value}" />
+                    
+                    <p:outputLabel value="Umbral de costo" />
+                    <h:outputText id="output" value="%#{sliderView.number2}" />
+                    <h:inputHidden id="txt2" value="#{sliderView.number4}" />
+                    <p:slider for="txt2" display="output" style="width: 200px" displayTemplate="%{value}" />
+                    
+                    <p:outputLabel value="Número de sitios" />
+                    
+
+
+                </p:panelGrid>
+                <br />
+                <p:commandButton ajax="false" value="Generar esquema" action="#{bd.btnesquema()}" />
+            </div>
         </h:form>
     </h:body>
 </html>

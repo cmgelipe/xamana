@@ -5,7 +5,7 @@
  */
 package org.xamana.dbJB;
 
-import javax.enterprise.context.SessionScoped;
+import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
 import javax.faces.bean.ManagedBean;
 import org.primefaces.model.file.UploadedFiles;
@@ -23,6 +23,7 @@ public class BDJB implements Serializable {
     private boolean bconfig = false;
     private boolean bbotonfragmentar = false;
     private boolean bdatosincorrectos=false;
+    private boolean blog=true;
     private UploadedFiles files;
 
     /**
@@ -52,6 +53,21 @@ public class BDJB implements Serializable {
             this.bdatosincorrectos=true;
         }
         return "index.xhtml";
+    }
+    
+    public void onCBIRchange(){
+        if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("a")==0){
+            this.blog=true;
+        }else{
+            this.blog=false;
+        }
+    }
+    
+    public String btnesquema(){
+        if(this.obj.getTabla().getTipoFragment().compareTo("a")==0 && this.obj.getTabla().isCBIR()){
+            
+        }
+        return "esquema.xhtml";
     }
 
     public String configurarFragmentacion() {
@@ -130,6 +146,20 @@ public class BDJB implements Serializable {
      */
     public void setFiles(UploadedFiles files) {
         this.files = files;
+    }
+
+    /**
+     * @return the blog
+     */
+    public boolean isBlog() {
+        return blog;
+    }
+
+    /**
+     * @param blog the blog to set
+     */
+    public void setBlog(boolean blog) {
+        this.blog = blog;
     }
 
 }
