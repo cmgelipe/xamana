@@ -57,6 +57,13 @@ public class BDJB implements Serializable {
     
     public void onCBIRchange(){
         if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("a")==0){
+            if(this.obj.getTipoBD().compareTo("a")==0){
+                this.obj.getTabla().listaAtributosMySQL();
+            }else if(this.obj.getTipoBD().compareTo("b")==0 || this.obj.getTipoBD().compareTo("c")==0){
+                this.obj.getTabla().listaAtributosPostgreSQL();
+            }else if(this.obj.getTipoBD().compareTo("c")==0){
+                this.obj.getTabla().listaAtributosMongoDB();
+            }
             this.blog=true;
         }else{
             this.blog=false;

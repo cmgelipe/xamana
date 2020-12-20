@@ -32,29 +32,32 @@ and open the template in the editor.
                     </p:selectOneMenu>
                     <p:outputLabel value="CBIR" />
                     <p:selectBooleanButton value="#{bd.obj.tabla.CBIR}" onLabel="Si" offLabel="No" >
-                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file" />
+                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4" />
                     </p:selectBooleanButton>
-                    <p:outputLabel value="Archivos log" />
+                    <p:outputLabel id="o1" value="Archivos log" rendered="#{!bd.blog}" />
                     <p:fileUpload id="file" value="#{bd.files}" disabled="#{bd.blog}" mode="simple" skinSimple="true" multiple="true" />
                     
                     <p:outputLabel value="Umbral de operaciones" />
-                    <h:outputText id="output" value="%#{sliderView.number2}" />
-                    <h:inputHidden id="txt2" value="#{sliderView.number4}" />
-                    <p:slider for="txt2" display="output" style="width: 200px" displayTemplate="%{value}" />
+                    <h:outputText id="output1" value="%#{bd.obj.tabla.umbralOP}" />
+                    <h:inputHidden id="s1" value="#{bd.obj.tabla.umbralOP}" />
+                    <p:slider for="s1" display="output1" style="width: 200px" displayTemplate="%{value}" minValue="-100.0" maxValue="100.0"/>
                     
                     <p:outputLabel value="Umbral de costo" />
-                    <h:outputText id="output" value="%#{sliderView.number2}" />
-                    <h:inputHidden id="txt2" value="#{sliderView.number4}" />
-                    <p:slider for="txt2" display="output" style="width: 200px" displayTemplate="%{value}" />
+                    <h:outputText id="output2" value="%#{bd.obj.tabla.umbralCO}" />
+                    <h:inputHidden id="s2" value="#{bd.obj.tabla.umbralCO}" />
+                    <p:slider for="s2" display="output2" style="width: 200px" displayTemplate="%{value}" minValue="-100.0" maxValue="100.0" />
                     
-                    <p:outputLabel value="Número de sitios" />
-                    
-
-
                 </p:panelGrid>
                 <br />
                 <p:commandButton ajax="false" value="Generar esquema" action="#{bd.btnesquema()}" />
             </div>
+            <p:dialog id="dl4" header="Selección de atributo multimedia" modal="true" visible="#{bd.blog}">
+                <p:outputLabel value="Atributo" />
+                <p:selectOneMenu value="#{bd.obj.tabla.atributoMultimedia}">
+                    <f:selectItem value="Selecciona un atributo" noSelectionOption="true" />
+                    <f:selectItems value="#{bd.obj.tabla.atributos}" />
+                </p:selectOneMenu>
+            </p:dialog>
         </h:form>
     </h:body>
 </html>
