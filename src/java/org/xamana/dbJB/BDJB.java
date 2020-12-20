@@ -7,7 +7,9 @@ package org.xamana.dbJB;
 
 import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
+import java.util.List;
 import javax.faces.bean.ManagedBean;
+import javax.faces.model.SelectItem;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.db.bd;
 
@@ -24,8 +26,9 @@ public class BDJB implements Serializable {
     private boolean bbotonfragmentar = false;
     private boolean bdatosincorrectos=false;
     private boolean blog=true;
+    private boolean dcolumna=false;
     private UploadedFiles files;
-
+    private List<SelectItem> atributos;
     /**
      * Creates a new instance of BD
      */
@@ -58,12 +61,13 @@ public class BDJB implements Serializable {
     public void onCBIRchange(){
         if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("a")==0){
             if(this.obj.getTipoBD().compareTo("a")==0){
-                this.obj.getTabla().listaAtributosMySQL();
+                atributos=this.obj.listaAtributosMySQL();
             }else if(this.obj.getTipoBD().compareTo("b")==0 || this.obj.getTipoBD().compareTo("c")==0){
-                this.obj.getTabla().listaAtributosPostgreSQL();
+                atributos=this.obj.listaAtributosPostgreSQL();
             }else if(this.obj.getTipoBD().compareTo("c")==0){
-                this.obj.getTabla().listaAtributosMongoDB();
+                atributos=this.obj.listaAtributosMongoDB();
             }
+            this.dcolumna=true;
             this.blog=true;
         }else{
             this.blog=false;
@@ -167,6 +171,33 @@ public class BDJB implements Serializable {
      */
     public void setBlog(boolean blog) {
         this.blog = blog;
+    }
+
+    /**
+     * @return the dcolumna
+     */
+    public boolean isDcolumna() {
+        return dcolumna;
+    }
+
+    /**
+     * @param dcolumna the dcolumna to set
+     */
+    public void setDcolumna(boolean dcolumna) {
+        this.dcolumna = dcolumna;
+    }
+    /**
+     * @return the atributos
+     */
+    public List<SelectItem> getAtributos() {
+        return atributos;
+    }
+
+    /**
+     * @param atributos the atributos to set
+     */
+    public void setAtributos(List<SelectItem> atributos) {
+        this.atributos = atributos;
     }
 
 }

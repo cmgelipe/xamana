@@ -14,7 +14,7 @@ public class Tabla {
     private int umbralOP;
     private int umbralCO;
     private String atributoMultimedia;
-    private List<SelectItem> atributos;
+    
 
     /**
      * @return the nombre
@@ -98,31 +98,5 @@ public class Tabla {
      */
     public void setAtributoMultimedia(String atributoMultimedia) {
         this.atributoMultimedia = atributoMultimedia;
-    }
-
-    /**
-     * @return the atributos
-     */
-    public List<SelectItem> getAtributos() {
-        return atributos;
-    }
-
-    /**
-     * @param atributos the atributos to set
-     */
-    public void setAtributos(List<SelectItem> atributos) {
-        this.atributos = atributos;
-    }
-
-    public void listaAtributosMySQL() {
-        
-    }
-
-    public void listaAtributosPostgreSQL() {
-        
-    }
-
-    public void listaAtributosMongoDB() {
-        
     }
 }

@@ -1,6 +1,11 @@
 package org.xamana.db;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.faces.model.SelectItem;
 import org.xamana.datos.AccesoDatos;
 import org.xamana.datos.AccesoDatosMG;
 import org.xamana.datos.AccesoDatosPG;
@@ -23,7 +28,7 @@ public class bd implements Serializable {
 
     public boolean conexionexterna() {
         boolean res = false;
-        
+
         if (TipoBD.compareTo("a") == 0) {
             try {
                 accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
@@ -141,6 +146,37 @@ public class bd implements Serializable {
      */
     public void setNombd(String nombd) {
         this.nombd = nombd;
+    }
+
+    public List<SelectItem> listaAtributosMySQL() {
+        ArrayList<String> arr;
+        List<SelectItem> res = new ArrayList<>();
+        try {
+            accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
+            if (accexternomysql.conectar()) {
+                arr = accexternomysql.atributos(nombd, this.getTabla().getNombre());
+                accexternomysql.desconectar();
+                if (arr != null) {
+                    arr.forEach((g) -> {
+                        res.add(new SelectItem(g, g));
+                    });
+                }
+            } else {
+                System.out.println("Conexión incorrecta listaatributosmysql");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return res;
+    }
+    
+    public List<SelectItem> listaAtributosMongoDB() {
+        List<SelectItem> res = new ArrayList<>();
+        return res;
+    }
+    public List<SelectItem> listaAtributosPostgreSQL() {
+        List<SelectItem> res = new ArrayList<>();
+        return res;
     }
 
 }
