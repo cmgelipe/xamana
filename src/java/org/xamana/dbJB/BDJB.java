@@ -8,6 +8,8 @@ package org.xamana.dbJB;
 import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.faces.bean.ManagedBean;
 import javax.faces.model.SelectItem;
 import org.primefaces.model.file.UploadedFiles;
@@ -24,11 +26,12 @@ public class BDJB implements Serializable {
     private bd obj = new bd();
     private boolean bconfig = false;
     private boolean bbotonfragmentar = false;
-    private boolean bdatosincorrectos=false;
-    private boolean blog=true;
-    private boolean dcolumna=false;
+    private boolean bdatosincorrectos = false;
+    private boolean blog = true;
+    private boolean dcolumna = false;
     private UploadedFiles files;
     private List<SelectItem> atributos;
+
     /**
      * Creates a new instance of BD
      */
@@ -37,7 +40,7 @@ public class BDJB implements Serializable {
 
     public void configuracion() {
         bconfig = true;
-        
+
     }
 
     public void cancelarConf() {
@@ -45,48 +48,53 @@ public class BDJB implements Serializable {
     }
 
     public String probarConexion() {
-        
-        if(obj.conexionexterna()){
-            this.bbotonfragmentar=true;
-            this.bconfig=false;
-            this.bdatosincorrectos=false;
-        }else{
-            this.bbotonfragmentar=false;
-            this.bconfig=false;
-            this.bdatosincorrectos=true;
+
+        if (obj.conexionexterna()) {
+            this.bbotonfragmentar = true;
+            this.bconfig = false;
+            this.bdatosincorrectos = false;
+        } else {
+            this.bbotonfragmentar = false;
+            this.bconfig = false;
+            this.bdatosincorrectos = true;
         }
         return "index.xhtml";
     }
-    
-    public void onCBIRchange(){
-        if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("a")==0){
-            if(this.obj.getTipoBD().compareTo("a")==0){
-                atributos=this.obj.listaAtributosMySQL();
-            }else if(this.obj.getTipoBD().compareTo("b")==0 || this.obj.getTipoBD().compareTo("c")==0){
-                atributos=this.obj.listaAtributosPostgreSQL();
-            }else if(this.obj.getTipoBD().compareTo("c")==0){
-                atributos=this.obj.listaAtributosMongoDB();
+
+    public void onCBIRchange() {
+        try {
+            if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
+                if (this.obj.getTipoBD().compareTo("a") == 0) {
+                    atributos = this.obj.listaAtributosMySQL();
+                } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+                    atributos = this.obj.listaAtributosPostgreSQL();
+                } else if (this.obj.getTipoBD().compareTo("c") == 0) {
+                    atributos = this.obj.listaAtributosMongoDB();
+                }
+                this.dcolumna = true;
+                this.blog = true;
+            } else {
+                this.blog = false;
             }
-            this.dcolumna=true;
-            this.blog=true;
-        }else{
-            this.blog=false;
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
-    
-    public String btnesquema(){
-        if(this.obj.getTabla().getTipoFragment().compareTo("a")==0 && this.obj.getTabla().isCBIR()){
+
+    public String btnesquema() {
+        if (this.obj.getTabla().getTipoFragment().compareTo("a") == 0 && this.obj.getTabla().isCBIR()) {
             
         }
         return "esquema.xhtml";
     }
 
     public String configurarFragmentacion() {
-        this.bbotonfragmentar=false;
+        this.bbotonfragmentar = false;
         return "config.xhtml";
     }
+
     public void revisarDatos() {
-        this.bdatosincorrectos=false;
+        this.bdatosincorrectos = false;
     }
 
     /**
@@ -186,6 +194,7 @@ public class BDJB implements Serializable {
     public void setDcolumna(boolean dcolumna) {
         this.dcolumna = dcolumna;
     }
+
     /**
      * @return the atributos
      */

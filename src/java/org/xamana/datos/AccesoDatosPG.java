@@ -1,6 +1,7 @@
 package org.xamana.datos;
 
 import java.io.Serializable;
+import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -9,29 +10,31 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Clase que realiza el acceso a la base de datos.
- * Driver, sUrl, sUsr, sPwd están fijos, pero deben leerse de un archivo encriptado
- * Autor: Beatriz A. Olivares Zepahua
- * Fecha: Enero 2004
+ * Clase que realiza el acceso a la base de datos. Driver, sUrl, sUsr, sPwd
+ * están fijos, pero deben leerse de un archivo encriptado Autor: Beatriz A.
+ * Olivares Zepahua Fecha: Enero 2004
  */
-public final class AccesoDatosPG implements Serializable{
+public final class AccesoDatosPG implements Serializable {
 
     private static String sUrl = null;  // sUrl de conexión
     private static String sUsr = null; // Usuario
     private static String sPwd = null;  // Contraseña
-    
+
     private java.sql.Connection oConexion;  // La conexión
-    
-   public AccesoDatosPG() throws Exception {
+
+    public AccesoDatosPG() throws Exception {
         //sUrl = "jdbc:postgresql://localhost/hrrb_integral";
         sUrl = "jdbc:postgresql://localhost/version";
         sUsr = "hrrb_ee";
         sPwd = "Password123";
     }
-   public AccesoDatosPG(String url, String nomdb, String usr, String pwd) throws Exception {
-        sUrl = "jdbc:postgresql://"+url+"//"+nomdb;//"jdbc:mysql://localhost/Master";
+
+    public AccesoDatosPG(String url, String nomdb, String usr, String pwd) throws Exception {
+        sUrl = "jdbc:postgresql://" + url + "//" + nomdb;//"jdbc:mysql://localhost/Master";
         sUsr = usr;//"root";
         sPwd = pwd;//"sunny_4teamo";
     }
@@ -40,13 +43,12 @@ public final class AccesoDatosPG implements Serializable{
      * Realiza la conexión a la base de datos.
      */
     public boolean conectar() throws Exception {
-    boolean bRet = false;
-        try 
-		{
-            Class.forName ("org.postgresql.Driver").newInstance();
+        boolean bRet = false;
+        try {
+            Class.forName("org.postgresql.Driver").newInstance();
             oConexion = DriverManager.getConnection(sUrl, sUsr, sPwd);
             bRet = true;
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             throw e;
         }
         return bRet;
@@ -56,7 +58,7 @@ public final class AccesoDatosPG implements Serializable{
      * Realiza la desconexión a la base de datos.
      */
     public void desconectar() throws Exception {
-		
+
         oConexion.close();
     }
 
@@ -64,7 +66,7 @@ public final class AccesoDatosPG implements Serializable{
      * Código que se ejecuta cuando este objeto es colectado.
      */
     @Override
-    public void finalize() throws Exception, Throwable{
+    public void finalize() throws Exception, Throwable {
         try {
             oConexion.close();
             oConexion = null;
@@ -72,12 +74,13 @@ public final class AccesoDatosPG implements Serializable{
             super.finalize();
         }
     }
-        
+
     /**
-     * Realiza una consulta a la base de datos y retorna un vector de resultados.
+     * Realiza una consulta a la base de datos y retorna un vector de
+     * resultados.
      */
     public synchronized ArrayList ejecutarConsulta(String psQuery) throws Exception {
-        
+
         Statement stmt = null;
         ResultSet rset = null;
         ArrayList vrset = null;
@@ -85,195 +88,212 @@ public final class AccesoDatosPG implements Serializable{
         int nNumCols = 0;
         try {
             stmt = oConexion.createStatement();
-            rset = stmt.executeQuery (psQuery);
+            rset = stmt.executeQuery(psQuery);
             rsmd = rset.getMetaData();
             nNumCols = rsmd.getColumnCount();
             vrset = convierteALista(rset, rsmd, nNumCols);
-        } catch(Exception e){e.printStackTrace();}
-        
-        finally {
-        	if(rset != null){
-	            rset.close();
-                    if (stmt != null)
-                        stmt.close(); 
-	         }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (rset != null) {
+                rset.close();
+                if (stmt != null) {
+                    stmt.close();
+                }
+            }
             rset = null;
             stmt = null;
         }
         return vrset;
     }
-    
-    
-    
-    public synchronized int ejecutarConsultaComando(ArrayList pvStatement) throws Exception { 
+
+    public synchronized int ejecutarConsultaComando(ArrayList pvStatement) throws Exception {
         Statement stmt = null;
         ResultSet rset = null;
         ArrayList vrset = null;
         ResultSetMetaData rsmd = null;
-		String temp = "";
+        String temp = "";
         int nNumCols = 0;
-        int nRegAfectados=0;
+        int nRegAfectados = 0;
         try {
-            oConexion.setAutoCommit(false); 
-            for (int i=0; i < pvStatement.size(); i++) {
-                System.out.println((String)pvStatement.get(i));
-                temp = (String)pvStatement.get(i);
+            oConexion.setAutoCommit(false);
+            for (int i = 0; i < pvStatement.size(); i++) {
+                System.out.println((String) pvStatement.get(i));
+                temp = (String) pvStatement.get(i);
                 stmt = oConexion.createStatement();
-                rset= stmt.executeQuery (temp);
+                rset = stmt.executeQuery(temp);
                 rsmd = rset.getMetaData();
                 nNumCols = rsmd.getColumnCount();
                 vrset = convierteALista(rset, rsmd, nNumCols);
-                ArrayList vRowTemp = (ArrayList)vrset.get(0);
-                nRegAfectados+=(((Double)vRowTemp.get(0)).intValue());         
+                ArrayList vRowTemp = (ArrayList) vrset.get(0);
+                nRegAfectados += (((Double) vRowTemp.get(0)).intValue());
             }
             oConexion.commit();
-            
-        } catch(SQLException e) {
+
+        } catch (SQLException e) {
             oConexion.rollback();
             throw e;
         } finally {
-        	if(rset != null){
-	            rset.close();
-                    if (stmt != null)
-                        stmt.close(); 
-	         }
+            if (rset != null) {
+                rset.close();
+                if (stmt != null) {
+                    stmt.close();
+                }
+            }
             rset = null;
             stmt = null;
         }
         return nRegAfectados;
     }
-       
-    
+
     /**
-     * Realiza una petición de modificación de datos, retornando
-     * un int con el número de registros afectados.
+     * Realiza una petición de modificación de datos, retornando un int con el
+     * número de registros afectados.
      */
-    public synchronized int ejecutarComando(String psStatement) 
-            throws Exception {
- 		
-        int ret = 0;
-        ArrayList vTransaction = new ArrayList();
-        
-        vTransaction.add(psStatement);
-        ret = ejecutarComando(vTransaction);
- 
-        return ret;     
-    }
-        
-    /**
-     * Realiza una serie de peticiones de modificación de datos, retornando
-     * un int con el número de registros afectados.
-     * Estas peticiones son ejecutadas todas en una transacción.
-     */
-    public synchronized int ejecutarComando(ArrayList pvStatement) 
+    public synchronized int ejecutarComando(String psStatement)
             throws Exception {
 
-        int ret = 0, i=0;
+        int ret = 0;
+        ArrayList vTransaction = new ArrayList();
+
+        vTransaction.add(psStatement);
+        ret = ejecutarComando(vTransaction);
+
+        return ret;
+    }
+
+    /**
+     * Realiza una serie de peticiones de modificación de datos, retornando un
+     * int con el número de registros afectados. Estas peticiones son ejecutadas
+     * todas en una transacción.
+     */
+    public synchronized int ejecutarComando(ArrayList pvStatement)
+            throws Exception {
+
+        int ret = 0, i = 0;
         Statement stmt = null;
         String temp = "";
-        
+
         try {
-            oConexion.setAutoCommit(false); 
+            oConexion.setAutoCommit(false);
             stmt = oConexion.createStatement();
-            for (i=0; i < pvStatement.size(); i++) {
-                temp = (String)pvStatement.get(i);
+            for (i = 0; i < pvStatement.size(); i++) {
+                temp = (String) pvStatement.get(i);
                 ret += stmt.executeUpdate(temp);
             }
             oConexion.commit();
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             oConexion.rollback();
             throw e;
         } finally {
-            if (stmt != null)
+            if (stmt != null) {
                 stmt.close();
+            }
             stmt = null;
         }
- 
+
         return ret;
     }
-        
+
     /**
      * Recorre un result set y entrega el vector resultante.
      */
-    private synchronized ArrayList convierteALista( ResultSet rset, 
-                                              ResultSetMetaData rsmd,
-                                              int nNumCols ) 
+    private synchronized ArrayList convierteALista(ResultSet rset,
+            ResultSetMetaData rsmd,
+            int nNumCols)
             throws Exception {
         ArrayList vrset = new ArrayList();
         ArrayList vrsettmp = null;
-        int i=0;
-        
+        int i = 0;
+
         while (rset.next()) {
             vrsettmp = new ArrayList();
-            for (i = 1; i <= nNumCols; i++) {            
+            for (i = 1; i <= nNumCols; i++) {
                 switch (rsmd.getColumnType(i)) {
-                case Types.CHAR:
-                case Types.VARCHAR:
-                    String varchar = "" + doubleQuote(rset.getString(i));
-                    vrsettmp.add(varchar);
-                    break;
-                case Types.INTEGER:
-                    vrsettmp.add(new Double(rset.getLong(i)));
-                    break;
-                case Types.SMALLINT:
-                    vrsettmp.add(new Double(rset.getInt(i)));             
-                    break;
-                case Types.BIGINT:
-                case Types.NUMERIC:
-                case Types.DECIMAL:
-                case Types.FLOAT:
-                case Types.DOUBLE:
-                    vrsettmp.add(new Double(rset.getDouble(i)));
-                    break;
-                case Types.DATE:
-                case Types.TIME:
-                case Types.TIMESTAMP:
-                    vrsettmp.add((rset.getTimestamp(i)==null?null:new Date(rset.getTimestamp(i).getTime())));
-                    break;
-               default:
-                    String str = "" + rset.getString(i);
-                    vrsettmp.add(str);
+                    case Types.CHAR:
+                    case Types.VARCHAR:
+                        String varchar = "" + doubleQuote(rset.getString(i));
+                        vrsettmp.add(varchar);
+                        break;
+                    case Types.INTEGER:
+                        vrsettmp.add(new Double(rset.getLong(i)));
+                        break;
+                    case Types.SMALLINT:
+                        vrsettmp.add(new Double(rset.getInt(i)));
+                        break;
+                    case Types.BIGINT:
+                    case Types.NUMERIC:
+                    case Types.DECIMAL:
+                    case Types.FLOAT:
+                    case Types.DOUBLE:
+                        vrsettmp.add(new Double(rset.getDouble(i)));
+                        break;
+                    case Types.DATE:
+                    case Types.TIME:
+                    case Types.TIMESTAMP:
+                        vrsettmp.add((rset.getTimestamp(i) == null ? null : new Date(rset.getTimestamp(i).getTime())));
+                        break;
+                    default:
+                        String str = "" + rset.getString(i);
+                        vrsettmp.add(str);
                 } //switch  
             }  //for
             vrset.add(vrsettmp);
         } //while
         return vrset;
     }
-        
+
     /**
      * Imprime en forma adecuada este objeto.
+     *
      * @return String los datos del objeto.
      */
     @Override
     public String toString() {
         String s = "";
-        s="Class = AccesoDatos \n"+
-                "    static sUrl  = " + sUrl + "\n"+
-                "    static sUsr = " + sUsr + "\n"+
-                "    static sPwd  = " + sPwd + "\n"+
-                "    oConexion = " + oConexion + "\n";
+        s = "Class = AccesoDatos \n"
+                + "    static sUrl  = " + sUrl + "\n"
+                + "    static sUsr = " + sUsr + "\n"
+                + "    static sPwd  = " + sPwd + "\n"
+                + "    oConexion = " + oConexion + "\n";
         return s;
     }
-    
+
     /**
      * Si la cadena contiene comillas en la base de datos, convierte a código.
+     *
      * @return String cadena sin las comillas internas.
      */
-	private String doubleQuote(String psCadena){
-            if(psCadena == null){
-                    psCadena = "";
+    private String doubleQuote(String psCadena) {
+        if (psCadena == null) {
+            psCadena = "";
+        }
+        String CadenaEntrada = "";
+        if (psCadena.equals("")) {
+            return psCadena;
+        } else if (psCadena.equals("\"")) {
+            return "&quot;";
+        } else {
+            int indice = -2;
+            CadenaEntrada = psCadena;
+            while ((indice = CadenaEntrada.indexOf("\"", indice + 2)) != -1) {
+                CadenaEntrada = CadenaEntrada.substring(0, CadenaEntrada.indexOf("\"", indice)) + "&quot;" + CadenaEntrada.substring(CadenaEntrada.indexOf("\"", indice) + 1);
             }
-            String CadenaEntrada="";
-            if(psCadena.equals("")){
-                    return psCadena;
-            } else if(psCadena.equals("\"")){
-                    return "&quot;";
-            } else {
-                    int indice = -2;
-                    CadenaEntrada=psCadena;
-                    while((indice = CadenaEntrada.indexOf("\"",indice+2))!=-1)
-                            CadenaEntrada=CadenaEntrada.substring(0,CadenaEntrada.indexOf("\"",indice))+"&quot;"+CadenaEntrada.substring(CadenaEntrada.indexOf("\"",indice)+1);
+        }
+        return CadenaEntrada;
+    }
+
+    public synchronized ArrayList<String> atributos(String nombreBase, String nombre) {
+        ArrayList<String> ret = new ArrayList<String>();
+        try {
+            DatabaseMetaData metadata = oConexion.getMetaData();
+            ResultSet atributos = metadata.getColumns(null, null, nombre, null);
+            while (atributos.next()) {
+                ret.add(atributos.getString("COLUMN_NAME") + ":" + atributos.getString("TYPE_NAME") + ":" + atributos.getString("COLUMN_SIZE"));
             }
-            return CadenaEntrada;
-	}
+        } catch (SQLException ex) {
+            Logger.getLogger(AccesoDatos.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
 }

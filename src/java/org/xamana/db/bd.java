@@ -148,34 +148,48 @@ public class bd implements Serializable {
         this.nombd = nombd;
     }
 
-    public List<SelectItem> listaAtributosMySQL() {
+    public List<SelectItem> listaAtributosMySQL() throws Exception {
         ArrayList<String> arr;
         List<SelectItem> res = new ArrayList<>();
-        try {
-            accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
-            if (accexternomysql.conectar()) {
-                arr = accexternomysql.atributos(nombd, this.getTabla().getNombre());
-                accexternomysql.desconectar();
-                if (arr != null) {
-                    arr.forEach((g) -> {
-                        res.add(new SelectItem(g, g));
-                    });
-                }
-            } else {
-                System.out.println("Conexión incorrecta listaatributosmysql");
+        accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
+        if (accexternomysql.conectar()) {
+            arr = accexternomysql.atributos(nombd, this.getTabla().getNombre());
+            accexternomysql.desconectar();
+            if (arr != null) {
+                arr.forEach((g) -> {
+                    res.add(new SelectItem(g, g));
+                });
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } else {
+            System.out.println("Conexión incorrecta listaatributosmysql");
         }
         return res;
     }
-    
-    public List<SelectItem> listaAtributosMongoDB() {
+
+    public List<SelectItem> listaAtributosMongoDB() throws Exception {
+        ArrayList<String> arr;
         List<SelectItem> res = new ArrayList<>();
+        this.accexternomongo = new AccesoDatosMG(dirbd, nombd, this.tabla.getNombre(), usubd, passbd);
+        if (this.accexternomongo.conectar()) {
+            arr = this.accexternomongo.atributos(nombd, this.getTabla().getNombre());
+            arr.forEach((h) -> {
+                res.add(new SelectItem(h, h));
+            });
+        }
         return res;
     }
-    public List<SelectItem> listaAtributosPostgreSQL() {
+
+    public List<SelectItem> listaAtributosPostgreSQL() throws Exception {
+        ArrayList<String> arr;
         List<SelectItem> res = new ArrayList<>();
+        this.accexternopost=new AccesoDatosPG(dirbd, nombd, usubd, passbd);
+        if(this.accexternopost.conectar()){
+            arr=this.accexternopost.atributos(nombd, this.getTabla().getNombre());
+            this.accexternopost.desconectar();
+             arr.forEach((h) -> {
+                res.add(new SelectItem(h, h));
+            });
+        }
         return res;
     }
 
