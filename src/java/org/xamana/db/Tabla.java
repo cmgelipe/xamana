@@ -9,7 +9,7 @@ import javax.faces.model.SelectItem;
  */
 public class Tabla {
     private String tipoFragment;
-    private boolean CBIR;
+    private boolean CBIR=false;
     private String nombre;
     private int umbralOP;
     private int umbralCO;

@@ -25,17 +25,18 @@ and open the template in the editor.
                 <p:panelGrid columns="2" style="margin: 0 auto; border: none">
                     <p:outputLabel value="Tipo de fragmentación" />
                     <p:selectOneMenu value="#{bd.obj.tabla.tipoFragment}">
+                        <p:ajax update="f3:sino" />
                         <f:selectItem itemLabel="Selecciona una opción" noSelectionOption="true" />
                         <f:selectItem itemLabel="Horizontal" itemValue="a" />
                         <f:selectItem itemLabel="Vertical" itemValue="b" />
                         <f:selectItem itemLabel="Híbrida" itemValue="c" />
                     </p:selectOneMenu>
                     <p:outputLabel value="CBIR" />
-                    <p:selectBooleanButton value="#{bd.obj.tabla.CBIR}" onLabel="Si" offLabel="No" >
+                    <p:selectBooleanButton id="sino" value="#{bd.obj.tabla.CBIR}" onLabel="Si" offLabel="No" >
                         <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4 f3:atb" />
                     </p:selectBooleanButton>
                     <p:outputLabel id="o1" value="Archivos log" rendered="#{!bd.blog}" />
-                    <p:fileUpload id="file" value="#{bd.files}" disabled="#{bd.blog}" mode="simple" skinSimple="true" multiple="true" />
+                    <p:fileUpload id="file" value="#{bd.files}" disabled="#{bd.blog}" rendered="#{!bd.blog}" mode="simple" skinSimple="true" multiple="true" />
                     
                     <p:outputLabel value="Umbral de operaciones" />
                     <h:outputText id="output1" value="%#{bd.obj.tabla.umbralOP}" />
@@ -54,10 +55,10 @@ and open the template in the editor.
             <p:dialog id="dl4" header="Selección de atributo multimedia" modal="true" visible="#{bd.dcolumna}">
                 <p:outputLabel value="Atributo" />
                 <p:selectOneMenu id="atb" value="#{bd.obj.tabla.atributoMultimedia}">
-                    <f:selectItem value="Selecciona un atributo" noSelectionOption="true" />
+                    
                     <f:selectItems value="#{bd.atributos}" />
                 </p:selectOneMenu><br />
-                <p:commandButton value="Establecer" action="#{bd.setDcolumna(false)}" update="f3:dl4"/>
+                <p:commandButton value="Establecer" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl4"/>
             </p:dialog>
         </h:form>
     </h:body>

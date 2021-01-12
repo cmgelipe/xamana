@@ -7,6 +7,7 @@ package org.xamana.dbJB;
 
 import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,6 +15,7 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.model.SelectItem;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.db.bd;
+import org.xamana.db.esquemaHorMultimedia;
 
 /**
  *
@@ -31,7 +33,7 @@ public class BDJB implements Serializable {
     private boolean dcolumna = false;
     private UploadedFiles files;
     private List<SelectItem> atributos;
-
+    private ArrayList<esquemaHorMultimedia> valoresColumna;
     /**
      * Creates a new instance of BD
      */
@@ -63,7 +65,8 @@ public class BDJB implements Serializable {
 
     public void onCBIRchange() {
         try {
-            if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
+            if (this.obj.getTabla().isCBIR()
+                    && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
                 if (this.obj.getTipoBD().compareTo("a") == 0) {
                     atributos = this.obj.listaAtributosMySQL();
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
@@ -82,8 +85,13 @@ public class BDJB implements Serializable {
     }
 
     public String btnesquema() {
-        if (this.obj.getTabla().getTipoFragment().compareTo("a") == 0 && this.obj.getTabla().isCBIR()) {
-            
+        if (this.obj.getTabla().isCBIR()
+                    && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
+            try {
+                valoresColumna=this.obj.valoresDistintosColMultimedia();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
         return "esquema.xhtml";
     }
@@ -207,6 +215,24 @@ public class BDJB implements Serializable {
      */
     public void setAtributos(List<SelectItem> atributos) {
         this.atributos = atributos;
+    }
+
+    public void esquemaCBIRHorizontal() {
+        this.dcolumna = false;
+    }
+
+    /**
+     * @return the valoresColumna
+     */
+    public ArrayList<esquemaHorMultimedia> getValoresColumna() {
+        return valoresColumna;
+    }
+
+    /**
+     * @param valoresColumna the valoresColumna to set
+     */
+    public void setValoresColumna(ArrayList<esquemaHorMultimedia> valoresColumna) {
+        this.valoresColumna = valoresColumna;
     }
 
 }

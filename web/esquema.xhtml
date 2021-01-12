@@ -14,7 +14,17 @@
         <h:outputStylesheet name="jquery-ui.structure.css"/>
         <h:outputStylesheet name="jquery-ui.structure.min.css"/>
     </h:head>
-    <h:body>
-        <div>TODO write content</div>
+    <h:body style="background-color: #3f3f3f">
+        <p:dataTable value="#{bd.valoresColumna}" var="t" rendered="">
+            <p:column headerText="Nombre de fragmento">
+                <h:outputText value="#{t.nombre}" />
+            </p:column>
+            <p:column headerText="Conjunto">
+                <h:outputText value="#{t.valor}" />
+            </p:column>
+            <p:column headerText="Número de tuplas">
+                <h:outputText value="#{t.NTuplas}" />
+            </p:column>
+        </p:dataTable>
     </h:body>
 </html>

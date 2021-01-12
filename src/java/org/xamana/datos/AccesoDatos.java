@@ -31,7 +31,7 @@ public class AccesoDatos implements Serializable {
     }
     
     public AccesoDatos(String url, String nombd, String usr, String pwd) throws Exception {
-        sUrl = "jdbc:mysql://"+url+"//"+nombd;//"jdbc:mysql://localhost/Master";
+        sUrl = "jdbc:mysql://"+url+"/"+nombd;//"jdbc:mysql://localhost/Master";
         sUsr = usr;//"root";
         sPwd = pwd;//"sunny_4teamo";
     }
@@ -40,10 +40,12 @@ public class AccesoDatos implements Serializable {
         boolean bRet = false;
         try {
             Class.forName("com.mysql.jdbc.Driver").newInstance();
+            System.out.println(sUrl +" " +sUsr+" "+ sPwd);
             oConexion = DriverManager.getConnection(sUrl, sUsr, sPwd);
             bRet = true;
         } catch (SQLException e) {
             throw e;
+            
         }
         return bRet;
     }
@@ -224,7 +226,7 @@ public class AccesoDatos implements Serializable {
         ArrayList<String> ret=new ArrayList<String>();
         try {
             DatabaseMetaData metadata=oConexion.getMetaData();
-            ResultSet atributos=metadata.getColumns(null, null, nombre, null);
+            ResultSet atributos=metadata.getColumns(nombreBase, null, nombre, null);
             while(atributos.next())
                 ret.add(atributos.getString("COLUMN_NAME")+":"+atributos.getString("TYPE_NAME")+":"+atributos.getString("COLUMN_SIZE"));
         } catch (SQLException ex) {

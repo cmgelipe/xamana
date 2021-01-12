@@ -193,4 +193,26 @@ public class bd implements Serializable {
         return res;
     }
 
+    public ArrayList<esquemaHorMultimedia> valoresDistintosColMultimedia() throws Exception {
+        ArrayList<esquemaHorMultimedia> res=null;
+        ArrayList arr=null;
+        if(this.TipoBD.compareTo("a")==0){
+            if(this.accexternomysql.conectar()){
+                String nombreColumna=this.getTabla().getAtributoMultimedia().split(":")[0];
+                arr=this.accexternomysql.ejecutarConsulta("select "+nombreColumna+", count("+nombreColumna+") as num from "+this.tabla.getNombre()+" group by "+nombreColumna);
+                this.accexternomysql.desconectar();
+            }
+            if(arr!=null){
+                res=new ArrayList<>();
+                for(int t=0;t<arr.size();t++){
+                    esquemaHorMultimedia tupla=new esquemaHorMultimedia();
+                    tupla.setNombre(this.tabla.getNombre()+"_f"+(t+1));
+                    tupla.setValor(""+((ArrayList)arr.get(t)).get(0));
+                    tupla.setNTuplas(""+((ArrayList)arr.get(t)).get(1));
+                }
+            }
+        }
+        return res;
+    }
+
 }
