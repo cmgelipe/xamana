@@ -34,6 +34,7 @@ public class BDJB implements Serializable {
     private UploadedFiles files;
     private List<SelectItem> atributos;
     private ArrayList<esquemaHorMultimedia> valoresColumna;
+    private boolean infoEsquema1=true;
     /**
      * Creates a new instance of BD
      */
@@ -71,7 +72,7 @@ public class BDJB implements Serializable {
                     atributos = this.obj.listaAtributosMySQL();
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                     atributos = this.obj.listaAtributosPostgreSQL();
-                } else if (this.obj.getTipoBD().compareTo("c") == 0) {
+                } else if (this.obj.getTipoBD().compareTo("d") == 0) {
                     atributos = this.obj.listaAtributosMongoDB();
                 }
                 this.dcolumna = true;
@@ -235,4 +236,29 @@ public class BDJB implements Serializable {
         this.valoresColumna = valoresColumna;
     }
 
+    /**
+     * @return the infoEsquema1
+     */
+    public boolean isInfoEsquema1() {
+        return infoEsquema1;
+    }
+
+    /**
+     * @param infoEsquema1 the infoEsquema1 to set
+     */
+    public void setInfoEsquema1(boolean infoEsquema1) {
+        this.infoEsquema1 = infoEsquema1;
+    }
+    public void fragEstatica(){
+        this.obj.guardarDatos();
+        if(this.obj.isHorizontalCBIR()){
+            if(this.obj.getTipoBD().compareTo("a")==0){
+                this.obj.fragmentarHorCBIRMySQL();
+            }else if(this.obj.getTipoBD().compareTo("b")==0 || this.obj.getTipoBD().compareTo("c")==0){
+                this.obj.fragmentarHorCBIRPostgres();
+            }else{
+                this.obj.fragmentarHorCBIRMongoDB();
+            }    
+        }
+    }
 }

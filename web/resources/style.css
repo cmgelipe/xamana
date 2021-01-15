@@ -1,6 +1,21 @@
 body{
 	background-color: #3f3f3f;
 }
+header{
+	
+    width: 100%;
+    background-color: black;
+    color: #ffb300;
+    font-family: impact;
+    height: 50px;
+    font-size: 30px;
+    text-align: center;
+    padding-top: 1%;
+    border-radius: 10px;
+    margin-top: 0px;
+    margin-bottom: 30px;
+
+}
 #t{
 	background-image: url(text12.png);
 	background-size: cover;

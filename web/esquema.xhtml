@@ -13,18 +13,31 @@
         <h:outputStylesheet name="jquery-ui.min.css"/>
         <h:outputStylesheet name="jquery-ui.structure.css"/>
         <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <h:outputStylesheet name="style.css"/>
     </h:head>
     <h:body style="background-color: #3f3f3f">
-        <p:dataTable value="#{bd.valoresColumna}" var="t" rendered="">
-            <p:column headerText="Nombre de fragmento">
-                <h:outputText value="#{t.nombre}" />
-            </p:column>
-            <p:column headerText="Conjunto">
-                <h:outputText value="#{t.valor}" />
-            </p:column>
-            <p:column headerText="Número de tuplas">
-                <h:outputText value="#{t.NTuplas}" />
-            </p:column>
-        </p:dataTable>
+        <header>
+            <text>Esquema</text>
+        </header>
+        <h:form id="f4">
+            <p:dataTable value="#{bd.valoresColumna}" var="t" rendered="#{bd.obj.horizontalCBIR}">
+                <p:column headerText="Nombre de fragmento">
+                    <h:outputText value="#{t.nombre}" />
+                </p:column>
+                <p:column headerText="Conjunto">
+                    <h:outputText value="#{t.valor}" />
+                </p:column>
+                <p:column headerText="Número de tuplas">
+                    <h:outputText value="#{t.NTuplas}" />
+                </p:column>
+            </p:dataTable>
+            <p:commandButton value="Hagámoslo" action="#{bd.fragEstatica()}" />
+            <p:commandButton value="Descargar archivos" />
+            <p:dialog id="d5" header="Información" visible="#{bd.infoEsquema1}" modal="true" closable="false">
+                <h:outputText value="Se muestra el primer diseño del esquema propuesto, al aplicarlo se deberán descargar todos los archivos correspondientes"/><br />
+                <h:outputText value="para aplicar la fragmentación dinámica. La descarga la acompaña un archivo con las instrucciones a seguir." /><br />
+                <p:commandButton value="OK" action="#{bd.setInfoEsquema1(false)}" update="f4:d5" />
+            </p:dialog>
+        </h:form>
     </h:body>
 </html>

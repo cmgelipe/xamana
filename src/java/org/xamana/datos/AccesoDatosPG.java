@@ -34,7 +34,7 @@ public final class AccesoDatosPG implements Serializable {
     }
 
     public AccesoDatosPG(String url, String nomdb, String usr, String pwd) throws Exception {
-        sUrl = "jdbc:postgresql://" + url + "//" + nomdb;//"jdbc:mysql://localhost/Master";
+        sUrl = "jdbc:postgresql://" + url + "/" + nomdb;//"jdbc:mysql://localhost/Master";
         sUsr = usr;//"root";
         sPwd = pwd;//"sunny_4teamo";
     }
