@@ -15,8 +15,14 @@ import org.xamana.datos.AccesoDatos;
 import org.xamana.datos.AccesoDatosMG;
 import org.xamana.datos.AccesoDatosPG;
 import static com.mongodb.client.model.Aggregates.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 import org.json.JSONObject;
+import org.primefaces.model.file.UploadedFile;
+import org.primefaces.model.file.UploadedFiles;
 
 /**
  *
@@ -191,10 +197,10 @@ public class bd implements Serializable {
         ArrayList<String> arr;
         List<SelectItem> res = new ArrayList<>();
         //this.accexternopost=new AccesoDatosPG(dirbd, nombd, usubd, passbd);
-        if(this.accexternopost.conectar()){
-            arr=this.accexternopost.atributos(nombd, this.getTabla().getNombre());
+        if (this.accexternopost.conectar()) {
+            arr = this.accexternopost.atributos(nombd, this.getTabla().getNombre());
             this.accexternopost.desconectar();
-             arr.forEach((h) -> {
+            arr.forEach((h) -> {
                 res.add(new SelectItem(h, h));
             });
         }
@@ -202,55 +208,55 @@ public class bd implements Serializable {
     }
 
     public ArrayList<esquemaHorMultimedia> valoresDistintosColMultimedia() throws Exception {
-        ArrayList<esquemaHorMultimedia> res=null;
-        ArrayList arr=null;
-        String nombreColumna=this.getTabla().getAtributoMultimedia().split(":")[0];
-        String queryRelacional="select "+nombreColumna+", count("+nombreColumna+") as num from "+this.tabla.getNombre()+" group by "+nombreColumna;
-        if(this.TipoBD.compareTo("a")==0){
-            if(this.accexternomysql.conectar()){
-                arr=this.accexternomysql.ejecutarConsulta(queryRelacional);
+        ArrayList<esquemaHorMultimedia> res = null;
+        ArrayList arr = null;
+        String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
+        String queryRelacional = "select " + nombreColumna + ", count(" + nombreColumna + ") as num from " + this.tabla.getNombre() + " group by " + nombreColumna;
+        if (this.TipoBD.compareTo("a") == 0) {
+            if (this.accexternomysql.conectar()) {
+                arr = this.accexternomysql.ejecutarConsulta(queryRelacional);
                 this.accexternomysql.desconectar();
             }
-            if(arr!=null){
-                res=new ArrayList<>();
-                for(int t=0;t<arr.size();t++){
-                    esquemaHorMultimedia tupla=new esquemaHorMultimedia();
-                    tupla.setNombre(this.tabla.getNombre()+"_f"+(t+1));
-                    tupla.setValor(""+((ArrayList)arr.get(t)).get(0));
-                    tupla.setNTuplas(""+((ArrayList)arr.get(t)).get(1));
+            if (arr != null) {
+                res = new ArrayList<>();
+                for (int t = 0; t < arr.size(); t++) {
+                    esquemaHorMultimedia tupla = new esquemaHorMultimedia();
+                    tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
+                    tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
+                    tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
                     res.add(tupla);
                 }
             }
-        }else if(this.TipoBD.compareTo("b")==0 || this.TipoBD.compareTo("c")==0){
-            if(this.accexternopost.conectar()){
-                arr=this.accexternopost.ejecutarConsulta(queryRelacional);
+        } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
+            if (this.accexternopost.conectar()) {
+                arr = this.accexternopost.ejecutarConsulta(queryRelacional);
                 this.accexternopost.desconectar();
             }
-            if(arr!=null){
-                res=new ArrayList<>();
-                for(int t=0;t<arr.size();t++){
-                    esquemaHorMultimedia tupla=new esquemaHorMultimedia();
-                    tupla.setNombre(this.tabla.getNombre()+"_f"+(t+1));
-                    tupla.setValor(""+((ArrayList)arr.get(t)).get(0));
-                    tupla.setNTuplas(""+((ArrayList)arr.get(t)).get(1));
+            if (arr != null) {
+                res = new ArrayList<>();
+                for (int t = 0; t < arr.size(); t++) {
+                    esquemaHorMultimedia tupla = new esquemaHorMultimedia();
+                    tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
+                    tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
+                    tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
                     res.add(tupla);
                 }
             }
-        }else{
-            if(this.accexternomongo.conectar()){
-                MongoDatabase db=this.accexternomongo.getMongoClient().getDatabase(nombd);
-                MongoCollection<Document> colec=db.getCollection(this.tabla.getNombre());
-                Bson group=group("$"+nombreColumna,sum("num",1L));
-                List<Document> r=colec.aggregate(Arrays.asList(group)).into(new ArrayList<>());
-                if(!r.isEmpty()){
-                    res=new ArrayList<>();
-                    int t=0;
-                    for(Document d:r){
+        } else {
+            if (this.accexternomongo.conectar()) {
+                MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
+                MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
+                Bson group = group("$" + nombreColumna, sum("num", 1L));
+                List<Document> r = colec.aggregate(Arrays.asList(group)).into(new ArrayList<>());
+                if (!r.isEmpty()) {
+                    res = new ArrayList<>();
+                    int t = 0;
+                    for (Document d : r) {
                         t++;
-                        esquemaHorMultimedia tupla=new esquemaHorMultimedia();
-                        tupla.setNombre(this.tabla.getNombre()+"_f"+(t));
-                        tupla.setValor(""+(new JSONObject(d.toJson())).get("_id"));
-                        tupla.setNTuplas(""+(new JSONObject(d.toJson())).get("num"));
+                        esquemaHorMultimedia tupla = new esquemaHorMultimedia();
+                        tupla.setNombre(this.tabla.getNombre() + "_f" + (t));
+                        tupla.setValor("" + (new JSONObject(d.toJson())).get("_id"));
+                        tupla.setNTuplas("" + (new JSONObject(d.toJson())).get("num"));
                         res.add(tupla);
                     }
                 }
@@ -258,34 +264,113 @@ public class bd implements Serializable {
         }
         return res;
     }
-    public boolean isHorizontalCBIR(){
-        return this.tabla.isCBIR() && this.tabla.getTipoFragment().compareTo("a")==0;
-    }
-    public boolean isRelacional(){
-        return this.TipoBD.compareTo("a")==0 || this.TipoBD.compareTo("b")==0 || this.TipoBD.compareTo("c")==0;
+
+    public boolean isHorizontalCBIR() {
+        return this.tabla.isCBIR() && this.tabla.getTipoFragment().compareTo("a") == 0;
     }
 
-    public void guardarDatos() {
+    public boolean isRelacional() {
+        return this.TipoBD.compareTo("a") == 0 || this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0;
+    }
+
+    public String guardarDatos() {
+        String id_bd = "";
+        String id_tabla = "";
+        String query = "";
         try {
-            AccesoDatos acc=new AccesoDatos();
-            if(acc.conectar()){
-                
+            AccesoDatos acc = new AccesoDatos();
+            if (acc.conectar()) {
+
+                if (this.usubd.isEmpty()) {
+                    query = "insert into BD (direccion, gestor, usr, psw) values('" + this.dirbd + "','" + this.TipoBD + "',null,null)";
+                } else if (!this.usubd.isEmpty() && this.passbd.isEmpty()) {
+                    query = "insert into BD (direccion, gestor, usr, psw) values('" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
+                } else {
+                    query = "insert into BD (direccion, gestor, usr, psw) values('" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
+                }
+                acc.ejecutarComando(query);
+                ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                id_bd = "" + ((ArrayList) res.get(0)).get(0);
+                acc.ejecutarComando("insert into tabla (nombre,umbral_op,umbral_des,tipo_frag,id_BD) values ('" + this.getTabla().getNombre() + "'," + this.getTabla().getUmbralOP() + "," + this.getTabla().getUmbralCO() + ",'" + this.tabla.getTipoFragment() + "'," + id_bd + ")");
+                res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                id_tabla = "" + ((ArrayList) res.get(0)).get(0);
                 acc.desconectar();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        return id_tabla;
     }
-    public void fragmentarHorCBIRMySQL(){
-        
+
+    public void fragmentarHorCBIRMySQL() {
+
     }
 
     public void fragmentarHorCBIRPostgres() {
-        
+
     }
 
     public void fragmentarHorCBIRMongoDB() {
-        
+
     }
 
+    public double nOperacionesLog(UploadedFiles files) {
+        double res = 0;
+        for (UploadedFile f : files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (this.isRelacional()) {
+                            if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                res++;
+                            }
+                        } else {
+                            if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                res++;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return res;
+    }
+
+    public double nTuplas() {
+        double res=0;
+        ArrayList arr=null;
+        try {
+            if (this.TipoBD.compareTo("a") == 0) {
+                if (this.accexternomysql.conectar()) {
+                    arr=this.accexternomysql.ejecutarConsulta("select count(*) from " + this.tabla.getNombre());
+                    this.accexternomysql.desconectar();
+                }
+                if(arr!=null){
+                    res=(double)((ArrayList)arr.get(0)).get(0);
+                }
+            } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
+                if (this.accexternopost.conectar()) {
+                    arr=this.accexternopost.ejecutarConsulta("select count(*) from " + this.tabla.getNombre());
+                    this.accexternopost.desconectar();
+                }
+                if(arr!=null){
+                    res=(double)((ArrayList)arr.get(0)).get(0);
+                }
+            } else if (this.TipoBD.compareTo("d") == 0) {
+                if(this.accexternomongo.conectar()){
+                    MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
+                    MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
+                    res=(double)colec.countDocuments();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+    
 }

@@ -90,6 +90,9 @@ public class BDJB implements Serializable {
                     && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
             try {
                 valoresColumna=this.obj.valoresDistintosColMultimedia();
+                double nOperacionesLog=this.obj.nOperacionesLog(files);
+                double nTuplas=this.obj.nTuplas();
+                //
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
