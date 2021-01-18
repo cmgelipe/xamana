@@ -89,10 +89,8 @@ public class BDJB implements Serializable {
         if (this.obj.getTabla().isCBIR()
                     && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
             try {
-                valoresColumna=this.obj.valoresDistintosColMultimedia();
-                double nOperacionesLog=this.obj.nOperacionesLog(files);
-                double nTuplas=this.obj.nTuplas();
-                //
+                valoresColumna=this.obj.valoresDistintosColMultimedia(files);
+                
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -256,11 +254,11 @@ public class BDJB implements Serializable {
         this.obj.guardarDatos();
         if(this.obj.isHorizontalCBIR()){
             if(this.obj.getTipoBD().compareTo("a")==0){
-                this.obj.fragmentarHorCBIRMySQL();
+                this.obj.fragmentarHorCBIRMySQL(valoresColumna);
             }else if(this.obj.getTipoBD().compareTo("b")==0 || this.obj.getTipoBD().compareTo("c")==0){
-                this.obj.fragmentarHorCBIRPostgres();
+                this.obj.fragmentarHorCBIRPostgres(valoresColumna);
             }else{
-                this.obj.fragmentarHorCBIRMongoDB();
+                this.obj.fragmentarHorCBIRMongoDB(valoresColumna);
             }    
         }
     }

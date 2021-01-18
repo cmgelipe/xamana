@@ -13,6 +13,9 @@ public class esquemaHorMultimedia {
     private String nombre;
     private String valor;
     private String nTuplas;
+    private String porcentaje;
+    private String nOperacionesAprox;
+    
 
     /**
      * @return the nombre
@@ -46,14 +49,56 @@ public class esquemaHorMultimedia {
      * @return the nTuplas
      */
     public String getNTuplas() {
-        return nTuplas;
+        return getnTuplas();
     }
 
     /**
      * @param nTuplas the nTuplas to set
      */
     public void setNTuplas(String nTuplas) {
+        this.setnTuplas(nTuplas);
+    }
+
+    /**
+     * @return the nTuplas
+     */
+    public String getnTuplas() {
+        return nTuplas;
+    }
+
+    /**
+     * @param nTuplas the nTuplas to set
+     */
+    public void setnTuplas(String nTuplas) {
         this.nTuplas = nTuplas;
+    }
+
+    /**
+     * @return the porcentaje
+     */
+    public String getPorcentaje() {
+        return porcentaje;
+    }
+
+    /**
+     * @param porcentaje the porcentaje to set
+     */
+    public void setPorcentaje(String porcentaje) {
+        this.porcentaje = porcentaje;
+    }
+
+    /**
+     * @return the nOperacionesAprox
+     */
+    public String getNOperacionesAprox() {
+        return nOperacionesAprox;
+    }
+
+    /**
+     * @param nOperacionesAprox the nOperacionesAprox to set
+     */
+    public void setNOperacionesAprox(String nOperacionesAprox) {
+        this.nOperacionesAprox = nOperacionesAprox;
     }
     
 }

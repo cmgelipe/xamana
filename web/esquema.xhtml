@@ -30,6 +30,12 @@
                 <p:column headerText="Número de tuplas">
                     <h:outputText value="#{t.NTuplas}" />
                 </p:column>
+                <p:column headerText="Porcentaje">
+                    <h:outputText value="#{t.porcentaje}" />
+                </p:column>
+                <p:column headerText="Operaciones aproximadas">
+                    <h:outputText value="#{t.NOperacionesAprox}" />
+                </p:column>
             </p:dataTable>
             <p:commandButton value="Hagámoslo" action="#{bd.fragEstatica()}" />
             <p:commandButton value="Descargar archivos" />

@@ -207,11 +207,14 @@ public class bd implements Serializable {
         return res;
     }
 
-    public ArrayList<esquemaHorMultimedia> valoresDistintosColMultimedia() throws Exception {
+    public ArrayList<esquemaHorMultimedia> valoresDistintosColMultimedia(UploadedFiles files) throws Exception {
         ArrayList<esquemaHorMultimedia> res = null;
         ArrayList arr = null;
         String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
         String queryRelacional = "select " + nombreColumna + ", count(" + nombreColumna + ") as num from " + this.tabla.getNombre() + " group by " + nombreColumna;
+        double nOperacionesLog = this.nOperacionesLog(files);
+        double nTuplas = this.nTuplas();
+        double nOperacionesTabla = nOperacionesLog / nTuplas;
         if (this.TipoBD.compareTo("a") == 0) {
             if (this.accexternomysql.conectar()) {
                 arr = this.accexternomysql.ejecutarConsulta(queryRelacional);
@@ -224,6 +227,8 @@ public class bd implements Serializable {
                     tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
                     tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
                     tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
+                    tupla.setPorcentaje("" + (((Double) ((Integer.parseInt(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
+                    tupla.setNOperacionesAprox("" + (((Double) ((Integer.parseInt(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
                     res.add(tupla);
                 }
             }
@@ -239,6 +244,8 @@ public class bd implements Serializable {
                     tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
                     tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
                     tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
+                    tupla.setPorcentaje("" + (((Double) ((Integer.parseInt(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
+                    tupla.setNOperacionesAprox("" + (((Double) ((Integer.parseInt(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
                     res.add(tupla);
                 }
             }
@@ -257,6 +264,8 @@ public class bd implements Serializable {
                         tupla.setNombre(this.tabla.getNombre() + "_f" + (t));
                         tupla.setValor("" + (new JSONObject(d.toJson())).get("_id"));
                         tupla.setNTuplas("" + (new JSONObject(d.toJson())).get("num"));
+                        tupla.setPorcentaje("" + (((Double) ((Integer.parseInt(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
+                        tupla.setNOperacionesAprox("" + (((Double) ((Integer.parseInt(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
                         res.add(tupla);
                     }
                 }
@@ -302,15 +311,53 @@ public class bd implements Serializable {
         return id_tabla;
     }
 
-    public void fragmentarHorCBIRMySQL() {
+    public void fragmentarHorCBIRMySQL(ArrayList<esquemaHorMultimedia> e) {
+        try {
+            if (this.accexternomysql.conectar()) {
+                List<SelectItem> res=listaAtributosMySQL();
+                String att_tipo = "";
+                for(SelectItem r:res){
+                    String nombre=r.getValue().toString().split(":")[0];
+                    String tipo=r.getValue().toString().split(":")[1];
+                    if(this.transTipoDato(tipo)!=0){
+                        att_tipo += nombre + " " + tipo + ", ";
+                    }else{
+                        if(tipo.compareTo("BIT")!=0){
+                            String tamanio=r.getValue().toString().split(":")[2];
+                            att_tipo += nombre + " " + tipo + "("+tamanio+"), ";
+                        }else{
+                            att_tipo += nombre + " TINYINT, ";
+                        }
+                    }
+                }
+                att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+                for(esquemaHorMultimedia tupla:e){
+                    ArrayList resultado=null;
+                    String query="create table "+tupla.getNombre()+" ("+att_tipo+");";
+                    this.accexternomysql.ejecutarComando(query);
+                    query="select * from "+this.tabla.getNombre()+" where "+this.tabla.getAtributoMultimedia()+"="+tupla.getValor();
+                    resultado=this.accexternomysql.ejecutarConsulta(query);
+                    if(resultado!=null){
+                        if(!resultado.isEmpty()){
+                            for (int i = 0; i < resultado.size(); i++) {
+                                String valores = "";
+                                //crear linea de insercion
+                            }
+                        }
+                    }
+                }
+                this.accexternomysql.desconectar();
+            }
+        } catch (Exception y) {
+            y.printStackTrace();
+        }
+    }
+
+    public void fragmentarHorCBIRPostgres(ArrayList<esquemaHorMultimedia> e) {
 
     }
 
-    public void fragmentarHorCBIRPostgres() {
-
-    }
-
-    public void fragmentarHorCBIRMongoDB() {
+    public void fragmentarHorCBIRMongoDB(ArrayList<esquemaHorMultimedia> e) {
 
     }
 
@@ -341,30 +388,30 @@ public class bd implements Serializable {
     }
 
     public double nTuplas() {
-        double res=0;
-        ArrayList arr=null;
+        double res = 0;
+        ArrayList arr = null;
         try {
             if (this.TipoBD.compareTo("a") == 0) {
                 if (this.accexternomysql.conectar()) {
-                    arr=this.accexternomysql.ejecutarConsulta("select count(*) from " + this.tabla.getNombre());
+                    arr = this.accexternomysql.ejecutarConsulta("select count(*) from " + this.tabla.getNombre());
                     this.accexternomysql.desconectar();
                 }
-                if(arr!=null){
-                    res=(double)((ArrayList)arr.get(0)).get(0);
+                if (arr != null) {
+                    res = (double) ((ArrayList) arr.get(0)).get(0);
                 }
             } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
                 if (this.accexternopost.conectar()) {
-                    arr=this.accexternopost.ejecutarConsulta("select count(*) from " + this.tabla.getNombre());
+                    arr = this.accexternopost.ejecutarConsulta("select count(*) from " + this.tabla.getNombre());
                     this.accexternopost.desconectar();
                 }
-                if(arr!=null){
-                    res=(double)((ArrayList)arr.get(0)).get(0);
+                if (arr != null) {
+                    res = (double) ((ArrayList) arr.get(0)).get(0);
                 }
             } else if (this.TipoBD.compareTo("d") == 0) {
-                if(this.accexternomongo.conectar()){
+                if (this.accexternomongo.conectar()) {
                     MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
                     MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
-                    res=(double)colec.countDocuments();
+                    res = (double) colec.countDocuments();
                 }
             }
         } catch (Exception e) {
@@ -372,5 +419,28 @@ public class bd implements Serializable {
         }
         return res;
     }
-    
+    public int transTipoDato(String tipo) {
+        switch (tipo) {
+            case "CHAR":
+            case "VARCHAR":
+            case "BIT":
+            case "TINYINT":
+                return 0;
+            case "INTEGER":
+            case "SMALLINT":
+            case "BIGINT":
+            case "NUMERIC":
+            case "DECIMAL":
+            case "FLOAT":
+            case "DOUBLE":
+                return 1;
+            case "DATE":
+            case "TIME":
+            case "TIMESTAMP":
+            case "DATETIME":
+                return 2;
+            default:
+                return 3;
+        }
+    }
 }
