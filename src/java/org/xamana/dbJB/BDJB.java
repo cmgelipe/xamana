@@ -12,7 +12,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.faces.bean.ManagedBean;
+import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.db.bd;
 import org.xamana.db.esquemaHorMultimedia;
@@ -34,7 +37,9 @@ public class BDJB implements Serializable {
     private UploadedFiles files;
     private List<SelectItem> atributos;
     private ArrayList<esquemaHorMultimedia> valoresColumna;
-    private boolean infoEsquema1=true;
+    private boolean infoEsquema1 = true;
+    private StreamedContent Descarga;
+
     /**
      * Creates a new instance of BD
      */
@@ -87,10 +92,29 @@ public class BDJB implements Serializable {
 
     public String btnesquema() {
         if (this.obj.getTabla().isCBIR()
-                    && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
+                && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
             try {
-                valoresColumna=this.obj.valoresDistintosColMultimedia(files);
-                
+                valoresColumna = this.obj.valoresDistintosColMultimedia(files);
+                if (this.getObj().getTipoBD().compareTo("a") == 0) {
+                    this.Descarga = DefaultStreamedContent.builder()
+                            .name("HorizontalMySQLCBIR.rar")
+                            .contentType("application/x-rar-compressed")
+                            .stream(() -> FacesContext.getCurrentInstance().getExternalContext().getResourceAsStream("/resources/descargas/HorizontalMySQLCBIR.rar"))
+                            .build();
+                }else if(this.getObj().getTipoBD().compareTo("b") == 0 || this.getObj().getTipoBD().compareTo("c") == 0){
+                    this.Descarga = DefaultStreamedContent.builder()
+                            .name("HorizontalPostCBIR.rar")
+                            .contentType("application/x-rar-compressed")
+                            .stream(() -> FacesContext.getCurrentInstance().getExternalContext().getResourceAsStream("/resources/descargas/HorizontalPostCBIR.rar"))
+                            .build();
+                }else if(this.getObj().getTipoBD().compareTo("d") == 0){
+                    this.Descarga = DefaultStreamedContent.builder()
+                            .name("HorizontalMongoCBIR.rar")
+                            .contentType("application/x-rar-compressed")
+                            .stream(() -> FacesContext.getCurrentInstance().getExternalContext().getResourceAsStream("/resources/descargas/HorizontalMongoCBIR.rar"))
+                            .build();
+                }
+
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -250,16 +274,31 @@ public class BDJB implements Serializable {
     public void setInfoEsquema1(boolean infoEsquema1) {
         this.infoEsquema1 = infoEsquema1;
     }
-    public void fragEstatica(){
+
+    public void fragEstatica() {
         this.obj.guardarDatos();
-        if(this.obj.isHorizontalCBIR()){
-            if(this.obj.getTipoBD().compareTo("a")==0){
+        if (this.obj.isHorizontalCBIR()) {
+            if (this.obj.getTipoBD().compareTo("a") == 0) {
                 this.obj.fragmentarHorCBIRMySQL(valoresColumna);
-            }else if(this.obj.getTipoBD().compareTo("b")==0 || this.obj.getTipoBD().compareTo("c")==0){
+            } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 this.obj.fragmentarHorCBIRPostgres(valoresColumna);
-            }else{
+            } else {
                 this.obj.fragmentarHorCBIRMongoDB(valoresColumna);
-            }    
+            }
         }
+    }
+
+    /**
+     * @return the Descarga
+     */
+    public StreamedContent getDescarga() {
+        return Descarga;
+    }
+
+    /**
+     * @param Descarga the Descarga to set
+     */
+    public void setDescarga(StreamedContent Descarga) {
+        this.Descarga = Descarga;
     }
 }

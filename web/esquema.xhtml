@@ -14,6 +14,17 @@
         <h:outputStylesheet name="jquery-ui.structure.css"/>
         <h:outputStylesheet name="jquery-ui.structure.min.css"/>
         <h:outputStylesheet name="style.css"/>
+        <script type="text/javascript">
+            //<![CDATA[
+            function start() {
+                PF('statusDialog').show();
+            }
+
+            function stop() {
+                PF('statusDialog').hide();
+            }
+            //]]>
+        </script>
     </h:head>
     <h:body style="background-color: #3f3f3f">
         <header>
@@ -38,7 +49,9 @@
                 </p:column>
             </p:dataTable>
             <p:commandButton value="Hagámoslo" action="#{bd.fragEstatica()}" />
-            <p:commandButton value="Descargar archivos" />
+            <p:commandButton value="Descargar archivos" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);" icon="pi pi-arrow-down" >
+                <p:fileDownload value="#{bd.descarga}" />
+            </p:commandButton>
             <p:dialog id="d5" header="Información" visible="#{bd.infoEsquema1}" modal="true" closable="false">
                 <h:outputText value="Se muestra el primer diseño del esquema propuesto, al aplicarlo se deberán descargar todos los archivos correspondientes"/><br />
                 <h:outputText value="para aplicar la fragmentación dinámica. La descarga la acompaña un archivo con las instrucciones a seguir." /><br />

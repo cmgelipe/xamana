@@ -1,5 +1,6 @@
 package org.xamana.db;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.faces.model.SelectItem;
 
@@ -14,6 +15,7 @@ public class Tabla {
     private int umbralOP;
     private int umbralCO;
     private String atributoMultimedia;
+    private ArrayList<Atributo> Atributos;
     
 
     /**
@@ -98,5 +100,19 @@ public class Tabla {
      */
     public void setAtributoMultimedia(String atributoMultimedia) {
         this.atributoMultimedia = atributoMultimedia;
+    }
+
+    /**
+     * @return the Atributos
+     */
+    public ArrayList<Atributo> getAtributos() {
+        return Atributos;
+    }
+
+    /**
+     * @param Atributos the Atributos to set
+     */
+    public void setAtributos(ArrayList<Atributo> Atributos) {
+        this.Atributos = Atributos;
     }
 }
