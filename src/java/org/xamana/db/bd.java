@@ -39,7 +39,6 @@ public class bd implements Serializable {
     private String passbd;
     private String TipoBD = "";
     private Tabla tabla = new Tabla();
-    
 
     public boolean conexionexterna() {
         boolean res = false;
@@ -174,8 +173,8 @@ public class bd implements Serializable {
             if (arr != null) {
                 arr.forEach((g) -> {
                     res.add(new SelectItem(g, g));
-                    String []t=g.split(":");
-                    Atributo att=new Atributo();
+                    String[] t = g.split(":");
+                    Atributo att = new Atributo();
                     att.setNombre(t[0]);
                     att.setTipo(t[1]);
                     att.setTamanio(t[2]);
@@ -190,6 +189,7 @@ public class bd implements Serializable {
 
     public List<SelectItem> listaAtributosMongoDB() throws Exception {
         ArrayList<String> arr;
+        this.tabla.setAtributos(new ArrayList<>());
         List<SelectItem> res = new ArrayList<>();
         //this.accexternomongo = new AccesoDatosMG(dirbd, nombd, this.tabla.getNombre(), usubd, passbd);
         if (this.accexternomongo.conectar()) {
@@ -203,6 +203,7 @@ public class bd implements Serializable {
 
     public List<SelectItem> listaAtributosPostgreSQL() throws Exception {
         ArrayList<String> arr;
+        this.tabla.setAtributos(new ArrayList<>());
         List<SelectItem> res = new ArrayList<>();
         //this.accexternopost=new AccesoDatosPG(dirbd, nombd, usubd, passbd);
         if (this.accexternopost.conectar()) {
@@ -210,6 +211,12 @@ public class bd implements Serializable {
             this.accexternopost.desconectar();
             arr.forEach((h) -> {
                 res.add(new SelectItem(h, h));
+                String[] t = h.split(":");
+                Atributo att = new Atributo();
+                att.setNombre(t[0]);
+                att.setTipo(t[1]);
+                att.setTamanio(t[2]);
+                this.tabla.getAtributos().add(att);
             });
         }
         return res;
@@ -252,8 +259,8 @@ public class bd implements Serializable {
                     tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
                     tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
                     tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
-                    tupla.setPorcentaje("" + (((Double) ((Integer.parseInt(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
-                    tupla.setNOperacionesAprox("" + (((Double) ((Integer.parseInt(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
+                    tupla.setPorcentaje("" + (((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
+                    tupla.setNOperacionesAprox("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
                     res.add(tupla);
                 }
             }
@@ -272,8 +279,8 @@ public class bd implements Serializable {
                         tupla.setNombre(this.tabla.getNombre() + "_f" + (t));
                         tupla.setValor("" + (new JSONObject(d.toJson())).get("_id"));
                         tupla.setNTuplas("" + (new JSONObject(d.toJson())).get("num"));
-                        tupla.setPorcentaje("" + (((Double) ((Integer.parseInt(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
-                        tupla.setNOperacionesAprox("" + (((Double) ((Integer.parseInt(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
+                        tupla.setPorcentaje("" + (((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
+                        tupla.setNOperacionesAprox("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
                         res.add(tupla);
                     }
                 }
@@ -323,8 +330,8 @@ public class bd implements Serializable {
         try {
             accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
             if (this.accexternomysql.conectar()) {
-                String []u=this.getTabla().getAtributoMultimedia().split(":");
-                Atributo attMultimedia=new Atributo();
+                String[] u = this.getTabla().getAtributoMultimedia().split(":");
+                Atributo attMultimedia = new Atributo();
                 attMultimedia.setNombre(u[0]);
                 attMultimedia.setTipo(u[1]);
                 attMultimedia.setTamanio(u[2]);
@@ -345,7 +352,7 @@ public class bd implements Serializable {
                     ArrayList resultado = null;
                     String query = "create table " + tupla.getNombre() + " (" + att_tipo + ");";
                     this.accexternomysql.ejecutarComando(query);
-                    query = "select * from " + this.tabla.getNombre() + " where " + attMultimedia.getNombre() + "='" + tupla.getValor()+"'";
+                    query = "select * from " + this.tabla.getNombre() + " where " + attMultimedia.getNombre() + "='" + tupla.getValor() + "'";
                     resultado = this.accexternomysql.ejecutarConsulta(query);
                     if (resultado != null) {
                         if (!resultado.isEmpty()) {
@@ -359,7 +366,7 @@ public class bd implements Serializable {
                                     }
                                 }
                                 valores = valores.substring(0, valores.length() - 2);
-                                String q="INSERT INTO " + tupla.getNombre() +" VALUES (" + valores + ");";
+                                String q = "INSERT INTO " + tupla.getNombre() + " VALUES (" + valores + ");";
                                 this.accexternomysql.ejecutarComando(q);
                             }
                         }
@@ -373,7 +380,58 @@ public class bd implements Serializable {
     }
 
     public void fragmentarHorCBIRPostgres(ArrayList<esquemaHorMultimedia> e) {
-
+        try {
+            if (this.accexternopost.conectar()) {
+                String[] u = this.getTabla().getAtributoMultimedia().split(":");
+                Atributo attMultimedia = new Atributo();
+                attMultimedia.setNombre(u[0]);
+                attMultimedia.setTipo(u[1]);
+                attMultimedia.setTamanio(u[2]);
+                String att_tipo = "";
+                for (Atributo r : this.getTabla().getAtributos()) {
+                    if (this.transTipoDato(r.getTipo()) != 0) {
+                        att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                    } else {
+                        if (r.getTipo().compareTo("BIT") != 0) {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                        } else {
+                            att_tipo += r.getNombre() + " TINYINT, ";
+                        }
+                    }
+                }
+                att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+                for (esquemaHorMultimedia tupla : e) {
+                    ArrayList resultado = null;
+                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ");";
+                    this.accexternopost.ejecutarComando(query);
+                    query = "select * from " + this.tabla.getNombre() + " where " + attMultimedia.getNombre() + "='" + tupla.getValor() + "'";
+                    resultado = this.accexternopost.ejecutarConsulta(query);
+                    if (resultado != null) {
+                        if (!resultado.isEmpty()) {
+                            for (int i = 0; i < resultado.size(); i++) {
+                                String valores = "";
+                                for (int j = 0; j < ((ArrayList) resultado.get(i)).size(); j++) {
+                                    
+                                    if (this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 0 || this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 2) {
+                                        valores += "'" + ((ArrayList) resultado.get(i)).get(j) + "', ";
+                                        System.out.println("pasa");
+                                    } else {
+                                        valores += ((ArrayList) resultado.get(i)).get(j) + ", ";
+                                    }
+                                }
+                                valores = valores.substring(0, valores.length() - 2);
+                                
+                                String q = "INSERT INTO " + tupla.getNombre() + " VALUES (" + valores + ");";
+                                this.accexternopost.ejecutarComando(q);
+                            }
+                        }
+                    }
+                }
+                this.accexternopost.desconectar();
+            }
+        } catch (Exception y) {
+            y.printStackTrace();
+        }
     }
 
     public void fragmentarHorCBIRMongoDB(ArrayList<esquemaHorMultimedia> e) {
@@ -440,6 +498,7 @@ public class bd implements Serializable {
     }
 
     public int transTipoDato(String tipo) {
+        tipo=tipo.toUpperCase();
         switch (tipo) {
             case "CHAR":
             case "VARCHAR":
