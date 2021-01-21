@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
+
 import javax.faces.model.SelectItem;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
@@ -39,6 +41,7 @@ public class BDJB implements Serializable {
     private ArrayList<esquemaHorMultimedia> valoresColumna;
     private boolean infoEsquema1 = true;
     private StreamedContent Descarga;
+    
 
     /**
      * Creates a new instance of BD
@@ -300,5 +303,10 @@ public class BDJB implements Serializable {
      */
     public void setDescarga(StreamedContent Descarga) {
         this.Descarga = Descarga;
+    }
+
+    
+    public void onComplete() {
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Progress Completed"));
     }
 }

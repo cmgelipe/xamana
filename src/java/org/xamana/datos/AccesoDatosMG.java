@@ -5,11 +5,16 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import static com.mongodb.client.model.Aggregates.project;
+import com.mongodb.client.model.Projections;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -67,8 +72,11 @@ public class AccesoDatosMG implements Serializable {
             Iterator js = new JSONObject(doc.toJson()).keys();
             while (js.hasNext()) {
                 String key=js.next().toString();
-                System.out.println(key);
-                res.add(key);
+                Bson group=project(Projections.computed(key, Document.parse("{$type: '$"+key+"'}")));
+                List<Document> r=collection.aggregate(Arrays.asList(group)).into(new ArrayList<>());
+                String tipo=""+(new JSONObject(r.get(0).toJson()).get(key));
+                System.out.println(key+":"+tipo);
+                res.add(key+":"+tipo);
             }
         } catch (JSONException ex) {
             ex.printStackTrace();

@@ -1,6 +1,7 @@
 package org.xamana.db;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import static com.mongodb.client.model.Accumulators.sum;
 import java.io.Serializable;
@@ -39,6 +40,7 @@ public class bd implements Serializable {
     private String passbd;
     private String TipoBD = "";
     private Tabla tabla = new Tabla();
+    private Integer progress1;
 
     public boolean conexionexterna() {
         boolean res = false;
@@ -190,12 +192,18 @@ public class bd implements Serializable {
     public List<SelectItem> listaAtributosMongoDB() throws Exception {
         ArrayList<String> arr;
         this.tabla.setAtributos(new ArrayList<>());
+        this.tabla.setAtributos(new ArrayList<>());
         List<SelectItem> res = new ArrayList<>();
         //this.accexternomongo = new AccesoDatosMG(dirbd, nombd, this.tabla.getNombre(), usubd, passbd);
         if (this.accexternomongo.conectar()) {
             arr = this.accexternomongo.atributos(nombd, this.getTabla().getNombre());
             arr.forEach((h) -> {
                 res.add(new SelectItem(h, h));
+                String[] t = h.split(":");
+                Atributo att = new Atributo();
+                att.setNombre(t[0]);
+                att.setTipo(t[1]);
+                this.tabla.getAtributos().add(att);
             });
         }
         return res;
@@ -411,7 +419,7 @@ public class bd implements Serializable {
                             for (int i = 0; i < resultado.size(); i++) {
                                 String valores = "";
                                 for (int j = 0; j < ((ArrayList) resultado.get(i)).size(); j++) {
-                                    
+
                                     if (this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 0 || this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 2) {
                                         valores += "'" + ((ArrayList) resultado.get(i)).get(j) + "', ";
                                         System.out.println("pasa");
@@ -420,7 +428,7 @@ public class bd implements Serializable {
                                     }
                                 }
                                 valores = valores.substring(0, valores.length() - 2);
-                                
+
                                 String q = "INSERT INTO " + tupla.getNombre() + " VALUES (" + valores + ");";
                                 this.accexternopost.ejecutarComando(q);
                             }
@@ -435,7 +443,41 @@ public class bd implements Serializable {
     }
 
     public void fragmentarHorCBIRMongoDB(ArrayList<esquemaHorMultimedia> e) {
-
+        try {
+            if (this.accexternomongo.conectar()) {
+                this.progress1=10;
+                for (esquemaHorMultimedia tupla : e) {
+                    String[] u = this.getTabla().getAtributoMultimedia().split(":");
+                    Atributo attMultimedia = new Atributo();
+                    attMultimedia.setNombre(u[0]);
+                    attMultimedia.setTipo(u[1]);
+                    MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
+                    this.progress1=20;
+                    MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
+                    db.createCollection(tupla.getNombre());
+                    this.progress1=30;
+                    MongoCollection<Document> nuevoDoc = db.getCollection(tupla.getNombre());
+                    Document where = null;
+                    if (attMultimedia.getTipo().compareTo("double") == 0 || attMultimedia.getTipo().compareTo("decimal") == 0 || attMultimedia.getTipo().compareTo("int") == 0 || attMultimedia.getTipo().compareTo("long") == 0) {
+                        where = new Document(attMultimedia.getNombre(), Double.parseDouble(tupla.getValor()));
+                    } else {
+                        where = new Document(attMultimedia.getNombre(), tupla.getValor());
+                    }
+                    MongoCursor<Document> resultado = doc.find(where).iterator();
+                    this.progress1=50;
+                    while (resultado.hasNext()) {
+                        this.progress1++;
+                        nuevoDoc.insertOne(resultado.next());
+                        if(this.progress1>100)
+                            this.progress1=100;
+                    }
+                    if(this.progress1<100)
+                        this.progress1=100;
+                }
+            }
+        } catch (Exception y) {
+            y.printStackTrace();
+        }
     }
 
     public double nOperacionesLog(UploadedFiles files) {
@@ -498,7 +540,7 @@ public class bd implements Serializable {
     }
 
     public int transTipoDato(String tipo) {
-        tipo=tipo.toUpperCase();
+        tipo = tipo.toUpperCase();
         switch (tipo) {
             case "CHAR":
             case "VARCHAR":
@@ -521,5 +563,20 @@ public class bd implements Serializable {
             default:
                 return 3;
         }
+
+    }
+
+    /**
+     * @return the progress1
+     */
+    public Integer getProgress1() {
+        return progress1;
+    }
+
+    /**
+     * @param progress1 the progress1 to set
+     */
+    public void setProgress1(Integer progress1) {
+        this.progress1 = progress1;
     }
 }
