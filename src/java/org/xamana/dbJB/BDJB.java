@@ -279,7 +279,6 @@ public class BDJB implements Serializable {
     }
 
     public void fragEstatica() {
-        this.obj.guardarDatos();
         if (this.obj.isHorizontalCBIR()) {
             if (this.obj.getTipoBD().compareTo("a") == 0) {
                 this.obj.fragmentarHorCBIRMySQL(valoresColumna);

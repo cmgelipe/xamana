@@ -336,27 +336,29 @@ public class bd implements Serializable {
 
     public void fragmentarHorCBIRMySQL(ArrayList<esquemaHorMultimedia> e) {
         try {
-            accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
-            if (this.accexternomysql.conectar()) {
-                String[] u = this.getTabla().getAtributoMultimedia().split(":");
-                Atributo attMultimedia = new Atributo();
-                attMultimedia.setNombre(u[0]);
-                attMultimedia.setTipo(u[1]);
-                attMultimedia.setTamanio(u[2]);
-                String att_tipo = "";
-                for (Atributo r : this.getTabla().getAtributos()) {
-                    if (this.transTipoDato(r.getTipo()) != 0) {
-                        att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+            String idTabla=this.guardarDatos();
+            String[] u = this.getTabla().getAtributoMultimedia().split(":");
+            Atributo attMultimedia = new Atributo();
+            attMultimedia.setNombre(u[0]);
+            attMultimedia.setTipo(u[1]);
+            attMultimedia.setTamanio(u[2]);
+            String att_tipo = "";
+            for (Atributo r : this.getTabla().getAtributos()) {
+                if (this.transTipoDato(r.getTipo()) != 0) {
+                    att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                } else {
+                    if (r.getTipo().compareTo("BIT") != 0) {
+                        att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
                     } else {
-                        if (r.getTipo().compareTo("BIT") != 0) {
-                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
-                        } else {
-                            att_tipo += r.getNombre() + " TINYINT, ";
-                        }
+                        att_tipo += r.getNombre() + " TINYINT, ";
                     }
                 }
-                att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
-                for (esquemaHorMultimedia tupla : e) {
+            }
+            att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+            for (esquemaHorMultimedia tupla : e) {
+                accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
+                ArrayList<String> idTuplas=null;
+                if (this.accexternomysql.conectar()) {
                     ArrayList resultado = null;
                     String query = "create table " + tupla.getNombre() + " (" + att_tipo + ");";
                     this.accexternomysql.ejecutarComando(query);
@@ -364,6 +366,7 @@ public class bd implements Serializable {
                     resultado = this.accexternomysql.ejecutarConsulta(query);
                     if (resultado != null) {
                         if (!resultado.isEmpty()) {
+                            idTuplas=new ArrayList<>();
                             for (int i = 0; i < resultado.size(); i++) {
                                 String valores = "";
                                 for (int j = 0; j < ((ArrayList) resultado.get(i)).size(); j++) {
@@ -376,11 +379,29 @@ public class bd implements Serializable {
                                 valores = valores.substring(0, valores.length() - 2);
                                 String q = "INSERT INTO " + tupla.getNombre() + " VALUES (" + valores + ");";
                                 this.accexternomysql.ejecutarComando(q);
+                                ArrayList res = this.accexternomysql.ejecutarConsulta("select LAST_INSERT_ID()");
+                                idTuplas.add(""+((ArrayList)res.get(0)).get(0));
                             }
                         }
                     }
+                    this.accexternomysql.desconectar();
                 }
-                this.accexternomysql.desconectar();
+                AccesoDatos acc = new AccesoDatos();
+                if (acc.conectar()) {
+                    String qSitio="insert into sitio (direccion) values('"+this.getDirbd()+"')";
+                    acc.ejecutarComando(qSitio);
+                    ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                    String idSitio=""+((ArrayList)res.get(0)).get(0);
+                    String q="insert into fragmento (nombre, id_tabla, id_sitio) values('"+tupla.getNombre()+"',"+idTabla+","+idSitio+")";
+                    acc.ejecutarComando(q);
+                    res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                    String idFragmento=""+((ArrayList)res.get(0)).get(0);
+                    for(String id:idTuplas){
+                        String qTupla="insert into tupla (id_remoto, freq_acceso, tamanioBytes, id_fragmento) values('"+id+"',0,0,"+idFragmento+")";
+                        acc.ejecutarComando(qTupla);
+                    }
+                    acc.desconectar();
+                }
             }
         } catch (Exception y) {
             y.printStackTrace();
@@ -445,17 +466,17 @@ public class bd implements Serializable {
     public void fragmentarHorCBIRMongoDB(ArrayList<esquemaHorMultimedia> e) {
         try {
             if (this.accexternomongo.conectar()) {
-                this.progress1=10;
+                this.progress1 = 10;
                 for (esquemaHorMultimedia tupla : e) {
                     String[] u = this.getTabla().getAtributoMultimedia().split(":");
                     Atributo attMultimedia = new Atributo();
                     attMultimedia.setNombre(u[0]);
                     attMultimedia.setTipo(u[1]);
                     MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
-                    this.progress1=20;
+                    this.progress1 = 20;
                     MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
                     db.createCollection(tupla.getNombre());
-                    this.progress1=30;
+                    this.progress1 = 30;
                     MongoCollection<Document> nuevoDoc = db.getCollection(tupla.getNombre());
                     Document where = null;
                     if (attMultimedia.getTipo().compareTo("double") == 0 || attMultimedia.getTipo().compareTo("decimal") == 0 || attMultimedia.getTipo().compareTo("int") == 0 || attMultimedia.getTipo().compareTo("long") == 0) {
@@ -464,15 +485,17 @@ public class bd implements Serializable {
                         where = new Document(attMultimedia.getNombre(), tupla.getValor());
                     }
                     MongoCursor<Document> resultado = doc.find(where).iterator();
-                    this.progress1=50;
+                    this.progress1 = 50;
                     while (resultado.hasNext()) {
                         this.progress1++;
                         nuevoDoc.insertOne(resultado.next());
-                        if(this.progress1>100)
-                            this.progress1=100;
+                        if (this.progress1 > 100) {
+                            this.progress1 = 100;
+                        }
                     }
-                    if(this.progress1<100)
-                        this.progress1=100;
+                    if (this.progress1 < 100) {
+                        this.progress1 = 100;
+                    }
                 }
             }
         } catch (Exception y) {
