@@ -305,7 +305,7 @@ public class bd implements Serializable {
         return this.TipoBD.compareTo("a") == 0 || this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0;
     }
 
-    public String guardarDatos() {
+    public void guardarDatos() {
         String id_bd = "";
         String id_tabla = "";
         String query = "";
@@ -331,12 +331,14 @@ public class bd implements Serializable {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        return id_tabla;
+        this.tabla.setIdTabla(id_tabla);
     }
 
     public void fragmentarHorCBIRMySQL(ArrayList<esquemaHorMultimedia> e) {
         try {
-            String idTabla = this.guardarDatos();
+            this.guardarDatos();
+            String qSitio="";
+            String idSitio = "";
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
             String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
             Atributo attMultimedia = new Atributo();
@@ -347,6 +349,13 @@ public class bd implements Serializable {
             tamanio.setNombre(u2[0]);
             tamanio.setTipo(u2[1]);
             tamanio.setTamanio(u2[2]);
+            AccesoDatos acc = new AccesoDatos();
+            if (acc.conectar()) {
+                qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
+                acc.ejecutarComando(qSitio);
+                ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                idSitio = "" + ((ArrayList) res.get(0)).get(0);
+            }
             String att_tipo = "";
             for (Atributo r : this.getTabla().getAtributos()) {
                 if (this.transTipoDato(r.getTipo()) != 0) {
@@ -398,15 +407,11 @@ public class bd implements Serializable {
                     }
                     this.accexternomysql.desconectar();
                 }
-                AccesoDatos acc = new AccesoDatos();
+                acc = new AccesoDatos();
                 if (acc.conectar()) {
-                    String qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
-                    acc.ejecutarComando(qSitio);
-                    ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
-                    String idSitio = "" + ((ArrayList) res.get(0)).get(0);
-                    String q = "insert into fragmento (nombre, id_tabla, id_sitio) values('" + tupla.getNombre() + "'," + idTabla + "," + idSitio + ")";
+                    String q = "insert into fragmento (nombre, id_tabla, id_sitio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + ")";
                     acc.ejecutarComando(q);
-                    res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                    ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
                     for (int i = 0; i < idTuplas.size(); i++) {
                         String qTupla = "insert into tupla (id_remoto, freq_acceso, tamanioBytes, id_fragmento) values('" + idTuplas.get(i) + "',0," + tamanioBytes.get(i) + "," + idFragmento + ")";
@@ -422,7 +427,9 @@ public class bd implements Serializable {
 
     public void fragmentarHorCBIRPostgres(ArrayList<esquemaHorMultimedia> e) {
         try {
-            String idTabla = this.guardarDatos();
+            this.guardarDatos();
+            String qSitio = "";
+            String idSitio = "";
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
             String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
             String[] u3 = this.getTabla().getAtributoLlave().split(":");
@@ -438,6 +445,13 @@ public class bd implements Serializable {
             llave.setNombre(u3[0]);
             llave.setTipo(u3[1]);
             llave.setTamanio(u3[2]);
+            AccesoDatos acc = new AccesoDatos();
+            if (acc.conectar()) {
+                qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
+                acc.ejecutarComando(qSitio);
+                ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                idSitio = "" + ((ArrayList) res.get(0)).get(0);
+            }
             String att_tipo = "";
             for (Atributo r : this.getTabla().getAtributos()) {
                 if (this.transTipoDato(r.getTipo()) != 0) {
@@ -467,13 +481,13 @@ public class bd implements Serializable {
                             for (int i = 0; i < resultado.size(); i++) {
                                 String valores = "";
                                 String tam = "";
-                                String id="";
+                                String id = "";
                                 for (int j = 0; j < ((ArrayList) resultado.get(i)).size(); j++) {
                                     if (this.getTabla().getAtributos().get(j).getNombre().compareTo(tamanio.getNombre()) == 0) {
                                         tam = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
-                                    if(this.getTabla().getAtributos().get(j).getNombre().compareTo(llave.getNombre()) == 0){
-                                        id="" + ((ArrayList) resultado.get(i)).get(j);
+                                    if (this.getTabla().getAtributos().get(j).getNombre().compareTo(llave.getNombre()) == 0) {
+                                        id = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
                                     if (this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 0 || this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 2) {
                                         valores += "'" + ((ArrayList) resultado.get(i)).get(j) + "', ";
@@ -492,15 +506,10 @@ public class bd implements Serializable {
                     }
                     this.accexternopost.desconectar();
                 }
-                AccesoDatos acc = new AccesoDatos();
                 if (acc.conectar()) {
-                    String qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
-                    acc.ejecutarComando(qSitio);
-                    ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
-                    String idSitio = "" + ((ArrayList) res.get(0)).get(0);
-                    String q = "insert into fragmento (nombre, id_tabla, id_sitio) values('" + tupla.getNombre() + "'," + idTabla + "," + idSitio + ")";
+                    String q = "insert into fragmento (nombre, id_tabla, id_sitio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + ")";
                     acc.ejecutarComando(q);
-                    res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                    ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
                     for (int i = 0; i < idTuplas.size(); i++) {
                         String qTupla = "insert into tupla (id_remoto, freq_acceso, tamanioBytes, id_fragmento) values('" + idTuplas.get(i) + "',0," + tamanioBytes.get(i) + "," + idFragmento + ")";
@@ -516,13 +525,34 @@ public class bd implements Serializable {
 
     public void fragmentarHorCBIRMongoDB(ArrayList<esquemaHorMultimedia> e) {
         try {
+            String qSitio = "";
+            String idSitio = "";
+            this.guardarDatos();
+            String[] u = this.getTabla().getAtributoMultimedia().split(":");
+            String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
+            String[] u3 = this.getTabla().getAtributoLlave().split(":");
+            Atributo attMultimedia = new Atributo();
+            Atributo tamanio = new Atributo();
+            Atributo llave = new Atributo();
+            attMultimedia.setNombre(u[0]);
+            attMultimedia.setTipo(u[1]);
+            tamanio.setNombre(u2[0]);
+            tamanio.setTipo(u2[1]);
+            llave.setNombre(u3[0]);
+            llave.setTipo(u3[1]);
+            AccesoDatos acc = new AccesoDatos();
+            if (acc.conectar()) {
+                qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
+                acc.ejecutarComando(qSitio);
+                ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                idSitio = "" + ((ArrayList) res.get(0)).get(0);
+                acc.desconectar();
+            }
             if (this.accexternomongo.conectar()) {
                 this.progress1 = 10;
                 for (esquemaHorMultimedia tupla : e) {
-                    String[] u = this.getTabla().getAtributoMultimedia().split(":");
-                    Atributo attMultimedia = new Atributo();
-                    attMultimedia.setNombre(u[0]);
-                    attMultimedia.setTipo(u[1]);
+                    ArrayList<String> idTuplas = null;
+                    ArrayList<String> tamanioBytes = null;
                     MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
                     this.progress1 = 20;
                     MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
@@ -536,17 +566,35 @@ public class bd implements Serializable {
                         where = new Document(attMultimedia.getNombre(), tupla.getValor());
                     }
                     MongoCursor<Document> resultado = doc.find(where).iterator();
+
                     this.progress1 = 50;
+                    idTuplas = new ArrayList<>();
+                    tamanioBytes = new ArrayList<>();
                     while (resultado.hasNext()) {
+                        Document Nuevatupla = resultado.next();
+                        idTuplas.add(Nuevatupla.get(this.tabla.getAtributoLlave()).toString());
+                        tamanioBytes.add(Nuevatupla.get(this.tabla.getAtributoMultimediaTamanio()).toString());
                         this.progress1++;
-                        nuevoDoc.insertOne(resultado.next());
+                        nuevoDoc.insertOne(Nuevatupla);
                         if (this.progress1 > 100) {
                             this.progress1 = 100;
                         }
                     }
+                    if (acc.conectar()) {
+                        String q = "insert into fragmento (nombre, id_tabla, id_sitio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + ")";
+                        acc.ejecutarComando(q);
+                        ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
+                        String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
+                        for (int i = 0; i < idTuplas.size(); i++) {
+                            String qTupla = "insert into tupla (id_remoto, freq_acceso, tamanioBytes, id_fragmento) values('" + idTuplas.get(i) + "',0," + tamanioBytes.get(i) + "," + idFragmento + ")";
+                            acc.ejecutarComando(qTupla);
+                        }
+                        acc.desconectar();
+                    }
                     if (this.progress1 < 100) {
                         this.progress1 = 100;
                     }
+
                 }
             }
         } catch (Exception y) {

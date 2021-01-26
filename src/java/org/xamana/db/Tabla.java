@@ -18,6 +18,7 @@ public class Tabla {
     private String atributoMultimediaTamanio;
     private String atributoLlave;
     private ArrayList<Atributo> Atributos;
+    private String idTabla; //mi tabla que se llama tabla, no la remota
     
 
     /**
@@ -144,5 +145,19 @@ public class Tabla {
      */
     public void setAtributoLlave(String atributoLlave) {
         this.atributoLlave = atributoLlave;
+    }
+
+    /**
+     * @return the idTabla
+     */
+    public String getIdTabla() {
+        return idTabla;
+    }
+
+    /**
+     * @param idTabla the idTabla to set
+     */
+    public void setIdTabla(String idTabla) {
+        this.idTabla = idTabla;
     }
 }
