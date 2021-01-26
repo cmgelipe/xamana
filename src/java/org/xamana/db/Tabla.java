@@ -15,6 +15,8 @@ public class Tabla {
     private int umbralOP;
     private int umbralCO;
     private String atributoMultimedia;
+    private String atributoMultimediaTamanio;
+    private String atributoLlave;
     private ArrayList<Atributo> Atributos;
     
 
@@ -114,5 +116,33 @@ public class Tabla {
      */
     public void setAtributos(ArrayList<Atributo> Atributos) {
         this.Atributos = Atributos;
+    }
+
+    /**
+     * @return the atributoMultimediaTamanio
+     */
+    public String getAtributoMultimediaTamanio() {
+        return atributoMultimediaTamanio;
+    }
+
+    /**
+     * @param atributoMultimediaTamanio the atributoMultimediaTamanio to set
+     */
+    public void setAtributoMultimediaTamanio(String atributoMultimediaTamanio) {
+        this.atributoMultimediaTamanio = atributoMultimediaTamanio;
+    }
+
+    /**
+     * @return the atributoLlave
+     */
+    public String getAtributoLlave() {
+        return atributoLlave;
+    }
+
+    /**
+     * @param atributoLlave the atributoLlave to set
+     */
+    public void setAtributoLlave(String atributoLlave) {
+        this.atributoLlave = atributoLlave;
     }
 }

@@ -41,6 +41,7 @@ public class BDJB implements Serializable {
     private ArrayList<esquemaHorMultimedia> valoresColumna;
     private boolean infoEsquema1 = true;
     private StreamedContent Descarga;
+    private boolean bpos=false;
     
 
     /**
@@ -80,8 +81,10 @@ public class BDJB implements Serializable {
                     atributos = this.obj.listaAtributosMySQL();
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                     atributos = this.obj.listaAtributosPostgreSQL();
+                    this.bpos=true;
                 } else if (this.obj.getTipoBD().compareTo("d") == 0) {
                     atributos = this.obj.listaAtributosMongoDB();
+                    this.bpos=true;
                 }
                 this.dcolumna = true;
                 this.blog = true;
@@ -307,5 +310,19 @@ public class BDJB implements Serializable {
     
     public void onComplete() {
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Progress Completed"));
+    }
+
+    /**
+     * @return the bpos
+     */
+    public boolean isBpos() {
+        return bpos;
+    }
+
+    /**
+     * @param bpos the bpos to set
+     */
+    public void setBpos(boolean bpos) {
+        this.bpos = bpos;
     }
 }
