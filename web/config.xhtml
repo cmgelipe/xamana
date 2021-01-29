@@ -57,16 +57,16 @@ and open the template in the editor.
                 <p:commandButton ajax="false" value="Generar esquema" action="#{bd.btnesquema()}" />
             </div>
             <p:dialog id="dl4" header="Detalles del atributo multimedia" modal="true" visible="#{bd.dcolumna}">
-                <p:outputLabel value="Atributo descriptor (mesa, silla, edificio, etc.)" />
+                <p:outputLabel value="Atributo descriptor (mesa, silla, edificio, etc.)" /><br />
                 <p:selectOneMenu id="atb" value="#{bd.obj.tabla.atributoMultimedia}">
                     <f:selectItems value="#{bd.atributos}" />
                 </p:selectOneMenu><br />
-                <p:outputLabel value="Atributo descriptor de tamaño en bytes" />
+                <p:outputLabel value="Atributo descriptor de tamaño en bytes" /><br />
                 <p:selectOneMenu id="atb2" value="#{bd.obj.tabla.atributoMultimediaTamanio}">
                     <f:selectItems value="#{bd.atributos}" />
                 </p:selectOneMenu><br />
-                <p:outputLabel id="out3" value="Llave primaria" rendered="#{bd.bpos}" />
-                <p:selectOneMenu id="atb3" rendered="#{bd.bpos}" value="#{bd.obj.tabla.atributoLlave}">
+                <p:outputLabel id="out3" value="Llave primaria" /><br />
+                <p:selectOneMenu id="atb3" value="#{bd.obj.tabla.atributoLlave}">
                     <f:selectItems value="#{bd.atributos}" />
                 </p:selectOneMenu><br />
                 <p:commandButton value="Establecer" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl4"/>

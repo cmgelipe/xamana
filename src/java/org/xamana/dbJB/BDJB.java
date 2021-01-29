@@ -41,7 +41,8 @@ public class BDJB implements Serializable {
     private ArrayList<esquemaHorMultimedia> valoresColumna;
     private boolean infoEsquema1 = true;
     private StreamedContent Descarga;
-    private boolean bpos=false;
+    String MensajeWARN="";
+    
     
 
     /**
@@ -81,10 +82,8 @@ public class BDJB implements Serializable {
                     atributos = this.obj.listaAtributosMySQL();
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                     atributos = this.obj.listaAtributosPostgreSQL();
-                    this.bpos=true;
                 } else if (this.obj.getTipoBD().compareTo("d") == 0) {
                     atributos = this.obj.listaAtributosMongoDB();
-                    this.bpos=true;
                 }
                 this.dcolumna = true;
                 this.blog = true;
@@ -283,6 +282,15 @@ public class BDJB implements Serializable {
 
     public void fragEstatica() {
         if (this.obj.isHorizontalCBIR()) {
+            boolean ban=false;
+            for(esquemaHorMultimedia t:valoresColumna){
+                if(t.getNOperacionesAprox().compareTo("0")==0){
+                    ban=true;
+                }
+            }
+            if(ban){
+                this.MensajeWARN="No se detectaron consultas en algún fragmento, se utilizará 1 como valor para realizar la primera fragmentación pero se recomienda no poner en marcha la fragmentación dinámica hasta que se detecten operaciones";
+            }
             if (this.obj.getTipoBD().compareTo("a") == 0) {
                 this.obj.fragmentarHorCBIRMySQL(valoresColumna);
             } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
@@ -290,6 +298,7 @@ public class BDJB implements Serializable {
             } else {
                 this.obj.fragmentarHorCBIRMongoDB(valoresColumna);
             }
+            
         }
     }
 
@@ -309,20 +318,8 @@ public class BDJB implements Serializable {
 
     
     public void onComplete() {
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Progress Completed"));
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Fragmentación realizada",this.MensajeWARN));
     }
 
-    /**
-     * @return the bpos
-     */
-    public boolean isBpos() {
-        return bpos;
-    }
-
-    /**
-     * @param bpos the bpos to set
-     */
-    public void setBpos(boolean bpos) {
-        this.bpos = bpos;
-    }
+   
 }
