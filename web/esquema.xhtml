@@ -84,6 +84,10 @@
                 <h:outputText value="para aplicar la fragmentación dinámica. La descarga la acompaña un archivo con las instrucciones a seguir." /><br />
                 <p:commandButton value="OK" action="#{bd.setInfoEsquema1(false)}" update="f4:d5" />
             </p:dialog>
+            <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
+                <h:outputText value="La fragmentación dinámica de este tipo requiere implementarse en Java con los archivos de descarga y utilizar este token" /><br />
+                <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
+            </p:dialog>
         </h:form>
     </h:body>
 </html>

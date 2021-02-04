@@ -41,6 +41,7 @@ public class bd implements Serializable {
     private String TipoBD = "";
     private Tabla tabla = new Tabla();
     private Integer progress1;
+    
 
     public boolean conexionexterna() {
         boolean res = false;
@@ -331,6 +332,7 @@ public class bd implements Serializable {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        
         this.tabla.setIdTabla(id_tabla);
     }
 
@@ -730,4 +732,6 @@ public class bd implements Serializable {
     public void setProgress1(Integer progress1) {
         this.progress1 = progress1;
     }
+
+   
 }

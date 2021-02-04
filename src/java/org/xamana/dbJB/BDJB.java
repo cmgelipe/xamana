@@ -42,6 +42,7 @@ public class BDJB implements Serializable {
     private boolean infoEsquema1 = true;
     private StreamedContent Descarga;
     String MensajeWARN="";
+    private boolean bToken;
     
     
 
@@ -289,7 +290,8 @@ public class BDJB implements Serializable {
                 }
             }
             if(ban){
-                this.MensajeWARN="No se detectaron consultas en algún fragmento, se utilizará 1 como valor para realizar la primera fragmentación pero se recomienda no poner en marcha la fragmentación dinámica hasta que se detecten operaciones";
+                this.MensajeWARN="No se detectaron consultas en algún fragmento, se utilizará 1 como valor para realizar la primera "
+                        + "fragmentación pero se recomienda no poner en marcha la fragmentación dinámica hasta que se detecten operaciones";
             }
             if (this.obj.getTipoBD().compareTo("a") == 0) {
                 this.obj.fragmentarHorCBIRMySQL(valoresColumna);
@@ -299,6 +301,7 @@ public class BDJB implements Serializable {
                 this.obj.fragmentarHorCBIRMongoDB(valoresColumna);
             }
             
+            this.setBToken(true);
         }
     }
 
@@ -319,6 +322,20 @@ public class BDJB implements Serializable {
     
     public void onComplete() {
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Fragmentación realizada",this.MensajeWARN));
+    }
+
+    /**
+     * @return the bToken
+     */
+    public boolean isBToken() {
+        return bToken;
+    }
+
+    /**
+     * @param bToken the bToken to set
+     */
+    public void setBToken(boolean bToken) {
+        this.bToken = bToken;
     }
 
    
