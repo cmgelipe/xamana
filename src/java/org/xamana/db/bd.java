@@ -343,19 +343,16 @@ public class bd implements Serializable {
             String idSitio = "";
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
             String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
-            String[] u3 = this.getTabla().getAtributoLlave().split(":");
+            accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
+            this.getTabla().setAtributoLlave(this.llaveMySQL(accexternomysql, nombd, this.getTabla().getNombre()));
             Atributo attMultimedia = new Atributo();
             Atributo tamanio = new Atributo();
-            Atributo llave = new Atributo();
             attMultimedia.setNombre(u[0]);
             attMultimedia.setTipo(u[1]);
             attMultimedia.setTamanio(u[2]);
             tamanio.setNombre(u2[0]);
             tamanio.setTipo(u2[1]);
             tamanio.setTamanio(u2[2]);
-            llave.setNombre(u3[0]);
-            llave.setTipo(u3[1]);
-            llave.setTamanio(u3[2]);
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
                 qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
@@ -400,7 +397,7 @@ public class bd implements Serializable {
                                     if (this.getTabla().getAtributos().get(j).getNombre().compareTo(tamanio.getNombre()) == 0) {
                                         tam = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
-                                    if (this.getTabla().getAtributos().get(j).getNombre().compareTo(llave.getNombre()) == 0) {
+                                    if (this.getTabla().getAtributos().get(j).getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
                                         id = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
                                     if (this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 0 || this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 2) {
@@ -453,19 +450,15 @@ public class bd implements Serializable {
             String idSitio = "";
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
             String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
-            String[] u3 = this.getTabla().getAtributoLlave().split(":");
+            this.getTabla().setAtributoLlave(this.llavePostgres(accexternopost, nombd, this.getTabla().getNombre()));
             Atributo attMultimedia = new Atributo();
             Atributo tamanio = new Atributo();
-            Atributo llave = new Atributo();
             attMultimedia.setNombre(u[0]);
             attMultimedia.setTipo(u[1]);
             attMultimedia.setTamanio(u[2]);
             tamanio.setNombre(u2[0]);
             tamanio.setTipo(u2[1]);
             tamanio.setTamanio(u2[2]);
-            llave.setNombre(u3[0]);
-            llave.setTipo(u3[1]);
-            llave.setTamanio(u3[2]);
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
                 qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
@@ -509,7 +502,7 @@ public class bd implements Serializable {
                                     if (this.getTabla().getAtributos().get(j).getNombre().compareTo(tamanio.getNombre()) == 0) {
                                         tam = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
-                                    if (this.getTabla().getAtributos().get(j).getNombre().compareTo(llave.getNombre()) == 0) {
+                                    if (this.getTabla().getAtributos().get(j).getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
                                         id = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
                                     if (this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 0 || this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 2) {
@@ -562,16 +555,12 @@ public class bd implements Serializable {
             this.guardarDatos();
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
             String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
-            String[] u3 = this.getTabla().getAtributoLlave().split(":");
             Atributo attMultimedia = new Atributo();
             Atributo tamanio = new Atributo();
-            Atributo llave = new Atributo();
             attMultimedia.setNombre(u[0]);
             attMultimedia.setTipo(u[1]);
             tamanio.setNombre(u2[0]);
             tamanio.setTipo(u2[1]);
-            llave.setNombre(u3[0]);
-            llave.setTipo(u3[1]);
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
                 qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
@@ -601,7 +590,7 @@ public class bd implements Serializable {
                     tamanioBytes = new ArrayList<>();
                     while (resultado.hasNext()) {
                         Document Nuevatupla = resultado.next();
-                        idTuplas.add(Nuevatupla.get(this.tabla.getAtributoLlave()).toString());
+                        idTuplas.add(Nuevatupla.get("_id").toString());
                         tamanioBytes.add(Nuevatupla.get(this.tabla.getAtributoMultimediaTamanio()).toString());
                         nuevoDoc.insertOne(Nuevatupla);
                     }
@@ -732,6 +721,51 @@ public class bd implements Serializable {
     public void setProgress1(Integer progress1) {
         this.progress1 = progress1;
     }
-
-   
+    protected Atributo llaveMySQL(AccesoDatos acc, String nombreBase, String nombreTabla) {
+        
+        Atributo att = null;
+        ArrayList res = null;
+        try {
+            if (acc.conectar()) {
+                res = acc.ejecutarConsulta("SELECT COLUMN_NAME, DATA_TYPE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + nombreBase + "' AND TABLE_NAME = '" + nombreTabla + "' and COLUMN_KEY IN('PRI', 'UNI')");
+                acc.desconectar();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (res != null) {
+            att = new Atributo();
+            att.setNombre("" + ((ArrayList) res.get(0)).get(0));
+            att.setTipo("" + ((ArrayList) res.get(0)).get(1));
+        }
+        return att;
+    }
+   protected Atributo llavePostgres(AccesoDatosPG acc, String nombreBase, String nombreTabla) {
+        
+        Atributo att = null;
+        ArrayList res = null;
+        try {
+            if (acc.conectar()) {
+                String q="select nombre, data_type "
+                        + "from (SELECT column_name as nombre "
+                        + "FROM information_schema.key_column_usage "
+                        + "WHERE TABLE_NAME='"+nombreTabla+"' "
+                        + "AND TABLE_CATALOG='"+nombreBase+"') as a "
+                        + "join INFORMATION_SCHEMA.COLUMNS "
+                        + "on INFORMATION_SCHEMA.COLUMNS.COLUMN_NAME=nombre "
+                        + "where INFORMATION_SCHEMA.COLUMNS.TABLE_NAME='"+nombreTabla+"' "
+                        + "and INFORMATION_SCHEMA.COLUMNS.TABLE_CATALOG='"+nombreBase+"';";
+                res = acc.ejecutarConsulta(q);
+                acc.desconectar();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (res != null) {
+            att = new Atributo();
+            att.setNombre("" + ((ArrayList) res.get(0)).get(0));
+            att.setTipo("" + ((ArrayList) res.get(0)).get(1));
+        }
+        return att;
+    }
 }

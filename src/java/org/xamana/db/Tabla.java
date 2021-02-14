@@ -16,7 +16,7 @@ public class Tabla {
     private int umbralCO;
     private String atributoMultimedia;
     private String atributoMultimediaTamanio;
-    private String atributoLlave;
+    private Atributo atributoLlave;
     private ArrayList<Atributo> Atributos;
     private String idTabla; //mi tabla que se llama tabla, no la remota
     
@@ -136,14 +136,14 @@ public class Tabla {
     /**
      * @return the atributoLlave
      */
-    public String getAtributoLlave() {
+    public Atributo getAtributoLlave() {
         return atributoLlave;
     }
 
     /**
      * @param atributoLlave the atributoLlave to set
      */
-    public void setAtributoLlave(String atributoLlave) {
+    public void setAtributoLlave(Atributo atributoLlave) {
         this.atributoLlave = atributoLlave;
     }
 
