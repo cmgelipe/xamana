@@ -315,11 +315,11 @@ public class bd implements Serializable {
             if (acc.conectar()) {
 
                 if (this.usubd.isEmpty()) {
-                    query = "insert into BD (direccion, gestor, usr, psw) values('" + this.dirbd + "','" + this.TipoBD + "',null,null)";
+                    query = "insert into BD (nombre, direccion, gestor, usr, psw) values('"+this.getNombd()+"','" + this.dirbd + "','" + this.TipoBD + "',null,null)";
                 } else if (!this.usubd.isEmpty() && this.passbd.isEmpty()) {
-                    query = "insert into BD (direccion, gestor, usr, psw) values('" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
+                    query = "insert into BD (nombre, direccion, gestor, usr, psw) values('"+this.getNombd()+"','" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
                 } else {
-                    query = "insert into BD (direccion, gestor, usr, psw) values('" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
+                    query = "insert into BD (nombre, direccion, gestor, usr, psw) values('"+this.getNombd()+"','" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
                 }
                 acc.ejecutarComando(query);
                 ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
@@ -381,7 +381,7 @@ public class bd implements Serializable {
                 ArrayList<String> tamanioBytes = null;
                 if (this.accexternomysql.conectar()) {
                     ArrayList resultado = null;
-                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ");";
+                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ", PRIMARY KEY ("+this.getTabla().getAtributoLlave().getNombre()+"));";
                     this.accexternomysql.ejecutarComando(query);
                     query = "select * from " + this.tabla.getNombre() + " where " + attMultimedia.getNombre() + "='" + tupla.getValor() + "'";
                     resultado = this.accexternomysql.ejecutarConsulta(query);
@@ -469,12 +469,25 @@ public class bd implements Serializable {
             String att_tipo = "";
             for (Atributo r : this.getTabla().getAtributos()) {
                 if (this.transTipoDato(r.getTipo()) != 0) {
-                    att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                    if(r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0){
+                        att_tipo += r.getNombre() + " " + r.getTipo() + " PRIMARY KEY, ";
+                    }else{
+                        att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                    }
+                    
                 } else {
                     if (r.getTipo().compareTo("BIT") != 0) {
-                        att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                        if(r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0){
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + ") PRIMARY KEY, ";
+                        }else{
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                        } 
                     } else {
-                        att_tipo += r.getNombre() + " TINYINT, ";
+                        if(r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0){
+                            att_tipo += r.getNombre() + " TINYINT PRIMARY KEY, ";
+                        }else{
+                            att_tipo += r.getNombre() + " TINYINT, ";
+                        }
                     }
                 }
             }

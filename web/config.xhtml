@@ -37,7 +37,7 @@ and open the template in the editor.
                     </p:selectOneMenu>
                     <p:outputLabel value="CBIR" />
                     <p:selectBooleanButton id="sino" value="#{bd.obj.tabla.CBIR}" onLabel="Si" offLabel="No" >
-                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4 f3:atb f3:atb2 f3:atb3 f3:out3" />
+                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4 f3:atb f3:atb2" />
                     </p:selectBooleanButton>
                     <p:outputLabel id="o1" value="Archivos log" />
                     <p:fileUpload id="file" value="#{bd.files}" mode="simple" skinSimple="true" multiple="true" />
