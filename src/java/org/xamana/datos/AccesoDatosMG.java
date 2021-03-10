@@ -5,6 +5,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 import static com.mongodb.client.model.Aggregates.project;
 import com.mongodb.client.model.Projections;
 import java.util.ArrayList;
@@ -81,6 +82,13 @@ public class AccesoDatosMG implements Serializable {
         } catch (JSONException ex) {
             ex.printStackTrace();
         }
+        return res;
+    }
+    
+    public synchronized ArrayList<String> tablas(String nombreBase) {
+        ArrayList<String> res=new ArrayList<>();
+        MongoDatabase db = this.getMongoClient().getDatabase(nombreBase);
+        db.listCollectionNames().forEach(x->{res.add(x);});
         return res;
     }
 

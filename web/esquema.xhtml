@@ -75,7 +75,7 @@
             <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
                 <p:ajax event="complete" listener="#{bd.onComplete}" update="f4:growl" oncomplete="PF('startButton2').enable()"/>
             </p:progressBar>
-            <p:commandButton widgetVar="startButton2" value="Hagámoslo" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f4:growl" />
+            <p:commandButton widgetVar="startButton2" value="Hagámoslo" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f4:growl f4:d6" />
             <p:commandButton value="Descargar archivos" ajax="false" onclick="PrimeFaces.monitorDownload(start2, stop2);" icon="pi pi-arrow-down" >
                 <p:fileDownload value="#{bd.descarga}" />
             </p:commandButton>

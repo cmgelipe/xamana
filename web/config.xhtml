@@ -67,6 +67,11 @@ and open the template in the editor.
                 </p:selectOneMenu><br />
                 <p:commandButton value="Establecer" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl4"/>
             </p:dialog>
+            <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>
+
+            <p:dialog width="20%" widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
+                <h:graphicImage style="margin-left:10%" name="images/load.gif" width="20%"/>
+            </p:dialog>
         </h:form>
     </h:body>
 </html>

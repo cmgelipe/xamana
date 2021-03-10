@@ -89,6 +89,7 @@ public class BDJB implements Serializable {
                 this.dcolumna = true;
                 this.blog = true;
             } else {
+                this.dcolumna = false;
                 this.blog = false;
             }
         } catch (Exception ex) {

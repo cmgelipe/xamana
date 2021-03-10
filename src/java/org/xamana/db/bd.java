@@ -41,6 +41,7 @@ public class bd implements Serializable {
     private String TipoBD = "";
     private Tabla tabla = new Tabla();
     private Integer progress1;
+    private List<SelectItem> tablas;
     
 
     public boolean conexionexterna() {
@@ -499,7 +500,7 @@ public class bd implements Serializable {
                 ArrayList<String> tamanioBytes = null;
                 if (this.accexternopost.conectar()) {
                     ArrayList resultado = null;
-                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ");";
+                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ", PRIMARY KEY ("+this.getTabla().getAtributoLlave().getNombre()+"));";
                     this.accexternopost.ejecutarComando(query);
                     query = "select * from " + this.tabla.getNombre() + " where " + attMultimedia.getNombre() + "='" + tupla.getValor() + "'";
                     resultado = this.accexternopost.ejecutarConsulta(query);
@@ -780,5 +781,81 @@ public class bd implements Serializable {
             att.setTipo("" + ((ArrayList) res.get(0)).get(1));
         }
         return att;
+    }
+   public void onTablas(){
+       try{
+           if(conexionexterna()){
+               if (TipoBD.compareTo("a") == 0) {
+                   ArrayList<String> t=null;
+                   if(this.accexternomysql.conectar()){
+                       t=this.accexternomysql.tablas(this.nombd);
+                   }
+                   if(!this.isNullorEmpty(t)){
+                       this.tablas=new ArrayList<>();
+                       for(String item:t){
+                           SelectItem si=new SelectItem(item,item);
+                           this.tablas.add(si);
+                       }
+                   }
+               }else if(TipoBD.compareTo("b") == 0 || TipoBD.compareTo("c") == 0){
+                   ArrayList<String> t=null;
+                   if(this.accexternopost.conectar()){
+                       t=this.accexternopost.tablas(this.nombd);
+                   }
+                   if(!this.isNullorEmpty(t)){
+                       this.tablas=new ArrayList<>();
+                       for(String item:t){
+                           SelectItem si=new SelectItem(item,item);
+                           this.tablas.add(si);
+                       }
+                   }
+               }else{
+                   ArrayList<String> t=null;
+                   if(this.accexternomongo.conectar()){
+                       t=this.accexternomongo.tablas(this.nombd);
+                   }
+                   if(!this.isNullorEmpty(t)){
+                       this.tablas=new ArrayList<>();
+                       for(String item:t){
+                           SelectItem si=new SelectItem(item,item);
+                           this.tablas.add(si);
+                       }
+                   }
+               }
+           }else{
+                System.out.println("Sin conexión");
+                this.tablas=new ArrayList<>();
+           }
+       }catch(Exception e){
+           System.out.println("Sin conexión");
+           this.tablas=new ArrayList<>();
+       }
+   }
+
+    /**
+     * @return the tablas
+     */
+    public List<SelectItem> getTablas() {
+        return tablas;
+    }
+
+    /**
+     * @param tablas the tablas to set
+     */
+    public void setTablas(List<SelectItem> tablas) {
+        this.tablas = tablas;
+    }
+    public boolean isNullorEmpty(ArrayList arr) {
+        boolean res = false;
+        try {
+            if (arr == null || arr.isEmpty()) {
+                res = true;
+            } else {
+                res = false;
+            }
+        } catch (Exception e) {
+            res = true;
+        }
+        return res;
     }
 }

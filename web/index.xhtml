@@ -12,6 +12,12 @@
         <h:outputStylesheet name="jquery-ui.min.css"/>
         <h:outputStylesheet name="jquery-ui.structure.css"/>
         <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <style type="text/css">
+            .loading-icon {
+                font-size: 3rem;
+
+            }
+        </style>
     </h:head>
     <h:body style="background-color: #3f3f3f">
         <h:form id="f1">
@@ -34,17 +40,27 @@
             <h:inputHidden value="#{bd.obj.tipoBD}" />
             <p:dialog header="Configurar conexión" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
                 <p:panelGrid columns="2">
-                    
+
                     <p:outputLabel value="Dirección de la base de datos" />
-                    <p:inputText value="#{bd.obj.dirbd}" placeholder="#.#.#.#:#" required="true"/>
+                    <p:inputText value="#{bd.obj.dirbd}" placeholder="#.#.#.#:#" required="true">
+                        <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
+                    </p:inputText>
                     <p:outputLabel value="Nombre de la base de datos" />
-                    <p:inputText value="#{bd.obj.nombd}" required="true"/>
+                    <p:inputText value="#{bd.obj.nombd}" required="true">
+                        <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
+                    </p:inputText>
                     <p:outputLabel value="Usuario administrador de la base de datos" />
-                    <p:inputText value="#{bd.obj.usubd}" title="Para MongoDB, si la autenticación esta deshabilitada, este campo y el siguiente no son obligatorios"/>
+                    <p:inputText value="#{bd.obj.usubd}" title="Para MongoDB, si la autenticación esta deshabilitada, este campo y el siguiente no son obligatorios">
+                        <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
+                    </p:inputText>
                     <p:outputLabel value="Contraseña"/>
-                    <p:password value="#{bd.obj.passbd}" title="Si la base de datos no tiene contraseña, este campo no es obligatorio" />
+                    <p:password value="#{bd.obj.passbd}" title="Si la base de datos no tiene contraseña, este campo no es obligatorio" >
+                        <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
+                    </p:password>
                     <p:outputLabel value="Nombre de la tabla a fragmentar" />
-                    <p:inputText value="#{bd.obj.tabla.nombre}" title="Para MongoDB la colección a fragmentar" required="true"/>
+                    <p:selectOneMenu id="tb" value="#{bd.obj.tabla.nombre}" rendered="true">
+                        <f:selectItems value="#{bd.obj.tablas}"/>
+                    </p:selectOneMenu>         
                 </p:panelGrid>
                 <p:commandButton value="Probar conexión" action="#{bd.probarConexion()}" update="f2:dl2 f2:d1 f2:dl3 f2:mensajes"/>
                 <p:commandButton value="Cancelar"  action="#{bd.cancelarConf()}" update="f2:d1"/>
@@ -57,6 +73,11 @@
             <p:dialog id="dl3" header="Información" visible="#{bd.bdatosincorrectos}" modal="true">
                 <h:outputText value="La conexión no fue exitosa. Revise sus datos."/><br /><br />
                 <p:commandButton value="Revisar" action="#{bd.revisarDatos()}" update="f2:dl3" />
+            </p:dialog>
+            <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>
+
+            <p:dialog width="20%" widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
+                <h:graphicImage style="margin-left: 40%" name="images/load.gif" width="20%"/>
             </p:dialog>
         </h:form>
     </h:body>

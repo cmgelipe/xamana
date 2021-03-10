@@ -296,4 +296,19 @@ public final class AccesoDatosPG implements Serializable {
         }
         return ret;
     }
+    public synchronized ArrayList<String> tablas(String nombreBase) {
+        String q="select table_name from information_schema.tables where table_type='BASE TABLE' and table_schema='public' and table_catalog='"+nombreBase+"'";
+        ArrayList<String> ret = new ArrayList<String>();
+        try {
+            ArrayList arr=this.ejecutarConsulta(q);
+            if(arr!=null){
+                for(Object y:arr){
+                    ret.add(""+((ArrayList)y).get(0));
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return ret;
+    }
 }
