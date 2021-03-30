@@ -61,10 +61,6 @@ and open the template in the editor.
                 <p:selectOneMenu id="atb" value="#{bd.obj.tabla.atributoMultimedia}">
                     <f:selectItems value="#{bd.atributos}" />
                 </p:selectOneMenu><br />
-                <p:outputLabel value="Atributo descriptor de tamaño en bytes" /><br />
-                <p:selectOneMenu id="atb2" value="#{bd.obj.tabla.atributoMultimediaTamanio}">
-                    <f:selectItems value="#{bd.atributos}" />
-                </p:selectOneMenu><br />
                 <p:commandButton value="Establecer" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl4"/>
             </p:dialog>
             <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>

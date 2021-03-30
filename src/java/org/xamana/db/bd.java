@@ -426,7 +426,7 @@ public class bd implements Serializable {
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
                     for (int i = 0; i < idTuplas.size(); i++) {
-                        String qTupla = "insert into tupla (id_remoto, tamanioBytes, id_fragmento) values('" + idTuplas.get(i) + "'," + tamanioBytes.get(i) + "," + idFragmento + ")";
+                        String qTupla = "insert into tupla (id_remoto, id_fragmento) values('" + idTuplas.get(i) + "'," + idFragmento + ")";
                         acc.ejecutarComando(qTupla);
                     }
                     acc.desconectar();
@@ -544,7 +544,7 @@ public class bd implements Serializable {
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
                     for (int i = 0; i < idTuplas.size(); i++) {
-                        String qTupla = "insert into tupla (id_remoto, tamanioBytes, id_fragmento) values('" + idTuplas.get(i) + "'," + tamanioBytes.get(i) + "," + idFragmento + ")";
+                        String qTupla = "insert into tupla (id_remoto, id_fragmento) values('" + idTuplas.get(i) + "'," + idFragmento + ")";
                         acc.ejecutarComando(qTupla);
                     }
                     acc.desconectar();
@@ -616,7 +616,7 @@ public class bd implements Serializable {
                         ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                         String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
                         for (int i = 0; i < idTuplas.size(); i++) {
-                            String qTupla = "insert into tupla (id_remoto, tamanioBytes, id_fragmento) values('" + idTuplas.get(i) + "'," + tamanioBytes.get(i) + "," + idFragmento + ")";
+                            String qTupla = "insert into tupla (id_remoto, id_fragmento) values('" + idTuplas.get(i) + "'," + idFragmento + ")";
                             acc.ejecutarComando(qTupla);
                         }
                         acc.desconectar();
