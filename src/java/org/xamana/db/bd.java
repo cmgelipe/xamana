@@ -643,11 +643,13 @@ public class bd implements Serializable {
                 try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
                     String actual = "";
                     while ((actual = bufferedReader.readLine()) != null) {
-                        if (this.isRelacional()) {
+                        if (this.TipoBD.compareTo("a")==0) {
                             if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 res++;
                             }
-                        } else {
+                        } else if(this.TipoBD.compareTo("b")==0 || this.TipoBD.compareTo("c")==0){
+                            
+                        } else if(this.TipoBD.compareTo("d")==0){
                             if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 res++;
                             }
