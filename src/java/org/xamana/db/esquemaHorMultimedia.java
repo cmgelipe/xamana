@@ -15,6 +15,7 @@ public class esquemaHorMultimedia {
     private String nTuplas;
     private String porcentaje;
     private String nOperacionesAprox;
+    private String ndesempenio;
     
 
     /**
@@ -91,7 +92,7 @@ public class esquemaHorMultimedia {
      * @return the nOperacionesAprox
      */
     public String getNOperacionesAprox() {
-        return nOperacionesAprox;
+        return getnOperacionesAprox();
     }
 
     /**
@@ -99,6 +100,27 @@ public class esquemaHorMultimedia {
      */
     public void setNOperacionesAprox(String nOperacionesAprox) {
         this.nOperacionesAprox = nOperacionesAprox;
+    }
+
+    /**
+     * @return the nOperacionesAprox
+     */
+    public String getnOperacionesAprox() {
+        return nOperacionesAprox;
+    }
+
+    /**
+     * @return the ndesempenio
+     */
+    public String getNdesempenio() {
+        return ndesempenio;
+    }
+
+    /**
+     * @param ndesempenio the ndesempenio to set
+     */
+    public void setNdesempenio(String ndesempenio) {
+        this.ndesempenio = ndesempenio;
     }
     
 }

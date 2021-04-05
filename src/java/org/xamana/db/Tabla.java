@@ -15,7 +15,7 @@ public class Tabla {
     private int umbralOP;
     private int umbralCO;
     private String atributoMultimedia;
-    private String atributoMultimediaTamanio;
+    
     private Atributo atributoLlave;
     private ArrayList<Atributo> Atributos;
     private String idTabla; //mi tabla que se llama tabla, no la remota
@@ -118,21 +118,6 @@ public class Tabla {
     public void setAtributos(ArrayList<Atributo> Atributos) {
         this.Atributos = Atributos;
     }
-
-    /**
-     * @return the atributoMultimediaTamanio
-     */
-    public String getAtributoMultimediaTamanio() {
-        return atributoMultimediaTamanio;
-    }
-
-    /**
-     * @param atributoMultimediaTamanio the atributoMultimediaTamanio to set
-     */
-    public void setAtributoMultimediaTamanio(String atributoMultimediaTamanio) {
-        this.atributoMultimediaTamanio = atributoMultimediaTamanio;
-    }
-
     /**
      * @return the atributoLlave
      */

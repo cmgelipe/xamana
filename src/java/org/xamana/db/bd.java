@@ -35,6 +35,7 @@ public class bd implements Serializable {
     AccesoDatosMG accexternomongo;
     AccesoDatosPG accexternopost;
     private String dirbd;
+    private String portbd;
     private String nombd;
     private String usubd;
     private String passbd;
@@ -42,14 +43,13 @@ public class bd implements Serializable {
     private Tabla tabla = new Tabla();
     private Integer progress1;
     private List<SelectItem> tablas;
-    
 
     public boolean conexionexterna() {
         boolean res = false;
 
         if (TipoBD.compareTo("a") == 0) {
             try {
-                accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
+                accexternomysql = new AccesoDatos(dirbd + ":" + this.portbd, nombd, usubd, passbd);
 
                 if (accexternomysql.conectar()) {
                     res = true;
@@ -60,7 +60,7 @@ public class bd implements Serializable {
             }
         } else if (TipoBD.compareTo("b") == 0 || TipoBD.compareTo("c") == 0) {
             try {
-                accexternopost = new AccesoDatosPG(dirbd, nombd, usubd, passbd);
+                accexternopost = new AccesoDatosPG(dirbd + ":" + this.portbd, nombd, usubd, passbd);
                 if (accexternopost.conectar()) {
                     res = true;
                     accexternopost.desconectar();
@@ -70,7 +70,7 @@ public class bd implements Serializable {
             }
         } else if (TipoBD.compareTo("d") == 0) {
             try {
-                accexternomongo = new AccesoDatosMG(dirbd, nombd, this.tabla.getNombre(), usubd, passbd);
+                accexternomongo = new AccesoDatosMG(dirbd + ":" + this.portbd, nombd, this.tabla.getNombre(), usubd, passbd);
                 if (accexternomongo.conectar()) {
                     res = true;
                 }
@@ -237,9 +237,11 @@ public class bd implements Serializable {
         ArrayList arr = null;
         String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
         String queryRelacional = "select " + nombreColumna + ", count(" + nombreColumna + ") as num from " + this.tabla.getNombre() + " group by " + nombreColumna;
-        double nOperacionesLog = this.nOperacionesLog(files);
+        vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files);
+        double nOperacionesLog = valoresOPDES.getOperaciones();
         double nTuplas = this.nTuplas();
         double nOperacionesTabla = nOperacionesLog / nTuplas;
+        double nValorDes=valoresOPDES.getDesempenio()/nTuplas;
         if (this.TipoBD.compareTo("a") == 0) {
             if (this.accexternomysql.conectar()) {
                 arr = this.accexternomysql.ejecutarConsulta(queryRelacional);
@@ -254,6 +256,7 @@ public class bd implements Serializable {
                     tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
                     tupla.setPorcentaje("" + (((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
                     tupla.setNOperacionesAprox("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
+                    tupla.setNdesempenio("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100)).intValue()));
                     res.add(tupla);
                 }
             }
@@ -316,11 +319,11 @@ public class bd implements Serializable {
             if (acc.conectar()) {
 
                 if (this.usubd.isEmpty()) {
-                    query = "insert into BD (nombre, direccion, gestor, usr, psw) values('"+this.getNombd()+"','" + this.dirbd + "','" + this.TipoBD + "',null,null)";
+                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "',null,null)";
                 } else if (!this.usubd.isEmpty() && this.passbd.isEmpty()) {
-                    query = "insert into BD (nombre, direccion, gestor, usr, psw) values('"+this.getNombd()+"','" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
+                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
                 } else {
-                    query = "insert into BD (nombre, direccion, gestor, usr, psw) values('"+this.getNombd()+"','" + this.dirbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
+                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
                 }
                 acc.ejecutarComando(query);
                 ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
@@ -333,7 +336,7 @@ public class bd implements Serializable {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        
+
         this.tabla.setIdTabla(id_tabla);
     }
 
@@ -343,17 +346,13 @@ public class bd implements Serializable {
             String qSitio = "";
             String idSitio = "";
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
-            String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
-            accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
+            accexternomysql = new AccesoDatos(dirbd + ":" + this.portbd, nombd, usubd, passbd);
             this.getTabla().setAtributoLlave(this.llaveMySQL(accexternomysql, nombd, this.getTabla().getNombre()));
             Atributo attMultimedia = new Atributo();
             Atributo tamanio = new Atributo();
             attMultimedia.setNombre(u[0]);
             attMultimedia.setTipo(u[1]);
             attMultimedia.setTamanio(u[2]);
-            tamanio.setNombre(u2[0]);
-            tamanio.setTipo(u2[1]);
-            tamanio.setTamanio(u2[2]);
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
                 qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
@@ -377,27 +376,21 @@ public class bd implements Serializable {
             this.progress1 = 10;
             int t = 100 / e.size();
             for (esquemaHorMultimedia tupla : e) {
-                accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
+                accexternomysql = new AccesoDatos(dirbd + ":" + this.portbd, nombd, usubd, passbd);
                 ArrayList<String> idTuplas = null;
-                ArrayList<String> tamanioBytes = null;
                 if (this.accexternomysql.conectar()) {
                     ArrayList resultado = null;
-                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ", PRIMARY KEY ("+this.getTabla().getAtributoLlave().getNombre()+"));";
+                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
                     this.accexternomysql.ejecutarComando(query);
                     query = "select * from " + this.tabla.getNombre() + " where " + attMultimedia.getNombre() + "='" + tupla.getValor() + "'";
                     resultado = this.accexternomysql.ejecutarConsulta(query);
                     if (resultado != null) {
                         if (!resultado.isEmpty()) {
                             idTuplas = new ArrayList<>();
-                            tamanioBytes = new ArrayList<>();
                             for (int i = 0; i < resultado.size(); i++) {
                                 String valores = "";
-                                String tam = "";
                                 String id = "";
                                 for (int j = 0; j < ((ArrayList) resultado.get(i)).size(); j++) {
-                                    if (this.getTabla().getAtributos().get(j).getNombre().compareTo(tamanio.getNombre()) == 0) {
-                                        tam = "" + ((ArrayList) resultado.get(i)).get(j);
-                                    }
                                     if (this.getTabla().getAtributos().get(j).getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
                                         id = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
@@ -411,7 +404,6 @@ public class bd implements Serializable {
                                 String q = "INSERT INTO " + tupla.getNombre() + " VALUES (" + valores + ");";
                                 this.accexternomysql.ejecutarComando(q);
                                 idTuplas.add(id);
-                                tamanioBytes.add(tam);
                             }
                         }
                     }
@@ -420,7 +412,7 @@ public class bd implements Serializable {
                 acc = new AccesoDatos();
                 if (acc.conectar()) {
                     String un = "0";
-                    un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : un;
+                    un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
                     String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ")";
                     acc.ejecutarComando(q);
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
@@ -436,12 +428,13 @@ public class bd implements Serializable {
                     this.progress1 = 100;
                 }
             }
+            if (this.progress1 < 100) {
+                this.progress1 = 100;
+            }
         } catch (Exception y) {
             y.printStackTrace();
         }
-        if (this.progress1 < 100) {
-            this.progress1 = 100;
-        }
+
     }
 
     public void fragmentarHorCBIRPostgres(ArrayList<esquemaHorMultimedia> e) {
@@ -450,16 +443,11 @@ public class bd implements Serializable {
             String qSitio = "";
             String idSitio = "";
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
-            String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
             this.getTabla().setAtributoLlave(this.llavePostgres(accexternopost, nombd, this.getTabla().getNombre()));
             Atributo attMultimedia = new Atributo();
-            Atributo tamanio = new Atributo();
             attMultimedia.setNombre(u[0]);
             attMultimedia.setTipo(u[1]);
             attMultimedia.setTamanio(u[2]);
-            tamanio.setNombre(u2[0]);
-            tamanio.setTipo(u2[1]);
-            tamanio.setTamanio(u2[2]);
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
                 qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
@@ -470,23 +458,23 @@ public class bd implements Serializable {
             String att_tipo = "";
             for (Atributo r : this.getTabla().getAtributos()) {
                 if (this.transTipoDato(r.getTipo()) != 0) {
-                    if(r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0){
+                    if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
                         att_tipo += r.getNombre() + " " + r.getTipo() + " PRIMARY KEY, ";
-                    }else{
+                    } else {
                         att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
                     }
-                    
+
                 } else {
                     if (r.getTipo().compareTo("BIT") != 0) {
-                        if(r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0){
+                        if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
                             att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + ") PRIMARY KEY, ";
-                        }else{
+                        } else {
                             att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
-                        } 
+                        }
                     } else {
-                        if(r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0){
+                        if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
                             att_tipo += r.getNombre() + " TINYINT PRIMARY KEY, ";
-                        }else{
+                        } else {
                             att_tipo += r.getNombre() + " TINYINT, ";
                         }
                     }
@@ -497,25 +485,19 @@ public class bd implements Serializable {
             int t = 100 / e.size();
             for (esquemaHorMultimedia tupla : e) {
                 ArrayList<String> idTuplas = null;
-                ArrayList<String> tamanioBytes = null;
                 if (this.accexternopost.conectar()) {
                     ArrayList resultado = null;
-                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ", PRIMARY KEY ("+this.getTabla().getAtributoLlave().getNombre()+"));";
+                    String query = "create table " + tupla.getNombre() + " (" + att_tipo + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
                     this.accexternopost.ejecutarComando(query);
                     query = "select * from " + this.tabla.getNombre() + " where " + attMultimedia.getNombre() + "='" + tupla.getValor() + "'";
                     resultado = this.accexternopost.ejecutarConsulta(query);
                     if (resultado != null) {
                         if (!resultado.isEmpty()) {
                             idTuplas = new ArrayList<>();
-                            tamanioBytes = new ArrayList<>();
                             for (int i = 0; i < resultado.size(); i++) {
                                 String valores = "";
-                                String tam = "";
                                 String id = "";
                                 for (int j = 0; j < ((ArrayList) resultado.get(i)).size(); j++) {
-                                    if (this.getTabla().getAtributos().get(j).getNombre().compareTo(tamanio.getNombre()) == 0) {
-                                        tam = "" + ((ArrayList) resultado.get(i)).get(j);
-                                    }
                                     if (this.getTabla().getAtributos().get(j).getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
                                         id = "" + ((ArrayList) resultado.get(i)).get(j);
                                     }
@@ -529,7 +511,6 @@ public class bd implements Serializable {
                                 valores = valores.substring(0, valores.length() - 2);
                                 String q = "INSERT INTO " + tupla.getNombre() + " VALUES (" + valores + ");";
                                 this.accexternopost.ejecutarComando(q);
-                                tamanioBytes.add(tam);
                                 idTuplas.add(id);
                             }
                         }
@@ -538,7 +519,7 @@ public class bd implements Serializable {
                 }
                 if (acc.conectar()) {
                     String un = "0";
-                    un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : un;
+                    un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
                     String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ")";
                     acc.ejecutarComando(q);
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
@@ -568,13 +549,9 @@ public class bd implements Serializable {
             String idSitio = "";
             this.guardarDatos();
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
-            String[] u2 = this.getTabla().getAtributoMultimediaTamanio().split(":");
             Atributo attMultimedia = new Atributo();
-            Atributo tamanio = new Atributo();
             attMultimedia.setNombre(u[0]);
             attMultimedia.setTipo(u[1]);
-            tamanio.setNombre(u2[0]);
-            tamanio.setTipo(u2[1]);
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
                 qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
@@ -601,16 +578,14 @@ public class bd implements Serializable {
                     }
                     MongoCursor<Document> resultado = doc.find(where).iterator();
                     idTuplas = new ArrayList<>();
-                    tamanioBytes = new ArrayList<>();
                     while (resultado.hasNext()) {
                         Document Nuevatupla = resultado.next();
                         idTuplas.add(Nuevatupla.get("_id").toString());
-                        tamanioBytes.add(Nuevatupla.get(this.tabla.getAtributoMultimediaTamanio()).toString());
                         nuevoDoc.insertOne(Nuevatupla);
                     }
                     if (acc.conectar()) {
                         String un = "0";
-                        un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : un;
+                        un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
                         String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ")";
                         acc.ejecutarComando(q);
                         ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
@@ -636,32 +611,46 @@ public class bd implements Serializable {
         }
     }
 
-    public double nOperacionesLog(UploadedFiles files) {
-        double res = 0;
+    public vOperacionDesempenio nOperacionesLog(UploadedFiles files) {
+        vOperacionDesempenio ret = new vOperacionDesempenio();
+        double op = 0;
+        double des = 0;
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
                     String actual = "";
-                    while ((actual = bufferedReader.readLine()) != null) {
-                        if (this.TipoBD.compareTo("a")==0) {
-                            if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
-                                res++;
+                    if (this.TipoBD.compareTo("a") == 0) {
+                        while ((actual = bufferedReader.readLine()) != null) {
+                            String ip = "127.0.0.1";
+                            if (actual.contains("Connect\t") && !actual.contains("denied")) {
+                                String y[] = actual.split("\t");
+                                ip = y[2].substring(y[2].indexOf("@") + 1, y[2].indexOf(" ", y[2].indexOf("@") + 1));
                             }
-                        } else if(this.TipoBD.compareTo("b")==0 || this.TipoBD.compareTo("c")==0){
-                            
-                        } else if(this.TipoBD.compareTo("d")==0){
-                            if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
-                                res++;
+                            if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                if (ip.compareTo(this.dirbd) == 0) {
+                                    des = des + 2;
+                                } else {
+                                    des++;
+                                }
+                                op++;
                             }
                         }
+                    } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
+
+                    } else if (this.TipoBD.compareTo("d") == 0) {
+                        if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                            op++;
+                        }
                     }
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
-
-        return res;
+        ret.setOperaciones(op);
+        ret.setDesempenio(des);
+        return ret;
     }
 
     public double nTuplas() {
@@ -737,8 +726,9 @@ public class bd implements Serializable {
     public void setProgress1(Integer progress1) {
         this.progress1 = progress1;
     }
+
     protected Atributo llaveMySQL(AccesoDatos acc, String nombreBase, String nombreTabla) {
-        
+
         Atributo att = null;
         ArrayList res = null;
         try {
@@ -756,21 +746,22 @@ public class bd implements Serializable {
         }
         return att;
     }
-   protected Atributo llavePostgres(AccesoDatosPG acc, String nombreBase, String nombreTabla) {
-        
+
+    protected Atributo llavePostgres(AccesoDatosPG acc, String nombreBase, String nombreTabla) {
+
         Atributo att = null;
         ArrayList res = null;
         try {
             if (acc.conectar()) {
-                String q="select nombre, data_type "
+                String q = "select nombre, data_type "
                         + "from (SELECT column_name as nombre "
                         + "FROM information_schema.key_column_usage "
-                        + "WHERE TABLE_NAME='"+nombreTabla+"' "
-                        + "AND TABLE_CATALOG='"+nombreBase+"') as a "
+                        + "WHERE TABLE_NAME='" + nombreTabla + "' "
+                        + "AND TABLE_CATALOG='" + nombreBase + "') as a "
                         + "join INFORMATION_SCHEMA.COLUMNS "
                         + "on INFORMATION_SCHEMA.COLUMNS.COLUMN_NAME=nombre "
-                        + "where INFORMATION_SCHEMA.COLUMNS.TABLE_NAME='"+nombreTabla+"' "
-                        + "and INFORMATION_SCHEMA.COLUMNS.TABLE_CATALOG='"+nombreBase+"';";
+                        + "where INFORMATION_SCHEMA.COLUMNS.TABLE_NAME='" + nombreTabla + "' "
+                        + "and INFORMATION_SCHEMA.COLUMNS.TABLE_CATALOG='" + nombreBase + "';";
                 res = acc.ejecutarConsulta(q);
                 acc.desconectar();
             }
@@ -784,55 +775,56 @@ public class bd implements Serializable {
         }
         return att;
     }
-   public void onTablas(){
-       try{
-           if(conexionexterna()){
-               if (TipoBD.compareTo("a") == 0) {
-                   ArrayList<String> t=null;
-                   if(this.accexternomysql.conectar()){
-                       t=this.accexternomysql.tablas(this.nombd);
-                   }
-                   if(!this.isNullorEmpty(t)){
-                       this.tablas=new ArrayList<>();
-                       for(String item:t){
-                           SelectItem si=new SelectItem(item,item);
-                           this.tablas.add(si);
-                       }
-                   }
-               }else if(TipoBD.compareTo("b") == 0 || TipoBD.compareTo("c") == 0){
-                   ArrayList<String> t=null;
-                   if(this.accexternopost.conectar()){
-                       t=this.accexternopost.tablas(this.nombd);
-                   }
-                   if(!this.isNullorEmpty(t)){
-                       this.tablas=new ArrayList<>();
-                       for(String item:t){
-                           SelectItem si=new SelectItem(item,item);
-                           this.tablas.add(si);
-                       }
-                   }
-               }else{
-                   ArrayList<String> t=null;
-                   if(this.accexternomongo.conectar()){
-                       t=this.accexternomongo.tablas(this.nombd);
-                   }
-                   if(!this.isNullorEmpty(t)){
-                       this.tablas=new ArrayList<>();
-                       for(String item:t){
-                           SelectItem si=new SelectItem(item,item);
-                           this.tablas.add(si);
-                       }
-                   }
-               }
-           }else{
+
+    public void onTablas() {
+        try {
+            if (conexionexterna()) {
+                if (TipoBD.compareTo("a") == 0) {
+                    ArrayList<String> t = null;
+                    if (this.accexternomysql.conectar()) {
+                        t = this.accexternomysql.tablas(this.nombd);
+                    }
+                    if (!this.isNullorEmpty(t)) {
+                        this.tablas = new ArrayList<>();
+                        for (String item : t) {
+                            SelectItem si = new SelectItem(item, item);
+                            this.tablas.add(si);
+                        }
+                    }
+                } else if (TipoBD.compareTo("b") == 0 || TipoBD.compareTo("c") == 0) {
+                    ArrayList<String> t = null;
+                    if (this.accexternopost.conectar()) {
+                        t = this.accexternopost.tablas(this.nombd);
+                    }
+                    if (!this.isNullorEmpty(t)) {
+                        this.tablas = new ArrayList<>();
+                        for (String item : t) {
+                            SelectItem si = new SelectItem(item, item);
+                            this.tablas.add(si);
+                        }
+                    }
+                } else {
+                    ArrayList<String> t = null;
+                    if (this.accexternomongo.conectar()) {
+                        t = this.accexternomongo.tablas(this.nombd);
+                    }
+                    if (!this.isNullorEmpty(t)) {
+                        this.tablas = new ArrayList<>();
+                        for (String item : t) {
+                            SelectItem si = new SelectItem(item, item);
+                            this.tablas.add(si);
+                        }
+                    }
+                }
+            } else {
                 System.out.println("Sin conexión");
-                this.tablas=new ArrayList<>();
-           }
-       }catch(Exception e){
-           System.out.println("Sin conexión");
-           this.tablas=new ArrayList<>();
-       }
-   }
+                this.tablas = new ArrayList<>();
+            }
+        } catch (Exception e) {
+            System.out.println("Sin conexión");
+            this.tablas = new ArrayList<>();
+        }
+    }
 
     /**
      * @return the tablas
@@ -847,6 +839,7 @@ public class bd implements Serializable {
     public void setTablas(List<SelectItem> tablas) {
         this.tablas = tablas;
     }
+
     public boolean isNullorEmpty(ArrayList arr) {
         boolean res = false;
         try {
@@ -859,5 +852,19 @@ public class bd implements Serializable {
             res = true;
         }
         return res;
+    }
+
+    /**
+     * @return the portbd
+     */
+    public String getPortbd() {
+        return portbd;
+    }
+
+    /**
+     * @param portbd the portbd to set
+     */
+    public void setPortbd(String portbd) {
+        this.portbd = portbd;
     }
 }

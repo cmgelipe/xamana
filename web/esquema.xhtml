@@ -71,6 +71,9 @@
                 <p:column headerText="Operaciones aproximadas">
                     <h:outputText value="#{t.NOperacionesAprox}" />
                 </p:column>
+                <p:column headerText="Valor de desempeño">
+                    <h:outputText value="#{t.ndesempenio}" />
+                </p:column>
             </p:dataTable>
             <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
                 <p:ajax event="complete" listener="#{bd.onComplete}" update="f4:growl" oncomplete="PF('startButton2').enable()"/>

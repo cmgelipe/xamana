@@ -42,7 +42,11 @@
                 <p:panelGrid columns="2">
 
                     <p:outputLabel value="Dirección de la base de datos" />
-                    <p:inputText value="#{bd.obj.dirbd}" placeholder="#.#.#.#:#" required="true">
+                    <p:inputText value="#{bd.obj.dirbd}" placeholder="#.#.#.#" required="true">
+                        <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
+                    </p:inputText>
+                    <p:outputLabel value="Puerto de la base de datos" />
+                    <p:inputText value="#{bd.obj.portbd}" required="true">
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
                     </p:inputText>
                     <p:outputLabel value="Nombre de la base de datos" />
