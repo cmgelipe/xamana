@@ -58,9 +58,9 @@
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
                     </p:inputText>
                     <p:outputLabel value="Contraseña"/>
-                    <p:password value="#{bd.obj.passbd}" title="Si la base de datos no tiene contraseña, este campo no es obligatorio" >
+                    <p:inputText value="#{bd.obj.passbd}" title="Si la base de datos no tiene contraseña, este campo no es obligatorio" >
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
-                    </p:password>
+                    </p:inputText>
                     <p:outputLabel value="Nombre de la tabla a fragmentar" />
                     <p:selectOneMenu id="tb" value="#{bd.obj.tabla.nombre}" rendered="true">
                         <f:selectItems value="#{bd.obj.tablas}"/>

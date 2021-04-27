@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <h:head>
+        <title>Nuevas tuplas</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <h:outputStylesheet name="style.css" />
+    </h:head>
+    <h:body>
+        <h:form id="f52">
+            <p:growl showDetail="true" id="mensajes" />
+            <header>
+                <text>Nuevas tuplas</text>
+            </header>
+            <h:outputText rendered="#{cNuevoFrag.visible(1)}" value="#{cNuevoFrag.val.n1}" />
+            <p:inputText id="a1" rendered="#{cNuevoFrag.visible(1)}" value="#{cNuevoFrag.val.v1}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(2)}" value="#{cNuevoFrag.val.n2}" />
+            <p:inputText id="a2" rendered="#{cNuevoFrag.visible(2)}" value="#{cNuevoFrag.val.v2}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(3)}" value="#{cNuevoFrag.val.n3}" />
+            <p:inputText id="a3" rendered="#{cNuevoFrag.visible(3)}" value="#{cNuevoFrag.val.v3}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(4)}" value="#{cNuevoFrag.val.n4}" />
+            <p:inputText id="a4" rendered="#{cNuevoFrag.visible(4)}" value="#{cNuevoFrag.val.v4}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(5)}" value="#{cNuevoFrag.val.n5}" />
+            <p:inputText id="a5" rendered="#{cNuevoFrag.visible(5)}" value="#{cNuevoFrag.val.v5}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(6)}" value="#{cNuevoFrag.val.n6}" />
+            <p:inputText id="a6" rendered="#{cNuevoFrag.visible(6)}" value="#{cNuevoFrag.val.v6}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(7)}" value="#{cNuevoFrag.val.n7}" />
+            <p:inputText id="a7" rendered="#{cNuevoFrag.visible(7)}" value="#{cNuevoFrag.val.v7}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(8)}" value="#{cNuevoFrag.val.n8}" />
+            <p:inputText id="a8" rendered="#{cNuevoFrag.visible(8)}" value="#{cNuevoFrag.val.v8}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(9)}" value="#{cNuevoFrag.val.n9}" />
+            <p:inputText id="a9" rendered="#{cNuevoFrag.visible(9)}" value="#{cNuevoFrag.val.v9}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(10)}" value="#{cNuevoFrag.val.n10}" />
+            <p:inputText id="a10" rendered="#{cNuevoFrag.visible(10)}" value="#{cNuevoFrag.val.v10}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(11)}" value="#{cNuevoFrag.val.n11}" />
+            <p:inputText id="a11" rendered="#{cNuevoFrag.visible(11)}" value="#{cNuevoFrag.val.v11}" /><br />
+            <h:outputText rendered="#{cNuevoFrag.visible(12)}" value="#{cNuevoFrag.val.n12}" />
+            <p:inputText id="a12" rendered="#{cNuevoFrag.visible(12)}" value="#{cNuevoFrag.val.v12}" /><br />
+            <p:commandButton action="#{cNuevoFrag.procesar}" value="Ejecutar" update="mensajes a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12"/>
+        </h:form>
+    </h:body>
+</html>

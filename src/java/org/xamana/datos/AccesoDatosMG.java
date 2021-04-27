@@ -40,7 +40,7 @@ public class AccesoDatosMG implements Serializable {
 
     public boolean conectar() throws Exception {
         String mongoClientURI = "";
-        if (sUsr.isEmpty()) {
+        if (this.isNullorEmpy(sUsr)) {
             mongoClientURI = "mongodb://" + sUrl + "/";
         } else {
             mongoClientURI = "mongodb://" + sUsr + ":" + sPwd + "@" + sUrl + "/";
@@ -48,6 +48,20 @@ public class AccesoDatosMG implements Serializable {
         setMongoClient(MongoClients.create(mongoClientURI));
 
         return getMongoClient() != null;
+    }
+    
+    public boolean isNullorEmpy(String q){
+        boolean ret=false;
+        if(q!=null){
+            if(q.isEmpty()){
+                ret=true;
+            }else{
+                ret=false;
+            }
+        }else{
+            ret=true;
+        }
+        return ret;
     }
 
     /**

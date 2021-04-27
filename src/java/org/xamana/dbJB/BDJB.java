@@ -5,6 +5,8 @@
  */
 package org.xamana.dbJB;
 
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -16,9 +18,13 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
 
 import javax.faces.model.SelectItem;
+import org.bson.Document;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFiles;
+import org.xamana.datos.AccesoDatos;
+import org.xamana.datos.AccesoDatosPG;
+import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.db.esquemaHorMultimedia;
 
@@ -41,10 +47,9 @@ public class BDJB implements Serializable {
     private ArrayList<esquemaHorMultimedia> valoresColumna;
     private boolean infoEsquema1 = true;
     private StreamedContent Descarga;
-    String MensajeWARN="";
+    String MensajeWARN = "";
     private boolean bToken;
-    
-    
+    private String nombreNuevoFrag;
 
     /**
      * Creates a new instance of BD
@@ -108,13 +113,13 @@ public class BDJB implements Serializable {
                             .contentType("application/x-rar-compressed")
                             .stream(() -> FacesContext.getCurrentInstance().getExternalContext().getResourceAsStream("/resources/descargas/HorizontalMySQLCBIR.rar"))
                             .build();
-                }else if(this.getObj().getTipoBD().compareTo("b") == 0 || this.getObj().getTipoBD().compareTo("c") == 0){
+                } else if (this.getObj().getTipoBD().compareTo("b") == 0 || this.getObj().getTipoBD().compareTo("c") == 0) {
                     this.Descarga = DefaultStreamedContent.builder()
                             .name("HorizontalPostCBIR.rar")
                             .contentType("application/x-rar-compressed")
                             .stream(() -> FacesContext.getCurrentInstance().getExternalContext().getResourceAsStream("/resources/descargas/HorizontalPostCBIR.rar"))
                             .build();
-                }else if(this.getObj().getTipoBD().compareTo("d") == 0){
+                } else if (this.getObj().getTipoBD().compareTo("d") == 0) {
                     this.Descarga = DefaultStreamedContent.builder()
                             .name("HorizontalMongoCBIR.rar")
                             .contentType("application/x-rar-compressed")
@@ -284,14 +289,14 @@ public class BDJB implements Serializable {
 
     public void fragEstatica() {
         if (this.obj.isHorizontalCBIR()) {
-            boolean ban=false;
-            for(esquemaHorMultimedia t:valoresColumna){
-                if(t.getNOperacionesAprox().compareTo("0")==0){
-                    ban=true;
+            boolean ban = false;
+            for (esquemaHorMultimedia t : valoresColumna) {
+                if (t.getNOperacionesAprox().compareTo("0") == 0) {
+                    ban = true;
                 }
             }
-            if(ban){
-                this.MensajeWARN="No se detectaron consultas en algún fragmento, se utilizará 1 como valor para realizar la primera "
+            if (ban) {
+                this.MensajeWARN = "No se detectaron consultas en algún fragmento, se utilizará 1 como valor para realizar la primera "
                         + "fragmentación pero se recomienda no poner en marcha la fragmentación dinámica hasta que se detecten operaciones";
             }
             if (this.obj.getTipoBD().compareTo("a") == 0) {
@@ -301,7 +306,7 @@ public class BDJB implements Serializable {
             } else {
                 this.obj.fragmentarHorCBIRMongoDB(valoresColumna);
             }
-            
+
             this.setBToken(true);
         }
     }
@@ -320,9 +325,8 @@ public class BDJB implements Serializable {
         this.Descarga = Descarga;
     }
 
-    
     public void onComplete() {
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Fragmentación realizada",this.MensajeWARN));
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Fragmentación realizada", this.MensajeWARN));
     }
 
     /**
@@ -339,5 +343,110 @@ public class BDJB implements Serializable {
         this.bToken = bToken;
     }
 
-   
+    public String nuevasTuplas() {
+        String ret = "";
+        if (this.obj.getTipoBD().compareTo("a") == 0
+                && this.obj.getTabla().getTipoFragment().compareTo("a") == 0
+                && this.obj.getTabla().isCBIR()) {
+
+            try {
+                AccesoDatos a = new AccesoDatos(this.obj.getDirbd() + ":" + this.obj.getPortbd(), this.obj.getNombd(), this.obj.getUsubd(), this.obj.getPassbd());
+                this.obj.listaAtributosMySQL();
+                String att_tipo = "";
+                for (Atributo r : this.obj.getTabla().getAtributos()) {
+                    if (this.obj.transTipoDato(r.getTipo()) != 0) {
+                        att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                    } else {
+                        if (r.getTipo().compareTo("BIT") != 0) {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                        } else {
+                            att_tipo += r.getNombre() + " TINYINT, ";
+                        }
+                    }
+                }
+                att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+                if (a.conectar()) {
+                    a.ejecutarComando("create table " + this.nombreNuevoFrag + " (" + att_tipo + ");");
+                    a.desconectar();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            ret = "NuevasTuplasHorMySQL.xhtml";
+        } else if ((this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0)
+                && this.obj.getTabla().getTipoFragment().compareTo("a") == 0
+                && this.obj.getTabla().isCBIR()) {
+            try {
+                AccesoDatosPG a = new AccesoDatosPG(this.obj.getDirbd() + ":" + this.obj.getPortbd(), this.obj.getNombd(), this.obj.getUsubd(), this.obj.getPassbd());
+                System.out.println("contra" + this.obj.getPassbd());
+                this.obj.getTabla().setAtributoLlave(this.obj.llavePostgres(a, this.obj.getNombd(), this.obj.getTabla().getNombre()));
+                this.obj.conexionexterna();
+                this.obj.listaAtributosPostgreSQL();
+                String att_tipo = "";
+                for (Atributo r : this.obj.getTabla().getAtributos()) {
+                    if (this.obj.transTipoDato(r.getTipo()) != 0) {
+                        if (r.getNombre().compareTo(this.obj.getTabla().getAtributoLlave().getNombre()) == 0) {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + " PRIMARY KEY, ";
+                        } else {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                        }
+
+                    } else {
+                        if (r.getTipo().compareTo("BIT") != 0) {
+                            if (r.getNombre().compareTo(this.obj.getTabla().getAtributoLlave().getNombre()) == 0) {
+                                att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + ") PRIMARY KEY, ";
+                            } else {
+                                att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                            }
+                        } else {
+                            if (r.getNombre().compareTo(this.obj.getTabla().getAtributoLlave().getNombre()) == 0) {
+                                att_tipo += r.getNombre() + " TINYINT PRIMARY KEY, ";
+                            } else {
+                                att_tipo += r.getNombre() + " TINYINT, ";
+                            }
+                        }
+                    }
+                }
+                att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+                if (a.conectar()) {
+                    a.ejecutarComando("create table " + this.nombreNuevoFrag + " (" + att_tipo + ");");
+                    a.desconectar();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            ret = "NuevasTuplasHorMySQL.xhtml";
+        } else if (this.obj.getTipoBD().compareTo("d") == 0
+                && this.obj.getTabla().getTipoFragment().compareTo("a") == 0
+                && this.obj.getTabla().isCBIR()) {
+            try {
+                this.obj.conexionexterna();
+                MongoDatabase db = this.obj.getAccexternomongo().getMongoClient().getDatabase(this.obj.getNombd());
+                db.createCollection(this.nombreNuevoFrag);
+                ret = "NuevasTuplasHorMySQL.xhtml";
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * @return the nombreNuevoFrag
+     */
+    public String getNombreNuevoFrag() {
+        return nombreNuevoFrag;
+    }
+
+    /**
+     * @param nombreNuevoFrag the nombreNuevoFrag to set
+     */
+    public void setNombreNuevoFrag(String nombreNuevoFrag) {
+        this.nombreNuevoFrag = nombreNuevoFrag;
+    }
+
+    public String confNuevoFrag() {
+        System.out.println("contra" + this.obj.getNombd());
+        return "confNuevoFragmento.xhtml";
+    }
 }

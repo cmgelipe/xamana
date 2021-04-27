@@ -21,10 +21,12 @@ and open the template in the editor.
         <h:outputStylesheet name="style.css"/>
     </h:head>
     <h:body style="background-color: #3f3f3f">
-        <header>
-            <text>Configuración</text>
-        </header>
         <h:form id="f3" enctype="multipart/form-data" style="text-align: center">
+            <header>
+                <text>Configuración</text>
+                <p:commandButton action="#{bd.confNuevoFrag()}" style="width: 20%; position: absolute; left: 15px; top: 22px; font-size: 17px;" value="Agregar nuevos fragmentos" />
+                <p:commandButton style="width: 20%; position: absolute; right: 15px; top:22px; font-size: 17px;" value="Eliminar fragmentos" />
+            </header>
             <div style="text-align: center">
                 <p:panelGrid  columns="2" style="margin: 0 auto; border: none">
                     <p:outputLabel value="Tipo de fragmentación" />
@@ -41,17 +43,17 @@ and open the template in the editor.
                     </p:selectBooleanButton>
                     <p:outputLabel id="o1" value="Archivos log" />
                     <p:fileUpload id="file" value="#{bd.files}" mode="simple" skinSimple="true" multiple="true" />
-                    
+
                     <p:outputLabel value="Umbral de operaciones" />
                     <h:outputText id="output1" value="%#{bd.obj.tabla.umbralOP}" />
                     <h:inputHidden id="s1" value="#{bd.obj.tabla.umbralOP}" />
                     <p:slider for="s1" display="output1" style="width: 200px" displayTemplate="%{value}" minValue="-100.0" maxValue="100.0"/>
-                    
+
                     <p:outputLabel value="Umbral de costo" />
                     <h:outputText id="output2" value="%#{bd.obj.tabla.umbralCO}" />
                     <h:inputHidden id="s2" value="#{bd.obj.tabla.umbralCO}" />
                     <p:slider for="s2" display="output2" style="width: 200px" displayTemplate="%{value}" minValue="-100.0" maxValue="100.0" />
-                    
+
                 </p:panelGrid>
                 <br />
                 <p:commandButton ajax="false" value="Generar esquema" action="#{bd.btnesquema()}" />

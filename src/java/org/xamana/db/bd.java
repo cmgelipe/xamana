@@ -32,7 +32,7 @@ import org.primefaces.model.file.UploadedFiles;
 public class bd implements Serializable {
 
     AccesoDatos accexternomysql;
-    AccesoDatosMG accexternomongo;
+    private AccesoDatosMG accexternomongo;
     AccesoDatosPG accexternopost;
     private String dirbd;
     private String portbd;
@@ -70,9 +70,11 @@ public class bd implements Serializable {
             }
         } else if (TipoBD.compareTo("d") == 0) {
             try {
-                accexternomongo = new AccesoDatosMG(dirbd + ":" + this.portbd, nombd, this.tabla.getNombre(), usubd, passbd);
-                if (accexternomongo.conectar()) {
+                setAccexternomongo(new AccesoDatosMG(dirbd + ":" + this.portbd, nombd, this.tabla.getNombre(), usubd, passbd));
+                if (getAccexternomongo().conectar()) {
                     res = true;
+                }else{
+                    System.out.println("CONEXION RECHAZADA");
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -197,8 +199,8 @@ public class bd implements Serializable {
         this.tabla.setAtributos(new ArrayList<>());
         List<SelectItem> res = new ArrayList<>();
         //this.accexternomongo = new AccesoDatosMG(dirbd, nombd, this.tabla.getNombre(), usubd, passbd);
-        if (this.accexternomongo.conectar()) {
-            arr = this.accexternomongo.atributos(nombd, this.getTabla().getNombre());
+        if (this.getAccexternomongo().conectar()) {
+            arr = this.getAccexternomongo().atributos(nombd, this.getTabla().getNombre());
             arr.forEach((h) -> {
                 res.add(new SelectItem(h, h));
                 String[] t = h.split(":");
@@ -278,8 +280,8 @@ public class bd implements Serializable {
                 }
             }
         } else {
-            if (this.accexternomongo.conectar()) {
-                MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
+            if (this.getAccexternomongo().conectar()) {
+                MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
                 MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
                 Bson group = group("$" + nombreColumna, sum("num", 1L));
                 List<Document> r = colec.aggregate(Arrays.asList(group)).into(new ArrayList<>());
@@ -560,13 +562,13 @@ public class bd implements Serializable {
                 idSitio = "" + ((ArrayList) res.get(0)).get(0);
                 acc.desconectar();
             }
-            if (this.accexternomongo.conectar()) {
+            if (this.getAccexternomongo().conectar()) {
                 this.progress1 = 10;
                 int t = 100 / e.size();
                 for (esquemaHorMultimedia tupla : e) {
                     ArrayList<String> idTuplas = null;
                     ArrayList<String> tamanioBytes = null;
-                    MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
+                    MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
                     MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
                     db.createCollection(tupla.getNombre());
                     MongoCollection<Document> nuevoDoc = db.getCollection(tupla.getNombre());
@@ -674,8 +676,8 @@ public class bd implements Serializable {
                     res = (double) ((ArrayList) arr.get(0)).get(0);
                 }
             } else if (this.TipoBD.compareTo("d") == 0) {
-                if (this.accexternomongo.conectar()) {
-                    MongoDatabase db = this.accexternomongo.getMongoClient().getDatabase(nombd);
+                if (this.getAccexternomongo().conectar()) {
+                    MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
                     MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
                     res = (double) colec.countDocuments();
                 }
@@ -747,7 +749,7 @@ public class bd implements Serializable {
         return att;
     }
 
-    protected Atributo llavePostgres(AccesoDatosPG acc, String nombreBase, String nombreTabla) {
+    public Atributo llavePostgres(AccesoDatosPG acc, String nombreBase, String nombreTabla) {
 
         Atributo att = null;
         ArrayList res = null;
@@ -805,8 +807,8 @@ public class bd implements Serializable {
                     }
                 } else {
                     ArrayList<String> t = null;
-                    if (this.accexternomongo.conectar()) {
-                        t = this.accexternomongo.tablas(this.nombd);
+                    if (this.getAccexternomongo().conectar()) {
+                        t = this.getAccexternomongo().tablas(this.nombd);
                     }
                     if (!this.isNullorEmpty(t)) {
                         this.tablas = new ArrayList<>();
@@ -866,5 +868,19 @@ public class bd implements Serializable {
      */
     public void setPortbd(String portbd) {
         this.portbd = portbd;
+    }
+
+    /**
+     * @return the accexternomongo
+     */
+    public AccesoDatosMG getAccexternomongo() {
+        return accexternomongo;
+    }
+
+    /**
+     * @param accexternomongo the accexternomongo to set
+     */
+    public void setAccexternomongo(AccesoDatosMG accexternomongo) {
+        this.accexternomongo = accexternomongo;
     }
 }
