@@ -7,19 +7,14 @@ package org.xamana.dbJB;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.SessionScoped;
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIPanel;
-import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
+import org.bson.Document;
 import org.xamana.datos.AccesoDatos;
 import org.xamana.datos.AccesoDatosMG;
 import org.xamana.datos.AccesoDatosPG;
-import org.xamana.db.Atributo;
 import org.xamana.db.valoresTupla;
 
 /**
@@ -150,11 +145,12 @@ public class confNuevoFragmento implements Serializable {
     public void procesar() {
         String valores = "";
         String tipo = "";
+
         if (this.beanBD.getObj().getTipoBD().compareTo("a") == 0 || this.beanBD.getObj().getTipoBD().compareTo("b") == 0 || this.beanBD.getObj().getTipoBD().compareTo("c") == 0) {
             for (int i = 0; i < att.size(); i++) {
+                tipo = att.get(i).split(":")[1];
                 switch (i) {
                     case 0:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV1() + "\", ";
                         } else {
@@ -162,7 +158,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 1:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV2() + "\", ";
                         } else {
@@ -170,7 +165,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 2:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV3() + "\", ";
                         } else {
@@ -178,7 +172,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 3:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV4() + "\", ";
                         } else {
@@ -186,7 +179,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 4:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV5() + "\", ";
                         } else {
@@ -194,7 +186,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 5:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV6() + "\", ";
                         } else {
@@ -202,7 +193,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 6:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV7() + "\", ";
                         } else {
@@ -210,7 +200,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 7:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV8() + "\", ";
                         } else {
@@ -218,7 +207,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 8:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV9() + "\", ";
                         } else {
@@ -226,7 +214,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 9:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV10() + "\", ";
                         } else {
@@ -234,7 +221,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 10:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV11() + "\", ";
                         } else {
@@ -242,7 +228,6 @@ public class confNuevoFragmento implements Serializable {
                         }
                         break;
                     case 11:
-                        tipo = att.get(i).split(":")[1];
                         if (this.beanBD.getObj().transTipoDato(tipo) == 0 || this.beanBD.getObj().transTipoDato(tipo) == 2) {
                             valores += "\"" + val.getV12() + "\", ";
                         } else {
@@ -251,38 +236,130 @@ public class confNuevoFragmento implements Serializable {
                         break;
                 }
             }
-        }else{
-            
-        }
-        valores = valores.substring(0, valores.length() - 2);
-        String q = "INSERT INTO " + this.beanBD.getNombreNuevoFrag() + " VALUES (" + valores + ");";
-        try {
-            AccesoDatos acc = new AccesoDatos(beanBD.getObj().getDirbd() + ":" + beanBD.getObj().getPortbd(), beanBD.getObj().getNombd(), beanBD.getObj().getUsubd(), beanBD.getObj().getPassbd());
-            int y = 0;
-            if (acc.conectar()) {
-                y = acc.ejecutarComando(q);
+        } else {
+            Document d=new Document();
+            for (int i = 0; i < att.size(); i++) {
+                switch (i) {
+                    case 1:
+                        tipo = att.get(i).split(":")[1];
+                        switch (tipo) {
+                            case "double":
+                                d.append(att.get(i).split(":")[0], Double.parseDouble(val.getV1()));
+                                break;
+                            case "string":
+                                d.append(att.get(i).split(":")[0], val.getV1());
+                                break;
+                            case "object":
+                                d.append(att.get(i).split(":")[0], Document.parse(val.getV1()));
+                                break;
+                            case "array":
+                                d.append(att.get(i).split(":")[0], org.bson.types.val.getV1());
+                                break;
+                            case "objectId":
 
-                acc.desconectar();
+                                break;
+                            case "bool":
+
+                                break;
+                            case "date":
+
+                                break;
+                            case "int":
+
+                                break;
+                            case "long":
+
+                                break;
+                            case "decimal":
+
+                                break;
+                        }
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    case 4:
+                        break;
+                    case 5:
+                        break;
+                    case 6:
+                        break;
+                    case 7:
+                        break;
+                    case 8:
+                        break;
+                    case 9:
+                        break;
+                    case 10:
+                        break;
+                    case 11:
+                        break;
+                }
             }
-            if (y != 0) {
-                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operación realizada", "Se insertó la tupla"));
-                this.val.setV1("");
-                this.val.setV2("");
-                this.val.setV3("");
-                this.val.setV4("");
-                this.val.setV5("");
-                this.val.setV6("");
-                this.val.setV7("");
-                this.val.setV8("");
-                this.val.setV9("");
-                this.val.setV10("");
-                this.val.setV11("");
-                this.val.setV12("");
-            } else {
-                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Error", "Error al insertar la tupla"));
+        }
+        if (this.beanBD.getObj().getTipoBD().compareTo("a") == 0) {
+            valores = valores.substring(0, valores.length() - 2);
+            String q = "INSERT INTO " + this.beanBD.getNombreNuevoFrag() + " VALUES (" + valores + ");";
+            try {
+                AccesoDatos acc = new AccesoDatos(beanBD.getObj().getDirbd() + ":" + beanBD.getObj().getPortbd(), beanBD.getObj().getNombd(), beanBD.getObj().getUsubd(), beanBD.getObj().getPassbd());
+                int y = 0;
+                if (acc.conectar()) {
+                    y = acc.ejecutarComando(q);
+
+                    acc.desconectar();
+                }
+                if (y != 0) {
+                    FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operación realizada", "Se insertó la tupla"));
+                    this.val.setV1("");
+                    this.val.setV2("");
+                    this.val.setV3("");
+                    this.val.setV4("");
+                    this.val.setV5("");
+                    this.val.setV6("");
+                    this.val.setV7("");
+                    this.val.setV8("");
+                    this.val.setV9("");
+                    this.val.setV10("");
+                    this.val.setV11("");
+                    this.val.setV12("");
+                } else {
+                    FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Error", "Error al insertar la tupla"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else if (this.beanBD.getObj().getTipoBD().compareTo("b") == 0 || this.beanBD.getObj().getTipoBD().compareTo("c") == 0) {
+            valores = valores.substring(0, valores.length() - 2);
+            String q = "INSERT INTO " + this.beanBD.getNombreNuevoFrag() + " VALUES (" + valores + ");";
+            try {
+                AccesoDatosPG acc = new AccesoDatosPG(beanBD.getObj().getDirbd() + ":" + beanBD.getObj().getPortbd(), beanBD.getObj().getNombd(), beanBD.getObj().getUsubd(), beanBD.getObj().getPassbd());
+                int y = 0;
+                if (acc.conectar()) {
+                    y = acc.ejecutarComando(q);
+
+                    acc.desconectar();
+                }
+                if (y != 0) {
+                    FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Operación realizada", "Se insertó la tupla"));
+                    this.val.setV1("");
+                    this.val.setV2("");
+                    this.val.setV3("");
+                    this.val.setV4("");
+                    this.val.setV5("");
+                    this.val.setV6("");
+                    this.val.setV7("");
+                    this.val.setV8("");
+                    this.val.setV9("");
+                    this.val.setV10("");
+                    this.val.setV11("");
+                    this.val.setV12("");
+                } else {
+                    FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Error", "Error al insertar la tupla"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
