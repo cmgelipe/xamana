@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+import java.util.HashMap;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
@@ -73,7 +74,7 @@ public class bd implements Serializable {
                 setAccexternomongo(new AccesoDatosMG(dirbd + ":" + this.portbd, nombd, this.tabla.getNombre(), usubd, passbd));
                 if (getAccexternomongo().conectar()) {
                     res = true;
-                }else{
+                } else {
                     System.out.println("CONEXION RECHAZADA");
                 }
             } catch (Exception ex) {
@@ -243,7 +244,7 @@ public class bd implements Serializable {
         double nOperacionesLog = valoresOPDES.getOperaciones();
         double nTuplas = this.nTuplas();
         double nOperacionesTabla = nOperacionesLog / nTuplas;
-        double nValorDes=valoresOPDES.getDesempenio()/nTuplas;
+        double nValorDes = valoresOPDES.getDesempenio() / nTuplas;
         if (this.TipoBD.compareTo("a") == 0) {
             if (this.accexternomysql.conectar()) {
                 arr = this.accexternomysql.ejecutarConsulta(queryRelacional);
@@ -617,6 +618,7 @@ public class bd implements Serializable {
         vOperacionDesempenio ret = new vOperacionDesempenio();
         double op = 0;
         double des = 0;
+        HashMap<String,String> NombreIp=new HashMap<>();
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
@@ -629,7 +631,7 @@ public class bd implements Serializable {
                                 ip = y[2].substring(y[2].indexOf("@") + 1, y[2].indexOf(" ", y[2].indexOf("@") + 1));
                             }
                             if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
-                                if (ip.compareTo(this.dirbd) == 0) {
+                                if (ip.compareTo(this.dirbd) != 0) {
                                     des = des + 2;
                                 } else {
                                     des++;
@@ -640,7 +642,23 @@ public class bd implements Serializable {
                     } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
 
                     } else if (this.TipoBD.compareTo("d") == 0) {
+                        String ipLinea = "";
+                        String nombre = "";
+                        if (actual.toLowerCase().contains("connection accepted from")) {
+                            ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("connection accepted from") + 25);
+                            nombre = "[conn" + ipLinea.substring(ipLinea.indexOf("#") + 1, ipLinea.indexOf("(") - 1) + "]";
+                            ipLinea = ipLinea.substring(0, ipLinea.indexOf(":"));
+                            NombreIp.put(nombre,ipLinea);
+                        }
                         if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                            String sujeto=actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn")+6);
+                            sujeto=sujeto.substring(0, sujeto.indexOf("] "));
+                            String ipTraduccion=NombreIp.get("[conn"+sujeto+"]");
+                            if(ipTraduccion.compareTo("127.0.0.1")==0){
+                                des=des++;
+                            }else{
+                                des=des+2;
+                            }
                             op++;
                         }
                     }

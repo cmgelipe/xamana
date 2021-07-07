@@ -253,7 +253,7 @@ public class confNuevoFragmento implements Serializable {
                                 d.append(att.get(i).split(":")[0], Document.parse(val.getV1()));
                                 break;
                             case "array":
-                                d.append(att.get(i).split(":")[0], org.bson.types.val.getV1());
+                                //d.append(att.get(i).split(":")[0], org.bson.types.val.getV1());
                                 break;
                             case "objectId":
 
