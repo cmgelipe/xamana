@@ -44,6 +44,7 @@ public class bd implements Serializable {
     private Tabla tabla = new Tabla();
     private Integer progress1;
     private List<SelectItem> tablas;
+    private HashMap<String,String> NombreIp;
 
     public boolean conexionexterna() {
         boolean res = false;
@@ -618,7 +619,7 @@ public class bd implements Serializable {
         vOperacionDesempenio ret = new vOperacionDesempenio();
         double op = 0;
         double des = 0;
-        HashMap<String,String> NombreIp=new HashMap<>();
+        setNombreIp(new HashMap<>());
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
@@ -640,7 +641,37 @@ public class bd implements Serializable {
                             }
                         }
                     } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
-
+                        //log_line_prefix = '[%p]-_-%h'
+                        //log_connections = on
+                        //log_disconnections = on
+                        //logging_collector = on
+                        //log_statement = 'all'
+                        //%h debe ser IP!
+                        //conexión: 
+                        //[2168]-_-::1LOG:  conexión autorizada: usuario=postgres base de datos=Prueba application_name=psql
+                        //Desconexión:
+                        //[2168]-_-::1LOG:  desconexiÃ³n: duraciÃ³n de sesiÃ³n: 0:01:31.066 usuario=postgres base=Prueba host=::1 port=51996
+                        //127.0.0.1 en IPv4 y ::1 en IPv6
+                        String ipLinea = "";
+                        String nombre = "";
+                        if (actual.toLowerCase().contains("conexión autorizada")) {
+                            ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("-_-")+3,actual.toLowerCase().indexOf("LOG"));
+                            nombre = actual.substring(ipLinea.indexOf("[") + 1, ipLinea.indexOf("]"));
+                            if(ipLinea.toLowerCase().compareTo("localhost")==0 || ipLinea.toLowerCase().compareTo("::1")==0){
+                                ipLinea="127.0.0.1";
+                            }
+                            getNombreIp().put(nombre,ipLinea);
+                        }
+                        if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                            String sujeto=actual.substring(actual.indexOf("[")+1,actual.indexOf("]"));
+                            String ipTraduccion=getNombreIp().get(sujeto);
+                            if(ipTraduccion.compareTo("127.0.0.1")==0){
+                                des=des++;
+                            }else{
+                                des=des+2;
+                            }
+                            op++;
+                        }
                     } else if (this.TipoBD.compareTo("d") == 0) {
                         String ipLinea = "";
                         String nombre = "";
@@ -648,12 +679,12 @@ public class bd implements Serializable {
                             ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("connection accepted from") + 25);
                             nombre = "[conn" + ipLinea.substring(ipLinea.indexOf("#") + 1, ipLinea.indexOf("(") - 1) + "]";
                             ipLinea = ipLinea.substring(0, ipLinea.indexOf(":"));
-                            NombreIp.put(nombre,ipLinea);
+                            getNombreIp().put(nombre,ipLinea);
                         }
                         if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                             String sujeto=actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn")+6);
                             sujeto=sujeto.substring(0, sujeto.indexOf("] "));
-                            String ipTraduccion=NombreIp.get("[conn"+sujeto+"]");
+                            String ipTraduccion=getNombreIp().get("[conn"+sujeto+"]");
                             if(ipTraduccion.compareTo("127.0.0.1")==0){
                                 des=des++;
                             }else{
@@ -900,5 +931,19 @@ public class bd implements Serializable {
      */
     public void setAccexternomongo(AccesoDatosMG accexternomongo) {
         this.accexternomongo = accexternomongo;
+    }
+
+    /**
+     * @return the NombreIp
+     */
+    public HashMap<String,String> getNombreIp() {
+        return NombreIp;
+    }
+
+    /**
+     * @param NombreIp the NombreIp to set
+     */
+    public void setNombreIp(HashMap<String,String> NombreIp) {
+        this.NombreIp = NombreIp;
     }
 }

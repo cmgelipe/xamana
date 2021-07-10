@@ -124,49 +124,63 @@ public class BDJB implements Serializable {
                             .build();
                 } else if (this.getObj().getTipoBD().compareTo("b") == 0 || this.getObj().getTipoBD().compareTo("c") == 0) {
                     String ruta = ((ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext()).getRealPath("/");
-                    String a=stringArchivoA();
-                    String b=stringArchivoB();
-                    String c=stringArchivoC();
-                    String d=stringArchivoD();
-                    String e=stringArchivoE();
-                    String f=stringArchivoF();
-                    File existe=new File(ruta+"resources/descargas/FuncionDinamicaCrear.sql");
-                    if(existe.exists())existe.delete();
-                    existe=new File(ruta+"resources/descargas/Crear.sql");
-                    if(existe.exists())existe.delete();
-                    existe=new File(ruta+"resources/descargas/FuncionDinamicaEliminar.sql");
-                    if(existe.exists())existe.delete();
-                    existe=new File(ruta+"resources/descargas/Eliminar.sql");
-                    if(existe.exists())existe.delete();
-                    existe=new File(ruta+"resources/descargas/FuncionDinamicaModificar.sql");
-                    if(existe.exists())existe.delete();
-                    existe=new File(ruta+"resources/descargas/Modificar.sql");
-                    if(existe.exists())existe.delete();
-                    existe=new File(ruta+"resources/descargas/Archivos.zip");
-                    if(existe.exists())existe.delete();
-                    
-                    RandomAccessFile ran=new RandomAccessFile(ruta+"resources/descargas/FuncionDinamicaCrear.sql","rw");
+                    String a = stringArchivoA();
+                    String b = stringArchivoB();
+                    String c = stringArchivoC();
+                    String d = stringArchivoD();
+                    String e = stringArchivoE();
+                    String f = stringArchivoF();
+                    File existe = new File(ruta + "resources/descargas/FuncionDinamicaCrear.sql");
+                    if (existe.exists()) {
+                        existe.delete();
+                    }
+                    existe = new File(ruta + "resources/descargas/Crear.sql");
+                    if (existe.exists()) {
+                        existe.delete();
+                    }
+                    existe = new File(ruta + "resources/descargas/FuncionDinamicaEliminar.sql");
+                    if (existe.exists()) {
+                        existe.delete();
+                    }
+                    existe = new File(ruta + "resources/descargas/Eliminar.sql");
+                    if (existe.exists()) {
+                        existe.delete();
+                    }
+                    existe = new File(ruta + "resources/descargas/FuncionDinamicaModificar.sql");
+                    if (existe.exists()) {
+                        existe.delete();
+                    }
+                    existe = new File(ruta + "resources/descargas/Modificar.sql");
+                    if (existe.exists()) {
+                        existe.delete();
+                    }
+                    existe = new File(ruta + "resources/descargas/Archivos.zip");
+                    if (existe.exists()) {
+                        existe.delete();
+                    }
+
+                    RandomAccessFile ran = new RandomAccessFile(ruta + "resources/descargas/FuncionDinamicaCrear.sql", "rw");
                     ran.writeBytes(a);
                     ran.close();
-                    ran=new RandomAccessFile(ruta+"resources/descargas/Crear.sql","rw");
+                    ran = new RandomAccessFile(ruta + "resources/descargas/Crear.sql", "rw");
                     ran.writeBytes(b);
                     ran.close();
-                    ran=new RandomAccessFile(ruta+"resources/descargas/FuncionDinamicaEliminar.sql","rw");
+                    ran = new RandomAccessFile(ruta + "resources/descargas/FuncionDinamicaEliminar.sql", "rw");
                     ran.writeBytes(c);
                     ran.close();
-                    ran=new RandomAccessFile(ruta+"resources/descargas/Eliminar.sql","rw");
+                    ran = new RandomAccessFile(ruta + "resources/descargas/Eliminar.sql", "rw");
                     ran.writeBytes(d);
                     ran.close();
-                    ran=new RandomAccessFile(ruta+"resources/descargas/FuncionDinamicaModificar.sql","rw");
+                    ran = new RandomAccessFile(ruta + "resources/descargas/FuncionDinamicaModificar.sql", "rw");
                     ran.writeBytes(e);
                     ran.close();
-                    ran=new RandomAccessFile(ruta+"resources/descargas/Modificar.sql","rw");
+                    ran = new RandomAccessFile(ruta + "resources/descargas/Modificar.sql", "rw");
                     ran.writeBytes(f);
                     ran.close();
-                    
-                    File w = new File(ruta+"resources/descargas/FuncionDinamicaCrear.sql");
+
+                    File w = new File(ruta + "resources/descargas/FuncionDinamicaCrear.sql");
                     InputStream u = new FileInputStream(w);
-                    ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(new File(ruta+"resources/descargas/Archivos.zip"))));
+                    ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(new File(ruta + "resources/descargas/Archivos.zip"))));
                     zos.putNextEntry(new ZipEntry("FuncionDinamicaCrear.sql"));
                     byte[] bytes = new byte[1024];
                     int length;
@@ -174,52 +188,52 @@ public class BDJB implements Serializable {
                         zos.write(bytes, 0, length);
                     }
                     u.close();
-                    
-                    w=new File(ruta+"resources/descargas/Crear.sql");
-                    u=new FileInputStream(w);
+
+                    w = new File(ruta + "resources/descargas/Crear.sql");
+                    u = new FileInputStream(w);
                     zos.putNextEntry(new ZipEntry("Crear.sql"));
                     bytes = new byte[1024];
                     while ((length = u.read(bytes)) >= 0) {
                         zos.write(bytes, 0, length);
                     }
                     u.close();
-                    
-                    w=new File(ruta+"resources/descargas/FuncionDinamicaEliminar.sql");
-                    u=new FileInputStream(w);
+
+                    w = new File(ruta + "resources/descargas/FuncionDinamicaEliminar.sql");
+                    u = new FileInputStream(w);
                     zos.putNextEntry(new ZipEntry("FuncionDinamicaEliminar.sql"));
                     bytes = new byte[1024];
                     while ((length = u.read(bytes)) >= 0) {
                         zos.write(bytes, 0, length);
                     }
                     u.close();
-                    
-                    w=new File(ruta+"resources/descargas/Eliminar.sql");
-                    u=new FileInputStream(w);
+
+                    w = new File(ruta + "resources/descargas/Eliminar.sql");
+                    u = new FileInputStream(w);
                     zos.putNextEntry(new ZipEntry("Eliminar.sql"));
                     bytes = new byte[1024];
                     while ((length = u.read(bytes)) >= 0) {
                         zos.write(bytes, 0, length);
                     }
                     u.close();
-                    
-                    w=new File(ruta+"resources/descargas/FuncionDinamicaModificar.sql");
-                    u=new FileInputStream(w);
+
+                    w = new File(ruta + "resources/descargas/FuncionDinamicaModificar.sql");
+                    u = new FileInputStream(w);
                     zos.putNextEntry(new ZipEntry("FuncionDinamicaModificar.sql"));
                     bytes = new byte[1024];
                     while ((length = u.read(bytes)) >= 0) {
                         zos.write(bytes, 0, length);
                     }
                     u.close();
-                    
-                    w=new File(ruta+"resources/descargas/Modificar.sql");
-                    u=new FileInputStream(w);
+
+                    w = new File(ruta + "resources/descargas/Modificar.sql");
+                    u = new FileInputStream(w);
                     zos.putNextEntry(new ZipEntry("Modificar.sql"));
                     bytes = new byte[1024];
                     while ((length = u.read(bytes)) >= 0) {
                         zos.write(bytes, 0, length);
                     }
                     u.close();
-                    
+
                     zos.close();
                     this.Descarga = DefaultStreamedContent.builder()
                             .name("Archivos.zip")
@@ -556,328 +570,367 @@ public class BDJB implements Serializable {
         System.out.println("contra" + this.obj.getNombd());
         return "confNuevoFragmento.xhtml";
     }
-    
-    String stringArchivoA(){
-        String a="CREATE or replace FUNCTION public.trg_alter_test()\n" +
-"    RETURNS event_trigger\n" +
-"    LANGUAGE 'plpgsql'\n" +
-"    COST 100\n" +
-"    VOLATILE NOT LEAKPROOF\n" +
-"AS $BODY$\n" +
-"DECLARE\n" +
-"     obj record;\n" +
-"	 nActuales record;\n" +
-"	 nTablas name;\n" +
-"	 cActuales bigint;\n" +
-"	 cOtras bigint;\n" +
-"	 nombreAtributo name;\n" +
-"	 nombreAtributoFragmento name;\n" +
-"	 faltante record;\n" +
-"	 prueba record;\n" +
-"	 bandera boolean;\n" +
-"	 consulta text;\n" +
-"	 consultaRemota text;\n" +
-"	 dblinkExt bigint;\n" +
-"BEGIN\n" +
-"	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n" +
-"	if dblinkExt=0 then\n" +
-"		CREATE EXTENSION dblink;\n" +
-"	end if;\n" +
-"    FOR obj in SELECT * FROM pg_event_trigger_ddl_commands()\n" +
-"         LOOP\n" +
-"              IF obj.objid = 'tabla1'::regclass THEN --tabla1 es nombre de la tabla que se fragmentó\n" +
-"			  	cActuales=(SELECT count(column_name) FROM information_schema.columns \n" +
-"						   WHERE table_schema = 'public' AND table_name='tabla1');\n" +
-"				bandera=false;\n" +
-"                for nTablas in SELECT table_name FROM information_schema.tables \n" +
-"					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like 'tabla1_%'\n" +
-"					LOOP\n" +
-"					cOtras=(SELECT count(column_name) FROM information_schema.columns \n" +
-"						   WHERE table_schema = 'public' AND table_name=nTablas);\n" +
-"					IF cActuales>cOtras then\n" +
-"						for faltante in SELECT t0.column_name, t0.data_type \n" +
-"						FROM information_schema.columns as t0\n" +
-"						left join (SELECT column_name \n" +
-"	  						FROM information_schema.columns \n" +
-"							WHERE table_schema = 'public' \n" +
-"	  						AND table_name=nTablas) as t1\n" +
-"						on t0.column_name=t1.column_name\n" +
-"						WHERE table_schema = 'public' \n" +
-"						AND table_name='tabla1'\n" +
-"						and t1 is null\n" +
-"						loop\n" +
-"							begin\n" +
-"								consulta='alter table '|| nTablas ||' add column '||faltante.column_name||' '||faltante.data_type;\n" +
-"								perform dblink_exec('dbname=Prueba user=postgres password=sunny_4teamo',consulta);--Agregar ip local\n" +
-"								if bandera=false then\n" +
-"									consultaRemota='select crear('''||faltante.column_name||'::'||faltante.data_type||''')';	\n" +
-"									--perform dblink('dbname=Prueba1 user=postgres password=sunny_4teamo',consultaRemota) as tt;--agregar cada ip remota\n" +
-"									select crear into prueba from dblink('dbname=Prueba1 user=postgres password=sunny_4teamo',consultaRemota) as t1(crear int);--agregar cada ip remota\n" +
-"									bandera=true;\n" +
-"								end if;\n" +
-"								RAISE NOTICE '% %',faltante.column_name, faltante.data_type;\n" +
-"							end;\n" +
-"						end loop;\n" +
-"					end if;\n" +
-"						   RAISE NOTICE '% %',cOtras, nTablas::text;\n" +
-"					END LOOP;\n" +
-"				END IF;\n" +
-"         END LOOP;\n" +
-"END\n" +
-"$BODY$;\n" +
-"\n" +
-"CREATE EVENT TRIGGER test_trigger ON ddl_command_end WHEN TAG IN ('ALTER TABLE')\n" +
-"EXECUTE FUNCTION trg_alter_test();";
-        return a;
+
+    String stringArchivoA() {
+        ArrayList<String> ips = new ArrayList<>();
+        for (String value : this.obj.getNombreIp().values()) {
+            if (!ips.contains(value)) {
+                ips.add(value);
+            }
+        }
+        String a1 = "CREATE or replace FUNCTION public.trg_alter_test()\n"
+                + "    RETURNS event_trigger\n"
+                + "    LANGUAGE 'plpgsql'\n"
+                + "    COST 100\n"
+                + "    VOLATILE NOT LEAKPROOF\n"
+                + "AS $BODY$\n"
+                + "DECLARE\n"
+                + "     obj record;\n"
+                + "	 nActuales record;\n"
+                + "	 nTablas name;\n"
+                + "	 cActuales bigint;\n"
+                + "	 cOtras bigint;\n"
+                + "	 nombreAtributo name;\n"
+                + "	 nombreAtributoFragmento name;\n"
+                + "	 faltante record;\n"
+                + "	 prueba record;\n"
+                + "	 bandera boolean;\n"
+                + "	 consulta text;\n"
+                + "	 consultaRemota text;\n"
+                + "	 dblinkExt bigint;\n"
+                + "BEGIN\n"
+                + "	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n"
+                + "	if dblinkExt=0 then\n"
+                + "		CREATE EXTENSION dblink;\n"
+                + "	end if;\n"
+                + "    FOR obj in SELECT * FROM pg_event_trigger_ddl_commands()\n"
+                + "         LOOP\n"
+                + "              IF obj.objid = '" + this.obj.getTabla().getNombre() + "'::regclass THEN \n"
+                +//--tabla1 es nombre de la tabla que se fragmentó
+                "			  	cActuales=(SELECT count(column_name) FROM information_schema.columns \n"
+                + "						   WHERE table_schema = 'public' AND table_name='" + this.obj.getTabla().getNombre() + "');\n"
+                + "				bandera=false;\n"
+                + "                for nTablas in SELECT table_name FROM information_schema.tables \n"
+                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '" + this.obj.getTabla().getNombre() + "_%'\n"
+                + "					LOOP\n"
+                + "					cOtras=(SELECT count(column_name) FROM information_schema.columns \n"
+                + "						   WHERE table_schema = 'public' AND table_name=nTablas);\n"
+                + "					IF cActuales>cOtras then\n"
+                + "						for faltante in SELECT t0.column_name, t0.data_type \n"
+                + "						FROM information_schema.columns as t0\n"
+                + "						left join (SELECT column_name \n"
+                + "	  						FROM information_schema.columns \n"
+                + "							WHERE table_schema = 'public' \n"
+                + "	  						AND table_name=nTablas) as t1\n"
+                + "						on t0.column_name=t1.column_name\n"
+                + "						WHERE table_schema = 'public' \n"
+                + "						AND table_name='" + this.obj.getTabla().getNombre() + "'\n"
+                + "						and t1 is null\n"
+                + "						loop\n"
+                + "							begin\n"
+                + "								consulta='alter table '|| nTablas ||' add column '||faltante.column_name||' '||faltante.data_type;\n"
+                + "								perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);\n"
+                +//Agregar ip local
+                "								if bandera=false then\n"
+                + "									consultaRemota='select crear('''||faltante.column_name||'::'||faltante.data_type||''')';	\n"
+                + "									--perform dblink('dbname=Prueba1 user=postgres password=sunny_4teamo',consultaRemota) as tt;--agregar cada ip remota\n";
+        String a2 = "";
+        for (String r : ips) {
+            a2 += "select crear into prueba from dblink('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + " hostaddr=" + r + " port=5432',consultaRemota) as t1(crear int);\n";//--agregar cada ip remota
+        }
+
+        String a3 = "									bandera=true;\n"
+                + "								end if;\n"
+                + "								RAISE NOTICE '% %',faltante.column_name, faltante.data_type;\n"
+                + "							end;\n"
+                + "						end loop;\n"
+                + "					end if;\n"
+                + "						   RAISE NOTICE '% %',cOtras, nTablas::text;\n"
+                + "					END LOOP;\n"
+                + "				END IF;\n"
+                + "         END LOOP;\n"
+                + "END\n"
+                + "$BODY$;\n"
+                + "\n"
+                + "CREATE EVENT TRIGGER test_trigger ON ddl_command_end WHEN TAG IN ('ALTER TABLE')\n"
+                + "EXECUTE FUNCTION trg_alter_test();";
+        return a1 + a2 + a3;
     }
-    String stringArchivoB(){
-        String b="create or replace function crear(original varchar) RETURNS int as\n" +
-"$$\n" +
-"declare\n" +
-"	nTablas record;\n" +
-"	contador int;\n" +
-"	res2 varchar;\n" +
-"	res3 varchar;\n" +
-"	consulta text;\n" +
-"	dblinkExt bigint;\n" +
-"begin\n" +
-"	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n" +
-"	if dblinkExt=0 then\n" +
-"		CREATE EXTENSION dblink;\n" +
-"	end if;\n" +
-"	res2=(select split_part(original,'::',1));\n" +
-"	res3=(select split_part(original,'::',2));\n" +
-"	for nTablas in SELECT table_name FROM information_schema.tables \n" +
-"					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like 'tabla1_%'\n" +
-"		loop\n" +
-"			consulta='alter table '|| nTablas.table_name ||' add column '||res2||' '||res3;\n" +
-"			raise notice '%',consulta;\n" +
-"			perform dblink_exec('dbname=Prueba1 user=postgres password=sunny_4teamo',consulta);\n" +
-"		end loop;\n" +
-"	raise notice '%-%',res2,res3;\n" +
-"	return 1;\n" +
-"end;\n" +
-"$$ language plpgsql;";
+
+    String stringArchivoB() {
+        String b = "create or replace function crear(original varchar) RETURNS int as\n"
+                + "$$\n"
+                + "declare\n"
+                + "	nTablas record;\n"
+                + "	contador int;\n"
+                + "	res2 varchar;\n"
+                + "	res3 varchar;\n"
+                + "	consulta text;\n"
+                + "	dblinkExt bigint;\n"
+                + "begin\n"
+                + "	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n"
+                + "	if dblinkExt=0 then\n"
+                + "		CREATE EXTENSION dblink;\n"
+                + "	end if;\n"
+                + "	res2=(select split_part(original,'::',1));\n"
+                + "	res3=(select split_part(original,'::',2));\n"
+                + "	for nTablas in SELECT table_name FROM information_schema.tables \n"
+                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '" + this.obj.getTabla().getNombre() + "_%'\n"
+                + "		loop\n"
+                + "			consulta='alter table '|| nTablas.table_name ||' add column '||res2||' '||res3;\n"
+                + "			raise notice '%',consulta;\n"
+                + "			perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);\n"
+                + "		end loop;\n"
+                + "	raise notice '%-%',res2,res3;\n"
+                + "	return 1;\n"
+                + "end;\n"
+                + "$$ language plpgsql;";
         return b;
     }
-    
-    String stringArchivoC(){
-        String c="CREATE FUNCTION public.trg_alter_test_eliminar()\n" +
-"    RETURNS event_trigger\n" +
-"    LANGUAGE 'plpgsql'\n" +
-"    COST 100\n" +
-"    VOLATILE NOT LEAKPROOF\n" +
-"AS $BODY$\n" +
-"DECLARE\n" +
-"     obj record;\n" +
-"	 nActuales record;\n" +
-"	 nTablas name;\n" +
-"	 cActuales bigint;\n" +
-"	 cOtras bigint;\n" +
-"	 nombreAtributo name;\n" +
-"	 nombreAtributoFragmento name;\n" +
-"	 faltante record;\n" +
-"	 consulta text;\n" +
-"	 prueba record;\n" +
-"	 bandera boolean;\n" +
-"	 consultaRemota text;\n" +
-"	 dblinkExt bigint;\n" +
-"BEGIN\n" +
-"	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n" +
-"	if dblinkExt=0 then\n" +
-"		CREATE EXTENSION dblink;\n" +
-"	end if;\n" +
-"     FOR obj in SELECT * FROM pg_event_trigger_ddl_commands()\n" +
-"         LOOP\n" +
-"              IF obj.objid = 'tabla1'::regclass THEN --tabla1 es nombre de la tabla que se fragmentó\n" +
-"			  	cActuales=(SELECT count(column_name) FROM information_schema.columns \n" +
-"						   WHERE table_schema = 'public' AND table_name='tabla1');\n" +
-"                bandera=false;\n" +
-"				for nTablas in SELECT table_name FROM information_schema.tables \n" +
-"					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like 'tabla1_%'\n" +
-"					LOOP\n" +
-"					cOtras=(SELECT count(column_name) FROM information_schema.columns \n" +
-"						   WHERE table_schema = 'public' AND table_name=nTablas);\n" +
-"					IF cActuales<cOtras then\n" +
-"						for faltante in select t0.column_name, t0.data_type \n" +
-"						from information_schema.columns as t0 \n" +
-"						left join (SELECT column_name \n" +
-"								   FROM information_schema.columns \n" +
-"								   WHERE table_schema = 'public' \n" +
-"								   AND table_name='tabla1') as t1 \n" +
-"									on t0.column_name=t1.column_name \n" +
-"									where table_schema = 'public' AND table_name=nTablas and t1 is null\n" +
-"						loop\n" +
-"							begin\n" +
-"								consulta='alter table '|| nTablas ||' drop column '||faltante.column_name;\n" +
-"								perform dblink_exec('dbname=Prueba user=postgres password=sunny_4teamo',consulta);--sitio principal\n" +
-"								if bandera=false then\n" +
-"									consultaRemota='select eliminar('''||faltante.column_name||''')';\n" +
-"									select eliminar into prueba from dblink('dbname=Prueba1 user=postgres password=sunny_4teamo',consultaRemota) as t1(eliminar int);--agregar cada ip remota\n" +
-"									bandera=true;\n" +
-"								end if;\n" +
-"								RAISE NOTICE '% %',faltante.column_name, faltante.data_type;\n" +
-"							end;\n" +
-"						end loop;\n" +
-"					end if;\n" +
-"						   RAISE NOTICE '% %',cOtras, nTablas::text;\n" +
-"					END LOOP;\n" +
-"				END IF;\n" +
-"         END LOOP;\n" +
-"END\n" +
-"$BODY$;\n" +
-"\n" +
-"CREATE EVENT TRIGGER test_trigger_eliminar ON ddl_command_end WHEN TAG IN ('ALTER TABLE')\n" +
-"EXECUTE FUNCTION trg_alter_test_eliminar();";
-        return c;
+
+    String stringArchivoC() {
+        ArrayList<String> ips = new ArrayList<>();
+        for (String value : this.obj.getNombreIp().values()) {
+            if (!ips.contains(value)) {
+                ips.add(value);
+            }
+        }
+        String a1 = "CREATE FUNCTION public.trg_alter_test_eliminar()\n"
+                + "    RETURNS event_trigger\n"
+                + "    LANGUAGE 'plpgsql'\n"
+                + "    COST 100\n"
+                + "    VOLATILE NOT LEAKPROOF\n"
+                + "AS $BODY$\n"
+                + "DECLARE\n"
+                + "     obj record;\n"
+                + "	 nActuales record;\n"
+                + "	 nTablas name;\n"
+                + "	 cActuales bigint;\n"
+                + "	 cOtras bigint;\n"
+                + "	 nombreAtributo name;\n"
+                + "	 nombreAtributoFragmento name;\n"
+                + "	 faltante record;\n"
+                + "	 consulta text;\n"
+                + "	 prueba record;\n"
+                + "	 bandera boolean;\n"
+                + "	 consultaRemota text;\n"
+                + "	 dblinkExt bigint;\n"
+                + "BEGIN\n"
+                + "	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n"
+                + "	if dblinkExt=0 then\n"
+                + "		CREATE EXTENSION dblink;\n"
+                + "	end if;\n"
+                + "     FOR obj in SELECT * FROM pg_event_trigger_ddl_commands()\n"
+                + "         LOOP\n"
+                + "              IF obj.objid = '" + this.obj.getTabla().getNombre() + "'::regclass THEN \n"
+                +//tabla1 es nombre de la tabla que se fragmentó
+                "			  	cActuales=(SELECT count(column_name) FROM information_schema.columns \n"
+                + "						   WHERE table_schema = 'public' AND table_name='" + this.obj.getTabla().getNombre() + "');\n"
+                + "                bandera=false;\n"
+                + "				for nTablas in SELECT table_name FROM information_schema.tables \n"
+                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '" + this.obj.getTabla().getNombre() + "_%'\n"
+                + "					LOOP\n"
+                + "					cOtras=(SELECT count(column_name) FROM information_schema.columns \n"
+                + "						   WHERE table_schema = 'public' AND table_name=nTablas);\n"
+                + "					IF cActuales<cOtras then\n"
+                + "						for faltante in select t0.column_name, t0.data_type \n"
+                + "						from information_schema.columns as t0 \n"
+                + "						left join (SELECT column_name \n"
+                + "								   FROM information_schema.columns \n"
+                + "								   WHERE table_schema = 'public' \n"
+                + "								   AND table_name='" + this.obj.getTabla().getNombre() + "') as t1 \n"
+                + "									on t0.column_name=t1.column_name \n"
+                + "									where table_schema = 'public' AND table_name=nTablas and t1 is null\n"
+                + "						loop\n"
+                + "							begin\n"
+                + "								consulta='alter table '|| nTablas ||' drop column '||faltante.column_name;\n"
+                + "								perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);\n"
+                + //--sitio principal
+                "								if bandera=false then\n"
+                + "									consultaRemota='select eliminar('''||faltante.column_name||''')';\n";
+        String a2 = "";
+        for (String f : ips) {
+            a2 += "									select eliminar into prueba from dblink('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + " hostaddr=" + f + "',consultaRemota) as t1(eliminar int);--agregar cada ip remota\n";
+        }
+
+        String a3 = "									bandera=true;\n"
+                + "								end if;\n"
+                + "								RAISE NOTICE '% %',faltante.column_name, faltante.data_type;\n"
+                + "							end;\n"
+                + "						end loop;\n"
+                + "					end if;\n"
+                + "						   RAISE NOTICE '% %',cOtras, nTablas::text;\n"
+                + "					END LOOP;\n"
+                + "				END IF;\n"
+                + "         END LOOP;\n"
+                + "END\n"
+                + "$BODY$;\n"
+                + "\n"
+                + "CREATE EVENT TRIGGER test_trigger_eliminar ON ddl_command_end WHEN TAG IN ('ALTER TABLE')\n"
+                + "EXECUTE FUNCTION trg_alter_test_eliminar();";
+        return a1 + a2 + a3;
     }
-    
-    String stringArchivoD(){
-        String D="create or replace function eliminar(original varchar) RETURNS int as\n" +
-"$$\n" +
-"declare\n" +
-"	nTablas record;\n" +
-"	contador int;\n" +
-"	consulta text;\n" +
-"	dblinkExt bigint;\n" +
-"begin\n" +
-"	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n" +
-"	if dblinkExt=0 then\n" +
-"		CREATE EXTENSION dblink;\n" +
-"	end if;\n" +
-"	for nTablas in SELECT table_name FROM information_schema.tables \n" +
-"					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like 'tabla1_%'\n" +
-"		loop\n" +
-"			consulta='alter table '|| nTablas.table_name ||' drop column '||original;\n" +
-"			perform dblink_exec('dbname=Prueba1 user=postgres password=sunny_4teamo',consulta);\n" +
-"		end loop;\n" +
-"	return 1;\n" +
-"end;\n" +
-"$$ language plpgsql;";
+
+    String stringArchivoD() {
+        String D = "create or replace function eliminar(original varchar) RETURNS int as\n"
+                + "$$\n"
+                + "declare\n"
+                + "	nTablas record;\n"
+                + "	contador int;\n"
+                + "	consulta text;\n"
+                + "	dblinkExt bigint;\n"
+                + "begin\n"
+                + "	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n"
+                + "	if dblinkExt=0 then\n"
+                + "		CREATE EXTENSION dblink;\n"
+                + "	end if;\n"
+                + "	for nTablas in SELECT table_name FROM information_schema.tables \n"
+                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '" + this.obj.getTabla().getNombre() + "_%'\n"
+                + "		loop\n"
+                + "			consulta='alter table '|| nTablas.table_name ||' drop column '||original;\n"
+                + "			perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);\n"
+                + "		end loop;\n"
+                + "	return 1;\n"
+                + "end;\n"
+                + "$$ language plpgsql;";
         return D;
     }
-    
-    String stringArchivoE(){
-        String e="CREATE FUNCTION public.trg_alter_test_modificar()\n" +
-"    RETURNS event_trigger\n" +
-"    LANGUAGE 'plpgsql'\n" +
-"    COST 100\n" +
-"    VOLATILE NOT LEAKPROOF\n" +
-"AS $BODY$\n" +
-"DECLARE\n" +
-"     obj record;\n" +
-"	 nActuales record;\n" +
-"	 nTablas name;\n" +
-"	 cActuales bigint;\n" +
-"	 cOtras bigint;\n" +
-"	 nombreAtributo name;\n" +
-"	 nombreAtributoFragmento name;\n" +
-"	 attOriginal record;\n" +
-"	 attOtro record;\n" +
-"	 consulta text;\n" +
-"	 con1 int;\n" +
-"	 con2 int;\n" +
-"	 prueba record;\n" +
-"	 consultaRemota text;\n" +
-"	 bandera boolean;\n" +
-"	 dblinkExt bigint;\n" +
-"BEGIN\n" +
-"	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n" +
-"	if dblinkExt=0 then\n" +
-"		CREATE EXTENSION dblink;\n" +
-"	end if;\n" +
-"    FOR obj in SELECT * FROM pg_event_trigger_ddl_commands()\n" +
-"         LOOP\n" +
-"              IF obj.objid = 'tabla1'::regclass THEN --tabla1 es nombre de la tabla que se fragmentó\n" +
-"			  	cActuales=(SELECT count(column_name) FROM information_schema.columns \n" +
-"						   WHERE table_schema = 'public' AND table_name='tabla1');\n" +
-"				bandera=false;\n" +
-"                for nTablas in SELECT table_name FROM information_schema.tables \n" +
-"					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like 'tabla1_%'\n" +
-"					LOOP\n" +
-"					cOtras=(SELECT count(column_name) FROM information_schema.columns \n" +
-"						   WHERE table_schema = 'public' AND table_name=nTablas);\n" +
-"					IF cActuales=cOtras then\n" +
-"					con1=0;\n" +
-"						for attOriginal in select t0.column_name, t0.data_type\n" +
-"											from information_schema.columns as t0 \n" +
-"											where table_schema = 'public' AND table_name='tabla1' \n" +
-"						loop\n" +
-"							con1=con1+1;\n" +
-"							con2=0;\n" +
-"							for attOtro in select t0.column_name, t0.data_type\n" +
-"											from information_schema.columns as t0 \n" +
-"											where table_schema = 'public' AND table_name=nTablas\n" +
-"							loop\n" +
-"								con2=con2+1;\n" +
-"								if con2=con1 then\n" +
-"									if attOtro.column_name<>attOriginal.column_name then \n" +
-"										--RAISE NOTICE 'DIFERENTE % %',attOtro.column_name, attOriginal.column_name;\n" +
-"										consulta='alter table '|| nTablas ||' rename column '||attOtro.column_name||' to '||attOriginal.column_name;\n" +
-"										perform dblink_exec('dbname=Prueba user=postgres password=sunny_4teamo',consulta);	\n" +
-"										if bandera=false then\n" +
-"											consultaRemota='select modificar('''||attOtro.column_name||'::'||attOriginal.column_name||''',1)';\n" +
-"											select modificar into prueba from dblink('dbname=Prueba1 user=postgres password=sunny_4teamo',consultaRemota) as t1(modificar int);--agregar cada ip remota\n" +
-"											bandera=true;\n" +
-"										end if;\n" +
-"									end if;\n" +
-"									if attOtro.data_type<>attOriginal.data_type then\n" +
-"										RAISE NOTICE 'DIFERENTE % %',attOtro.data_type, attOriginal.data_type;\n" +
-"										consulta='alter table '|| nTablas||' alter column '||attOtro.column_name||' set data type '||attOriginal.data_type;\n" +
-"										perform dblink_exec('dbname=Prueba user=postgres password=sunny_4teamo',consulta);		\n" +
-"										if bandera=false then\n" +
-"											consultaRemota='select modificar('''||attOtro.column_name||'::'||attOriginal.data_type||''',2)';\n" +
-"											select modificar into prueba from dblink('dbname=Prueba1 user=postgres password=sunny_4teamo',consultaRemota) as t1(modificar int);--agregar cada ip remota\n" +
-"											bandera=true;\n" +
-"										end if;\n" +
-"									end if;\n" +
-"								end if;\n" +
-"							end loop;\n" +
-"						end loop;\n" +
-"					end if;\n" +
-"					END LOOP;\n" +
-"				END IF;\n" +
-"         END LOOP;\n" +
-"END\n" +
-"$BODY$;\n" +
-"\n" +
-"CREATE EVENT TRIGGER test_trigger_modificar ON ddl_command_end WHEN TAG IN ('ALTER TABLE')\n" +
-"EXECUTE FUNCTION trg_alter_test_modificar();";
-        return e;
+
+    String stringArchivoE() {
+        ArrayList<String> ips = new ArrayList<>();
+        for (String value : this.obj.getNombreIp().values()) {
+            if (!ips.contains(value)) {
+                ips.add(value);
+            }
+        }
+        String a1 = "CREATE FUNCTION public.trg_alter_test_modificar()\n"
+                + "    RETURNS event_trigger\n"
+                + "    LANGUAGE 'plpgsql'\n"
+                + "    COST 100\n"
+                + "    VOLATILE NOT LEAKPROOF\n"
+                + "AS $BODY$\n"
+                + "DECLARE\n"
+                + "     obj record;\n"
+                + "	 nActuales record;\n"
+                + "	 nTablas name;\n"
+                + "	 cActuales bigint;\n"
+                + "	 cOtras bigint;\n"
+                + "	 nombreAtributo name;\n"
+                + "	 nombreAtributoFragmento name;\n"
+                + "	 attOriginal record;\n"
+                + "	 attOtro record;\n"
+                + "	 consulta text;\n"
+                + "	 con1 int;\n"
+                + "	 con2 int;\n"
+                + "	 prueba record;\n"
+                + "	 consultaRemota text;\n"
+                + "	 bandera boolean;\n"
+                + "	 dblinkExt bigint;\n"
+                + "BEGIN\n"
+                + "	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n"
+                + "	if dblinkExt=0 then\n"
+                + "		CREATE EXTENSION dblink;\n"
+                + "	end if;\n"
+                + "    FOR obj in SELECT * FROM pg_event_trigger_ddl_commands()\n"
+                + "         LOOP\n"
+                + "              IF obj.objid = '" + this.obj.getTabla().getNombre() + "'::regclass THEN \n"//--tabla1 es nombre de la tabla que se fragmentó
+                + "			  	cActuales=(SELECT count(column_name) FROM information_schema.columns \n"
+                + "						   WHERE table_schema = 'public' AND table_name='" + this.obj.getTabla().getNombre() + "');\n"
+                + "				bandera=false;\n"
+                + "                for nTablas in SELECT table_name FROM information_schema.tables \n"
+                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '" + this.obj.getTabla().getNombre() + "_%'\n"
+                + "					LOOP\n"
+                + "					cOtras=(SELECT count(column_name) FROM information_schema.columns \n"
+                + "						   WHERE table_schema = 'public' AND table_name=nTablas);\n"
+                + "					IF cActuales=cOtras then\n"
+                + "					con1=0;\n"
+                + "						for attOriginal in select t0.column_name, t0.data_type\n"
+                + "											from information_schema.columns as t0 \n"
+                + "											where table_schema = 'public' AND table_name='" + this.obj.getTabla().getNombre() + "' \n"
+                + "						loop\n"
+                + "							con1=con1+1;\n"
+                + "							con2=0;\n"
+                + "							for attOtro in select t0.column_name, t0.data_type\n"
+                + "											from information_schema.columns as t0 \n"
+                + "											where table_schema = 'public' AND table_name=nTablas\n"
+                + "							loop\n"
+                + "								con2=con2+1;\n"
+                + "								if con2=con1 then\n"
+                + "									if attOtro.column_name<>attOriginal.column_name then \n"
+                + "										--RAISE NOTICE 'DIFERENTE % %',attOtro.column_name, attOriginal.column_name;\n"
+                + "										consulta='alter table '|| nTablas ||' rename column '||attOtro.column_name||' to '||attOriginal.column_name;\n"
+                + "										perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);	\n"
+                + "										if bandera=false then\n"
+                + "											consultaRemota='select modificar('''||attOtro.column_name||'::'||attOriginal.column_name||''',1)';\n";
+        String a2 = "";
+        for (String f : ips) {
+            a2 += "											select modificar into prueba from dblink('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + " hostaddr=" + f + "',consultaRemota) as t1(modificar int);\n";//--agregar cada ip remota
+        }
+
+        String a3 = "											bandera=true;\n"
+                + "										end if;\n"
+                + "									end if;\n"
+                + "									if attOtro.data_type<>attOriginal.data_type then\n"
+                + "										RAISE NOTICE 'DIFERENTE % %',attOtro.data_type, attOriginal.data_type;\n"
+                + "										consulta='alter table '|| nTablas||' alter column '||attOtro.column_name||' set data type '||attOriginal.data_type;\n"
+                + "										perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);		\n"
+                + "										if bandera=false then\n"
+                + "											consultaRemota='select modificar('''||attOtro.column_name||'::'||attOriginal.data_type||''',2)';\n";
+        String a4 = "";
+        for (String f : ips) {
+            a4 += "											select modificar into prueba from dblink('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + " hostaddr=" + f + "',consultaRemota) as t1(modificar int);\n";//--agregar cada ip remota
+        }
+        String a5 = "											bandera=true;\n"
+                + "										end if;\n"
+                + "									end if;\n"
+                + "								end if;\n"
+                + "							end loop;\n"
+                + "						end loop;\n"
+                + "					end if;\n"
+                + "					END LOOP;\n"
+                + "				END IF;\n"
+                + "         END LOOP;\n"
+                + "END\n"
+                + "$BODY$;\n"
+                + "\n"
+                + "CREATE EVENT TRIGGER test_trigger_modificar ON ddl_command_end WHEN TAG IN ('ALTER TABLE')\n"
+                + "EXECUTE FUNCTION trg_alter_test_modificar();";
+        return a1 + a2 + a3+a4+a5;
     }
-    String stringArchivoF(){
-        String f="create or replace function modificar(original varchar,modo int) RETURNS int as\n" +
-"$$\n" +
-"declare\n" +
-"	nTablas record;\n" +
-"	contador int;\n" +
-"	res2 varchar;\n" +
-"	res3 varchar;\n" +
-"	consulta text;\n" +
-"	dblinkExt bigint;\n" +
-"begin\n" +
-"	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n" +
-"	if dblinkExt=0 then\n" +
-"		CREATE EXTENSION dblink;\n" +
-"	end if;\n" +
-"	res2=(select split_part(original,'::',1));\n" +
-"	res3=(select split_part(original,'::',2));\n" +
-"	for nTablas in SELECT table_name FROM information_schema.tables \n" +
-"					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like 'tabla1_%'\n" +
-"		loop\n" +
-"			if modo=1 then\n" +
-"				consulta='alter table '|| nTablas.table_name ||' rename column '||res2||' to '||res3;\n" +
-"				perform dblink_exec('dbname=Prueba1 user=postgres password=sunny_4teamo',consulta);\n" +
-"			end if;\n" +
-"			if modo=2 then\n" +
-"				consulta='alter table '|| nTablas.table_name ||' alter column '||res2||' set data type '||res3;\n" +
-"				perform dblink_exec('dbname=Prueba1 user=postgres password=sunny_4teamo',consulta);\n" +
-"			end if;\n" +
-"		end loop;\n" +
-"	raise notice '%-%',res2,res3;\n" +
-"	return 1;\n" +
-"end;\n" +
-"$$ language plpgsql;";
+
+    String stringArchivoF() {
+        String f = "create or replace function modificar(original varchar,modo int) RETURNS int as\n"
+                + "$$\n"
+                + "declare\n"
+                + "	nTablas record;\n"
+                + "	contador int;\n"
+                + "	res2 varchar;\n"
+                + "	res3 varchar;\n"
+                + "	consulta text;\n"
+                + "	dblinkExt bigint;\n"
+                + "begin\n"
+                + "	dblinkExt=(select count(extname) from pg_extension where extname='dblink');\n"
+                + "	if dblinkExt=0 then\n"
+                + "		CREATE EXTENSION dblink;\n"
+                + "	end if;\n"
+                + "	res2=(select split_part(original,'::',1));\n"
+                + "	res3=(select split_part(original,'::',2));\n"
+                + "	for nTablas in SELECT table_name FROM information_schema.tables \n"
+                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '"+this.obj.getTabla().getNombre()+"_%'\n"
+                + "		loop\n"
+                + "			if modo=1 then\n"
+                + "				consulta='alter table '|| nTablas.table_name ||' rename column '||res2||' to '||res3;\n"
+                + "				perform dblink_exec('dbname="+this.obj.getNombd()+" user="+this.obj.getUsubd()+" password="+this.obj.getPassbd()+"',consulta);\n"
+                + "			end if;\n"
+                + "			if modo=2 then\n"
+                + "				consulta='alter table '|| nTablas.table_name ||' alter column '||res2||' set data type '||res3;\n"
+                + "				perform dblink_exec('dbname="+this.obj.getNombd()+" user="+this.obj.getUsubd()+" password="+this.obj.getPassbd()+"',consulta);\n"
+                + "			end if;\n"
+                + "		end loop;\n"
+                + "	raise notice '%-%',res2,res3;\n"
+                + "	return 1;\n"
+                + "end;\n"
+                + "$$ language plpgsql;";
         return f;
     }
 }
