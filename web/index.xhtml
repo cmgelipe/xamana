@@ -78,7 +78,7 @@
                 <h:outputText value="La conexión no fue exitosa. Revise sus datos."/><br /><br />
                 <p:commandButton value="Revisar" action="#{bd.revisarDatos()}" update="f2:dl3" />
             </p:dialog>
-            <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>
+            <p:ajaxStatus onstart="PF('statusDialog').show()" onerror="PF('statusDialog').hide()" onsuccess="PF('statusDialog').hide()"/>
 
             <p:dialog width="20%" widgetVar="statusDialog" modal="true" draggable="false" closable="false" resizable="false" showHeader="false">
                 <h:graphicImage style="margin-left: 40%" name="images/load.gif" width="20%"/>

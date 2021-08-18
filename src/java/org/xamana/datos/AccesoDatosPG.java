@@ -289,7 +289,8 @@ public final class AccesoDatosPG implements Serializable {
             DatabaseMetaData metadata = oConexion.getMetaData();
             ResultSet atributos = metadata.getColumns(null, null, nombre, null);
             while (atributos.next()) {
-                ret.add(atributos.getString("COLUMN_NAME") + ":" + atributos.getString("TYPE_NAME") + ":" + atributos.getString("COLUMN_SIZE"));
+                String tam=Double.parseDouble(atributos.getString("COLUMN_SIZE"))>10000000?"10000000":atributos.getString("COLUMN_SIZE");
+                ret.add(atributos.getString("COLUMN_NAME") + ":" + atributos.getString("TYPE_NAME") + ":" + tam);
             }
         } catch (SQLException ex) {
             Logger.getLogger(AccesoDatos.class.getName()).log(Level.SEVERE, null, ex);

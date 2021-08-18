@@ -251,6 +251,10 @@ public class BDJB implements Serializable {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        } else if (this.obj.getTabla().isCBIR()
+                    && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
+            //Parte vertical
+            
         }
         return "esquema.xhtml";
     }
