@@ -5,14 +5,12 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
 import static com.mongodb.client.model.Aggregates.project;
 import com.mongodb.client.model.Projections;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -29,6 +27,7 @@ public class AccesoDatosMG implements Serializable {
     private static String sUsr = null; // Usuario
     private static String sPwd = null;  // Contraseña
     private static String tabla = null;
+    private static Logger logger;
     private MongoClient mongoClient;  // La conexión
 
     public AccesoDatosMG(String url, String nombd, String tabla, String usr, String pwd) throws Exception {
