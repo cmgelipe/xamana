@@ -20,6 +20,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.json.JSONObject;
@@ -245,6 +247,7 @@ public class bd implements Serializable {
         double nOperacionesLog = valoresOPDES.getOperaciones();
         double nTuplas = this.nTuplas();
         double nOperacionesTabla = nOperacionesLog / nTuplas;
+        System.out.println("nOperacionesTabla:"+nOperacionesTabla);
         double nValorDes = valoresOPDES.getDesempenio() / nTuplas;
         if (this.TipoBD.compareTo("a") == 0) {
             if (this.accexternomysql.conectar()) {
@@ -259,8 +262,8 @@ public class bd implements Serializable {
                     tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
                     tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
                     tupla.setPorcentaje("" + (((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
-                    tupla.setNOperacionesAprox("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
-                    tupla.setNdesempenio("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100)).intValue()));
+                    tupla.setNOperacionesAprox("" + ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100));
+                    tupla.setNdesempenio("" + ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100));
                     res.add(tupla);
                 }
             }
@@ -276,8 +279,9 @@ public class bd implements Serializable {
                     tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
                     tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
                     tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
-                    tupla.setPorcentaje("" + (((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
-                    tupla.setNOperacionesAprox("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
+                    tupla.setPorcentaje("" + ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas));
+                    tupla.setNOperacionesAprox("" + ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100));
+                    tupla.setNdesempenio("" + ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100));
                     res.add(tupla);
                 }
             }
@@ -296,8 +300,9 @@ public class bd implements Serializable {
                         tupla.setNombre(this.tabla.getNombre() + "_f" + (t));
                         tupla.setValor("" + (new JSONObject(d.toJson())).get("_id"));
                         tupla.setNTuplas("" + (new JSONObject(d.toJson())).get("num"));
-                        tupla.setPorcentaje("" + (((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
-                        tupla.setNOperacionesAprox("" + (((Double) ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100)).intValue()));
+                        tupla.setPorcentaje("" + ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas));
+                        tupla.setNOperacionesAprox("" + ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100));
+                        tupla.setNdesempenio("" + ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100));
                         res.add(tupla);
                     }
                 }
@@ -323,11 +328,11 @@ public class bd implements Serializable {
             if (acc.conectar()) {
 
                 if (this.usubd.isEmpty()) {
-                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "',null,null)";
+                    query = "insert into bd (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "',null,null)";
                 } else if (!this.usubd.isEmpty() && this.passbd.isEmpty()) {
-                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
+                    query = "insert into bd (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
                 } else {
-                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
+                    query = "insert into bd (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
                 }
                 acc.ejecutarComando(query);
                 ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
@@ -416,8 +421,10 @@ public class bd implements Serializable {
                 acc = new AccesoDatos();
                 if (acc.conectar()) {
                     String un = "0";
+                    String dos= "0";
                     un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
-                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ")";
+                    dos= (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
+                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ","+dos+")";
                     acc.ejecutarComando(q);
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
@@ -508,7 +515,6 @@ public class bd implements Serializable {
                                     }
                                     if (this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 0 || this.transTipoDato(this.getTabla().getAtributos().get(j).getTipo()) == 2) {
                                         valores += "'" + ((ArrayList) resultado.get(i)).get(j) + "', ";
-                                        System.out.println("pasa");
                                     } else {
                                         valores += ((ArrayList) resultado.get(i)).get(j) + ", ";
                                     }
@@ -524,8 +530,11 @@ public class bd implements Serializable {
                 }
                 if (acc.conectar()) {
                     String un = "0";
+                    String dos= "0";
                     un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
-                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ")";
+                    dos= (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
+                    System.out.println("undos:"+un+" - "+dos);
+                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ","+dos+")";
                     acc.ejecutarComando(q);
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
@@ -591,8 +600,10 @@ public class bd implements Serializable {
                     }
                     if (acc.conectar()) {
                         String un = "0";
+                        String dos="0";
                         un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
-                        String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ")";
+                        dos= (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
+                        String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ","+dos+")";
                         acc.ejecutarComando(q);
                         ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                         String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
@@ -609,11 +620,11 @@ public class bd implements Serializable {
 
                 }
             }
+            if (this.progress1 < 100) {
+                this.progress1 = 100;
+            }
         } catch (Exception y) {
             y.printStackTrace();
-        }
-        if (this.progress1 < 100) {
-            this.progress1 = 100;
         }
     }
 
@@ -639,6 +650,21 @@ public class bd implements Serializable {
                                     des = des + 2;
                                 } else {
                                     des++;
+                                }
+                                op++;
+                            } else if((actual.toLowerCase().contains("delete")
+                                    || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                                if (ip.compareTo(this.dirbd) != 0) {
+                                    des = des + 4;
+                                } else {
+                                    des = des + 2;
+                                }
+                                op++;
+                            }else if(actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                                if (ip.compareTo(this.dirbd) != 0) {
+                                    des = des + 6;
+                                } else {
+                                    des = des + 3;
                                 }
                                 op++;
                             }
@@ -672,10 +698,29 @@ public class bd implements Serializable {
                             if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                                 String ipTraduccion = getNombreIp().get(sujeto);
-                                if (ipTraduccion.compareTo("127.0.0.1") == 0) {
+                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
                                     des = des++;
                                 } else {
                                     des = des + 2;
+                                }
+                                op++;
+                            }else if((actual.toLowerCase().contains("delete")
+                                    || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                                String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
+                                String ipTraduccion = getNombreIp().get(sujeto);
+                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
+                                    des = des + 2;
+                                } else {
+                                    des = des + 4;
+                                }
+                                op++;
+                            }else if(actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                                String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
+                                String ipTraduccion = getNombreIp().get(sujeto);
+                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
+                                    des = des+3;
+                                } else {
+                                    des = des + 6;
                                 }
                                 op++;
                             }
@@ -693,10 +738,31 @@ public class bd implements Serializable {
                             String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
                             sujeto = sujeto.substring(0, sujeto.indexOf("] "));
                             String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
-                            if (ipTraduccion.compareTo("127.0.0.1") == 0) {
+                            if (ipTraduccion.compareTo(this.dirbd) == 0) {
                                 des = des++;
                             } else {
                                 des = des + 2;
+                            }
+                            op++;
+                        }else if((actual.toLowerCase().contains("insert") 
+                                || actual.toLowerCase().contains("remove")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                            String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
+                            sujeto = sujeto.substring(0, sujeto.indexOf("] "));
+                            String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
+                            if (ipTraduccion.compareTo(this.dirbd) == 0) {
+                                des = des+2;
+                            } else {
+                                des = des + 4;
+                            }
+                            op++;
+                        }else if(actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                            String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
+                            sujeto = sujeto.substring(0, sujeto.indexOf("] "));
+                            String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
+                            if (ipTraduccion.compareTo(this.dirbd) == 0) {
+                                des = des+3;
+                            } else {
+                                des = des + 6;
                             }
                             op++;
                         }
@@ -707,12 +773,46 @@ public class bd implements Serializable {
                 }
             }
         }
-
+        System.out.println("op:"+op+" des: "+des);
         ret.setOperaciones(op);
         ret.setDesempenio(des);
         return ret;
     }
 
+    protected String getIP() {
+        /*String publicIP = "";
+        try {
+            URL tempURL = new URL("https://www.cualesmiip.com");
+            HttpURLConnection tempConn = (HttpURLConnection) tempURL.openConnection();
+            InputStream tempInStream = tempConn.getInputStream();
+            InputStreamReader tempIsr = new InputStreamReader(tempInStream);
+            BufferedReader tempBr = new BufferedReader(tempIsr);
+            String aux = "";
+            while (aux != null) {
+                aux = tempBr.readLine();
+                if (aux != null) {
+                    if (aux.contains("IP es:")) {
+                        publicIP = aux.substring(aux.indexOf("color\">") + 7, aux.indexOf("</b></p>"));
+                    }
+                }
+
+            }
+            tempBr.close();
+            tempInStream.close();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }*/
+        //return publicIP;
+        String ipLocal="";
+        try{
+            ipLocal=InetAddress.getLocalHost().getHostAddress();
+        }catch(UnknownHostException ex){
+            ex.printStackTrace();
+        }
+        return ipLocal;
+    }
+    
     public double nTuplas() {
         double res = 0;
         ArrayList arr = null;

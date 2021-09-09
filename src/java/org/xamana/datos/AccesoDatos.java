@@ -25,13 +25,13 @@ public class AccesoDatos implements Serializable {
     private java.sql.Connection oConexion;
 
     public AccesoDatos() throws Exception {
-        sUrl = "jdbc:mysql://localhost/xamana";
+        sUrl = "jdbc:mysql://localhost/xamana?autoReconnect=true&useSSL=false&serverTimezone=UTC";
         sUsr = "root";
-        sPwd = "";
+        sPwd = "Sunny_4teamo";
     }
     
     public AccesoDatos(String url, String nombd, String usr, String pwd) throws Exception {
-        sUrl = "jdbc:mysql://"+url+"/"+nombd;//"jdbc:mysql://localhost/Master";
+        sUrl = "jdbc:mysql://"+url+"/"+nombd+"?autoReconnect=true&useSSL=false&serverTimezone=UTC";//"jdbc:mysql://localhost/Master";
         sUsr = usr;//"root";
         sPwd = pwd;//"sunny_4teamo";
     }
@@ -39,7 +39,7 @@ public class AccesoDatos implements Serializable {
     public boolean conectar() throws Exception {
         boolean bRet = false;
         try {
-            Class.forName("com.mysql.jdbc.Driver").newInstance();
+            Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
             System.out.println(sUrl +" " +sUsr+" "+ sPwd);
             oConexion = DriverManager.getConnection(sUrl, sUsr, sPwd);
             bRet = true;
