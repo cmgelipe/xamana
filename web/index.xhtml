@@ -25,58 +25,58 @@
             <div style="text-align: center">
                 <h:graphicImage name="text12.png"  width="35%"/><br />
                 <p:selectOneMenu value="#{bd.obj.tipoBD}">
-                    <f:selectItem itemLabel="Selecciona tu gestor" itemValue="" noSelectionOption="true" />
+                    <f:selectItem itemLabel="Select your DBMS" itemValue="" noSelectionOption="true" />
                     <f:selectItem itemLabel="MySQL" itemValue="a" />
                     <f:selectItem itemLabel="Postgres-XL" itemValue="b" />
                     <f:selectItem itemLabel="PostgreSQL" itemValue="c" />
                     <f:selectItem itemLabel="MongoDB" itemValue="d" />
                 </p:selectOneMenu><br/>
                 <br />
-                <p:commandButton ajax="false" value="Conexión" action="#{bd.configuracion()}" update="f2:d1" />
+                <p:commandButton ajax="false" value="Connection" action="#{bd.configuracion()}" update="f2:d1" />
             </div>
         </h:form>
         <h:form id="f2">
             <p:growl id="mensajes"  showDetail="true" />
             <h:inputHidden value="#{bd.obj.tipoBD}" />
-            <p:dialog header="Configurar conexión" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
+            <p:dialog header="Configure connection" id="d1" visible="#{bd.bconfig}" modal="true" closable="false" resizable="false">
                 <p:panelGrid columns="2">
 
-                    <p:outputLabel value="Dirección de la base de datos" />
+                    <p:outputLabel value="Database IP" />
                     <p:inputText value="#{bd.obj.dirbd}" placeholder="#.#.#.#" required="true">
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
                     </p:inputText>
-                    <p:outputLabel value="Puerto de la base de datos" />
+                    <p:outputLabel value="Database port" />
                     <p:inputText value="#{bd.obj.portbd}" required="true">
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
                     </p:inputText>
-                    <p:outputLabel value="Nombre de la base de datos" />
+                    <p:outputLabel value="Database name" />
                     <p:inputText value="#{bd.obj.nombd}" required="true">
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
                     </p:inputText>
-                    <p:outputLabel value="Usuario administrador de la base de datos" />
+                    <p:outputLabel value="Database administrator user" />
                     <p:inputText value="#{bd.obj.usubd}" title="Para MongoDB, si la autenticación esta deshabilitada, este campo y el siguiente no son obligatorios">
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
                     </p:inputText>
-                    <p:outputLabel value="Contraseña"/>
+                    <p:outputLabel value="Password"/>
                     <p:inputText value="#{bd.obj.passbd}" title="Si la base de datos no tiene contraseña, este campo no es obligatorio" >
                         <p:ajax listener="#{bd.obj.onTablas}" update="f2:tb"/>
                     </p:inputText>
-                    <p:outputLabel value="Nombre de la tabla a fragmentar" />
+                    <p:outputLabel value="Name of the table to fragment" />
                     <p:selectOneMenu id="tb" value="#{bd.obj.tabla.nombre}" rendered="true">
                         <f:selectItems value="#{bd.obj.tablas}"/>
                     </p:selectOneMenu>         
                 </p:panelGrid>
-                <p:commandButton value="Probar conexión" action="#{bd.probarConexion()}" update="f2:dl2 f2:d1 f2:dl3 f2:mensajes"/>
-                <p:commandButton value="Cancelar"  action="#{bd.cancelarConf()}" update="f2:d1"/>
+                <p:commandButton value="Test connection" action="#{bd.probarConexion()}" update="f2:dl2 f2:d1 f2:dl3 f2:mensajes"/>
+                <p:commandButton value="Cancel"  action="#{bd.cancelarConf()}" update="f2:d1"/>
             </p:dialog>
-            <p:dialog id="dl2" header="Información" visible="#{bd.bbotonfragmentar}" modal="true">
-                <h:outputText value="La conexión fue exitosa, ahora usted configurará" /><br />
-                <h:outputText value="detalles para llevar a cabo la fragmentación." /><br /><br />
-                <p:commandButton ajax="false" value="Configurar fragmentación" action="#{bd.configurarFragmentacion()}" update="f2:dl2" />
+            <p:dialog id="dl2" header="Information" visible="#{bd.bbotonfragmentar}" modal="true">
+                <h:outputText value="The connection was successful, now you will configure" /><br />
+                <h:outputText value="details to carry out fragmentation." /><br /><br />
+                <p:commandButton ajax="false" value="Configure fragmentation" action="#{bd.configurarFragmentacion()}" update="f2:dl2" />
             </p:dialog>
-            <p:dialog id="dl3" header="Información" visible="#{bd.bdatosincorrectos}" modal="true">
-                <h:outputText value="La conexión no fue exitosa. Revise sus datos."/><br /><br />
-                <p:commandButton value="Revisar" action="#{bd.revisarDatos()}" update="f2:dl3" />
+            <p:dialog id="dl3" header="Information" visible="#{bd.bdatosincorrectos}" modal="true">
+                <h:outputText value="The connection was not successful. Check your details."/><br /><br />
+                <p:commandButton value="Take a look" action="#{bd.revisarDatos()}" update="f2:dl3" />
             </p:dialog>
             <p:ajaxStatus onstart="PF('statusDialog').show()" onerror="PF('statusDialog').hide()" onsuccess="PF('statusDialog').hide()"/>
 

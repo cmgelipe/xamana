@@ -253,8 +253,12 @@ public class BDJB implements Serializable {
             }
         } else if (this.obj.getTabla().isCBIR()
                     && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
-            //Parte vertical
-            
+            //Parte vertical con CBIR
+            //Jesús
+        } else if(!this.obj.getTabla().isCBIR() 
+                && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
+           //Jesús
+           //Parte vertical sin CBIR
         }
         return "esquema.xhtml";
     }

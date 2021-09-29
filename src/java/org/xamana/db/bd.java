@@ -247,7 +247,7 @@ public class bd implements Serializable {
         double nOperacionesLog = valoresOPDES.getOperaciones();
         double nTuplas = this.nTuplas();
         double nOperacionesTabla = nOperacionesLog / nTuplas;
-        System.out.println("nOperacionesTabla:"+nOperacionesTabla);
+        System.out.println("nOperacionesTabla:" + nOperacionesLog);
         double nValorDes = valoresOPDES.getDesempenio() / nTuplas;
         if (this.TipoBD.compareTo("a") == 0) {
             if (this.accexternomysql.conectar()) {
@@ -421,10 +421,10 @@ public class bd implements Serializable {
                 acc = new AccesoDatos();
                 if (acc.conectar()) {
                     String un = "0";
-                    String dos= "0";
+                    String dos = "0";
                     un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
-                    dos= (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
-                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ","+dos+")";
+                    dos = (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
+                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + "," + dos + ")";
                     acc.ejecutarComando(q);
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
@@ -530,11 +530,11 @@ public class bd implements Serializable {
                 }
                 if (acc.conectar()) {
                     String un = "0";
-                    String dos= "0";
+                    String dos = "0";
                     un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
-                    dos= (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
-                    System.out.println("undos:"+un+" - "+dos);
-                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ","+dos+")";
+                    dos = (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
+                    System.out.println("undos:" + un + " - " + dos);
+                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + "," + dos + ")";
                     acc.ejecutarComando(q);
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
@@ -589,9 +589,12 @@ public class bd implements Serializable {
                     if (attMultimedia.getTipo().compareTo("double") == 0 || attMultimedia.getTipo().compareTo("decimal") == 0 || attMultimedia.getTipo().compareTo("int") == 0 || attMultimedia.getTipo().compareTo("long") == 0) {
                         where = new Document(attMultimedia.getNombre(), Double.parseDouble(tupla.getValor()));
                     } else {
+                        
                         where = new Document(attMultimedia.getNombre(), tupla.getValor());
                     }
+                    
                     MongoCursor<Document> resultado = doc.find(where).iterator();
+                    
                     idTuplas = new ArrayList<>();
                     while (resultado.hasNext()) {
                         Document Nuevatupla = resultado.next();
@@ -600,10 +603,10 @@ public class bd implements Serializable {
                     }
                     if (acc.conectar()) {
                         String un = "0";
-                        String dos="0";
+                        String dos = "0";
                         un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
-                        dos= (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
-                        String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + ","+dos+")";
+                        dos = (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
+                        String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + "," + dos + ")";
                         acc.ejecutarComando(q);
                         ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                         String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
@@ -652,15 +655,15 @@ public class bd implements Serializable {
                                     des++;
                                 }
                                 op++;
-                            } else if((actual.toLowerCase().contains("delete")
-                                    || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                            } else if ((actual.toLowerCase().contains("delete")
+                                    || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 if (ip.compareTo(this.dirbd) != 0) {
                                     des = des + 4;
                                 } else {
                                     des = des + 2;
                                 }
                                 op++;
-                            }else if(actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                            } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 if (ip.compareTo(this.dirbd) != 0) {
                                     des = des + 6;
                                 } else {
@@ -689,7 +692,7 @@ public class bd implements Serializable {
                                 ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("-_-") + 3, actual.toLowerCase().indexOf("log"));
                                 System.out.println(ipLinea);
                                 nombre = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
-                                
+
                                 if (ipLinea.toLowerCase().compareTo("localhost") == 0 || ipLinea.toLowerCase().compareTo("::1") == 0) {
                                     ipLinea = "127.0.0.1";
                                 }
@@ -704,8 +707,8 @@ public class bd implements Serializable {
                                     des = des + 2;
                                 }
                                 op++;
-                            }else if((actual.toLowerCase().contains("delete")
-                                    || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                            } else if ((actual.toLowerCase().contains("delete")
+                                    || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                                 String ipTraduccion = getNombreIp().get(sujeto);
                                 if (ipTraduccion.compareTo(this.dirbd) == 0) {
@@ -714,11 +717,11 @@ public class bd implements Serializable {
                                     des = des + 4;
                                 }
                                 op++;
-                            }else if(actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
+                            } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                                 String ipTraduccion = getNombreIp().get(sujeto);
                                 if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                    des = des+3;
+                                    des = des + 3;
                                 } else {
                                     des = des + 6;
                                 }
@@ -726,45 +729,49 @@ public class bd implements Serializable {
                             }
                         }
                     } else if (this.TipoBD.compareTo("d") == 0) {
-                        String ipLinea = "";
-                        String nombre = "";
-                        if (actual.toLowerCase().contains("connection accepted from")) {
-                            ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("connection accepted from") + 25);
-                            nombre = "[conn" + ipLinea.substring(ipLinea.indexOf("#") + 1, ipLinea.indexOf("(") - 1) + "]";
-                            ipLinea = ipLinea.substring(0, ipLinea.indexOf(":"));
-                            getNombreIp().put(nombre, ipLinea);
-                        }
-                        if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
-                            String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
-                            sujeto = sujeto.substring(0, sujeto.indexOf("] "));
-                            String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
-                            if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                des = des++;
-                            } else {
-                                des = des + 2;
+                        while ((actual = bufferedReader.readLine()) != null) {
+                            String ipLinea = "";
+                            String nombre = "";
+                            if (actual.toLowerCase().contains("connection accepted from")) {
+                                ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("connection accepted from") + 25);
+                                nombre = "[conn" + ipLinea.substring(ipLinea.indexOf("#") + 1, ipLinea.indexOf("(") - 1) + "]";
+                                ipLinea = ipLinea.substring(0, ipLinea.indexOf(":"));
+                                getNombreIp().put(nombre, ipLinea);
                             }
-                            op++;
-                        }else if((actual.toLowerCase().contains("insert") 
-                                || actual.toLowerCase().contains("remove")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
-                            String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
-                            sujeto = sujeto.substring(0, sujeto.indexOf("] "));
-                            String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
-                            if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                des = des+2;
-                            } else {
-                                des = des + 4;
+
+                            if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
+                                sujeto = sujeto.substring(0, sujeto.indexOf("] "));
+                                String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
+                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
+                                    des = des++;
+                                } else {
+                                    des = des + 2;
+                                }
+                                op++;
+
+                            } else if ((actual.toLowerCase().contains("insert")
+                                    || actual.toLowerCase().contains("remove")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
+                                sujeto = sujeto.substring(0, sujeto.indexOf("] "));
+                                String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
+                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
+                                    des = des + 2;
+                                } else {
+                                    des = des + 4;
+                                }
+                                op++;
+                            } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
+                                sujeto = sujeto.substring(0, sujeto.indexOf("] "));
+                                String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
+                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
+                                    des = des + 3;
+                                } else {
+                                    des = des + 6;
+                                }
+                                op++;
                             }
-                            op++;
-                        }else if(actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())){
-                            String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
-                            sujeto = sujeto.substring(0, sujeto.indexOf("] "));
-                            String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
-                            if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                des = des+3;
-                            } else {
-                                des = des + 6;
-                            }
-                            op++;
                         }
                     }
 
@@ -773,7 +780,7 @@ public class bd implements Serializable {
                 }
             }
         }
-        System.out.println("op:"+op+" des: "+des);
+        System.out.println("op:" + op + " des: " + des);
         ret.setOperaciones(op);
         ret.setDesempenio(des);
         return ret;
@@ -804,15 +811,15 @@ public class bd implements Serializable {
             ex.printStackTrace();
         }*/
         //return publicIP;
-        String ipLocal="";
-        try{
-            ipLocal=InetAddress.getLocalHost().getHostAddress();
-        }catch(UnknownHostException ex){
+        String ipLocal = "";
+        try {
+            ipLocal = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException ex) {
             ex.printStackTrace();
         }
         return ipLocal;
     }
-    
+
     public double nTuplas() {
         double res = 0;
         ArrayList arr = null;
