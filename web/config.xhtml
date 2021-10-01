@@ -39,7 +39,7 @@ and open the template in the editor.
                     </p:selectOneMenu>
                     <p:outputLabel value="CBIR" />
                     <p:selectBooleanButton id="sino" value="#{bd.obj.tabla.CBIR}" onLabel="Yes" offLabel="No" >
-                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4 f3:atb" />
+                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4 f3:atb f3:dl5" />
                     </p:selectBooleanButton>
                     <p:outputLabel id="o1" value="Log files" />
                     <p:fileUpload id="file" value="#{bd.files}" mode="simple" skinSimple="true" multiple="true" />
@@ -64,6 +64,44 @@ and open the template in the editor.
                     <f:selectItems value="#{bd.atributos}" />
                 </p:selectOneMenu><br />
                 <p:commandButton value="Set" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl4"/>
+            </p:dialog>
+            <p:dialog id="dl5" header="Multimedia attributes" modal="true" visible="#{bd.dcolumnas}">
+                <p:panelGrid>
+                    <f:facet name="header">
+                        <p:row>
+                            <p:column>Multimedia atributte</p:column>
+                            <p:column>Descriptor atributte</p:column>
+                            <p:column>Selections</p:column>
+                        </p:row>
+                    </f:facet>
+                    <p:row>
+                        <p:column>
+                            <p:selectOneListbox value="#{bd.seleccion1}"  >
+                                <f:selectItems value="#{bd.atributos}" /> 
+                            </p:selectOneListbox>
+                        </p:column>
+                        <p:column>
+                            <p:selectOneListbox value="#{bd.seleccion2}">
+                                <f:selectItems value="#{bd.atributos}" /> 
+                            </p:selectOneListbox>
+                        </p:column>
+                        <p:column>
+                            <p:selectOneListbox id="listaAtts" value="#{bd.seleccion3}">
+                                <f:selectItems value="#{bd.attsMultimediaDescriptor}" /> 
+                            </p:selectOneListbox>
+                        </p:column>
+                    </p:row>
+                    <p:row>
+                        <p:column></p:column>
+                        <p:column>
+                            <p:commandButton value="Add" actionListener="#{bd.agregarAtts()}" update="f3:listaAtts" />
+                        </p:column>
+                        <p:column>
+                            <p:commandButton value="Delete" actionListener="#{bd.eliminarAtts()}" update="f3:listaAtts" />
+                        </p:column>
+                    </p:row>
+                </p:panelGrid>
+                <p:commandButton value="Set" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl5"/>
             </p:dialog>
             <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>
 

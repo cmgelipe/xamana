@@ -90,7 +90,6 @@ public class AccesoDatosMG implements Serializable {
                 Bson group=project(Projections.computed(key, Document.parse("{$type: '$"+key+"'}")));
                 List<Document> r=collection.aggregate(Arrays.asList(group)).into(new ArrayList<>());
                 String tipo=""+(new JSONObject(r.get(0).toJson()).get(key));
-                System.out.println(key+":"+tipo);
                 res.add(key+":"+tipo);
             }
         } catch (JSONException ex) {

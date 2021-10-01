@@ -1062,4 +1062,24 @@ public class bd implements Serializable {
     public void setNombreIp(HashMap<String, String> NombreIp) {
         this.NombreIp = NombreIp;
     }
+
+    public ArrayList<String> esquemaVertical() {
+        ArrayList<String> ret=new ArrayList<>();
+        return ret;
+    }
+
+    public boolean isVerticalCBIR() {
+        return this.tabla.getTipoFragment().compareTo("b")==0 && this.tabla.isCBIR();
+    }
+
+    public void fragmentarVerCBIRMySQL(ArrayList<String> esquemaVerticalCBIR) {
+        
+    }
+
+    public void fragmentarVerCBIRPostgres(ArrayList<String> esquemaVerticalCBIR) {
+        
+    }
+    public void fragmentarVerCBIRMongoDB(ArrayList<String> esquemaVerticalCBIR) {
+        
+    }
 }

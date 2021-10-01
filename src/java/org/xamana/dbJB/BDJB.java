@@ -26,6 +26,7 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
 
 import javax.faces.model.SelectItem;
+import javax.faces.model.SelectItemGroup;
 import javax.servlet.ServletContext;
 import org.bson.Document;
 import org.primefaces.model.DefaultStreamedContent;
@@ -51,6 +52,7 @@ public class BDJB implements Serializable {
     private boolean bdatosincorrectos = false;
     private boolean blog = true;
     private boolean dcolumna = false;
+    private boolean dcolumnas = false;
     private UploadedFiles files;
     private List<SelectItem> atributos;
     private ArrayList<esquemaHorMultimedia> valoresColumna;
@@ -59,11 +61,17 @@ public class BDJB implements Serializable {
     String MensajeWARN = "";
     private boolean bToken;
     private String nombreNuevoFrag;
-
+    private String seleccion1;
+    private String seleccion2;
+    private String seleccion3;
+    private ArrayList<String> attsMultimediaDescriptor;
+    private ArrayList<String> esquemaVerticalCBIR;
+    
     /**
      * Creates a new instance of BD
      */
     public BDJB() {
+        attsMultimediaDescriptor=new ArrayList<>();
     }
 
     public void configuracion() {
@@ -102,9 +110,21 @@ public class BDJB implements Serializable {
                 }
                 this.dcolumna = true;
                 this.blog = true;
+            } else if(this.obj.getTabla().isCBIR()
+                    && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
+                if (this.obj.getTipoBD().compareTo("a") == 0) {
+                    atributos=this.obj.listaAtributosMySQL();
+                } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+                    atributos=this.obj.listaAtributosPostgreSQL();
+                } else if (this.obj.getTipoBD().compareTo("d") == 0) {
+                    atributos=this.obj.listaAtributosMongoDB();
+                }
+                
+                this.dcolumnas=true;  
             } else {
                 this.dcolumna = false;
                 this.blog = false;
+                this.dcolumnas=false;
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -112,6 +132,7 @@ public class BDJB implements Serializable {
     }
 
     public String btnesquema() {
+        String tipoEsquema="";
         if (this.obj.getTabla().isCBIR()
                 && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
             try {
@@ -251,16 +272,17 @@ public class BDJB implements Serializable {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+            tipoEsquema="esquema.xhtml";
         } else if (this.obj.getTabla().isCBIR()
                     && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
-            //Parte vertical con CBIR
-            //Jesús
+            this.setEsquemaVerticalCBIR(this.obj.esquemaVertical());
+            tipoEsquema="esquemaVerticalCBIR.xhtml";
         } else if(!this.obj.getTabla().isCBIR() 
                 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
            //Jesús
            //Parte vertical sin CBIR
         }
-        return "esquema.xhtml";
+        return tipoEsquema;
     }
 
     public String configurarFragmentacion() {
@@ -386,6 +408,7 @@ public class BDJB implements Serializable {
 
     public void esquemaCBIRHorizontal() {
         this.dcolumna = false;
+        this.dcolumnas=false;
     }
 
     /**
@@ -437,6 +460,14 @@ public class BDJB implements Serializable {
             }
 
             this.setBToken(true);
+        }else if(this.obj.isVerticalCBIR()){
+            if (this.obj.getTipoBD().compareTo("a") == 0) {
+                this.obj.fragmentarVerCBIRMySQL(this.esquemaVerticalCBIR);
+            } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+                this.obj.fragmentarVerCBIRPostgres(this.esquemaVerticalCBIR);
+            } else {
+                this.obj.fragmentarVerCBIRMongoDB(this.esquemaVerticalCBIR);
+            }
         }
     }
 
@@ -940,5 +971,95 @@ public class BDJB implements Serializable {
                 + "end;\n"
                 + "$$ language plpgsql;";
         return f;
+    }
+
+    /**
+     * @return the seleccion
+     */
+    public String getSeleccion1() {
+        return seleccion1;
+    }
+
+    /**
+     * @param seleccion the seleccion to set
+     */
+    public void setSeleccion1(String seleccion) {
+        this.seleccion1 = seleccion;
+    }
+
+    /**
+     * @return the attsMultimediaDescriptor
+     */
+    public ArrayList<String> getAttsMultimediaDescriptor() {
+        return attsMultimediaDescriptor;
+    }
+
+    /**
+     * @param attsMultimediaDescriptor the attsMultimediaDescriptor to set
+     */
+    public void setAttsMultimediaDescriptor(ArrayList<String> attsMultimediaDescriptor) {
+        this.attsMultimediaDescriptor = attsMultimediaDescriptor;
+    }
+
+    /**
+     * @return the dcolumnas
+     */
+    public boolean isDcolumnas() {
+        return dcolumnas;
+    }
+
+    /**
+     * @param dcolumnas the dcolumnas to set
+     */
+    public void setDcolumnas(boolean dcolumnas) {
+        this.dcolumnas = dcolumnas;
+    }
+
+    /**
+     * @return the seleccion2
+     */
+    public String getSeleccion2() {
+        return seleccion2;
+    }
+
+    /**
+     * @param seleccion2 the seleccion2 to set
+     */
+    public void setSeleccion2(String seleccion2) {
+        this.seleccion2 = seleccion2;
+    }
+    public void agregarAtts(){
+        this.attsMultimediaDescriptor.add(seleccion1+","+seleccion2);
+    }
+    public void eliminarAtts(){
+        this.attsMultimediaDescriptor.removeIf(x->(x.compareTo(this.seleccion3)==0));
+    }
+
+    /**
+     * @return the seleccion3
+     */
+    public String getSeleccion3() {
+        return seleccion3;
+    }
+
+    /**
+     * @param seleccion3 the seleccion3 to set
+     */
+    public void setSeleccion3(String seleccion3) {
+        this.seleccion3 = seleccion3;
+    }
+
+    /**
+     * @return the esquemaVerticalCBIR
+     */
+    public ArrayList<String> getEsquemaVerticalCBIR() {
+        return esquemaVerticalCBIR;
+    }
+
+    /**
+     * @param esquemaVerticalCBIR the esquemaVerticalCBIR to set
+     */
+    public void setEsquemaVerticalCBIR(ArrayList<String> esquemaVerticalCBIR) {
+        this.esquemaVerticalCBIR = esquemaVerticalCBIR;
     }
 }
