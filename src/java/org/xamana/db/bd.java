@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.json.JSONObject;
@@ -243,49 +244,19 @@ public class bd implements Serializable {
         ArrayList arr = null;
         String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
         String queryRelacional = "select " + nombreColumna + ", count(" + nombreColumna + ") as num from " + this.tabla.getNombre() + " group by " + nombreColumna;
-        vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files);
-        double nOperacionesLog = valoresOPDES.getOperaciones();
         double nTuplas = this.nTuplas();
-        double nOperacionesTabla = nOperacionesLog / nTuplas;
-        System.out.println("nOperacionesTabla:" + nOperacionesLog);
-        double nValorDes = valoresOPDES.getDesempenio() / nTuplas;
+        DecimalFormat formateador = new DecimalFormat("##########.##");
         if (this.TipoBD.compareTo("a") == 0) {
             if (this.accexternomysql.conectar()) {
                 arr = this.accexternomysql.ejecutarConsulta(queryRelacional);
                 this.accexternomysql.desconectar();
             }
-            if (arr != null) {
-                res = new ArrayList<>();
-                for (int t = 0; t < arr.size(); t++) {
-                    esquemaHorMultimedia tupla = new esquemaHorMultimedia();
-                    tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
-                    tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
-                    tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
-                    tupla.setPorcentaje("" + (((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
-                    tupla.setNOperacionesAprox("" + ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100));
-                    tupla.setNdesempenio("" + ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100));
-                    res.add(tupla);
-                }
-            }
-        } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
+        }else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
             if (this.accexternopost.conectar()) {
                 arr = this.accexternopost.ejecutarConsulta(queryRelacional);
                 this.accexternopost.desconectar();
             }
-            if (arr != null) {
-                res = new ArrayList<>();
-                for (int t = 0; t < arr.size(); t++) {
-                    esquemaHorMultimedia tupla = new esquemaHorMultimedia();
-                    tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
-                    tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
-                    tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
-                    tupla.setPorcentaje("" + ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas));
-                    tupla.setNOperacionesAprox("" + ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100));
-                    tupla.setNdesempenio("" + ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100));
-                    res.add(tupla);
-                }
-            }
-        } else {
+        }else {
             if (this.getAccexternomongo().conectar()) {
                 MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
                 MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
@@ -296,15 +267,32 @@ public class bd implements Serializable {
                     int t = 0;
                     for (Document d : r) {
                         t++;
+                        vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files,"" + (new JSONObject(d.toJson())).get("_id"));
                         esquemaHorMultimedia tupla = new esquemaHorMultimedia();
                         tupla.setNombre(this.tabla.getNombre() + "_f" + (t));
                         tupla.setValor("" + (new JSONObject(d.toJson())).get("_id"));
                         tupla.setNTuplas("" + (new JSONObject(d.toJson())).get("num"));
-                        tupla.setPorcentaje("" + ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas));
-                        tupla.setNOperacionesAprox("" + ((Double.parseDouble(tupla.getPorcentaje()) * nOperacionesTabla) / 100));
-                        tupla.setNdesempenio("" + ((Double.parseDouble(tupla.getPorcentaje()) * nValorDes) / 100));
+                        tupla.setPorcentaje(formateador.format((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas));
+                        tupla.setNOperacionesAprox(""+valoresOPDES.getOperaciones());
+                        tupla.setNdesempenio(""+valoresOPDES.getDesempenio());
                         res.add(tupla);
                     }
+                }
+            }
+        }
+        if(this.TipoBD.compareTo("a") == 0 || this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0){
+            if (arr != null) {
+                res = new ArrayList<>();
+                for (int t = 0; t < arr.size(); t++) {
+                    esquemaHorMultimedia tupla = new esquemaHorMultimedia();
+                    vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files,"" + ((ArrayList) arr.get(t)).get(0));
+                    tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
+                    tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
+                    tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
+                    tupla.setPorcentaje(formateador.format(((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
+                    tupla.setNOperacionesAprox(valoresOPDES.getOperaciones()+"");
+                    tupla.setNdesempenio(valoresOPDES.getDesempenio()+"");
+                    res.add(tupla);
                 }
             }
         }
@@ -631,7 +619,7 @@ public class bd implements Serializable {
         }
     }
 
-    public vOperacionDesempenio nOperacionesLog(UploadedFiles files) {
+    public vOperacionDesempenio nOperacionesLog(UploadedFiles files,String conjunto) {
         vOperacionDesempenio ret = new vOperacionDesempenio();
         double op = 0;
         double des = 0;
@@ -702,7 +690,7 @@ public class bd implements Serializable {
                                 String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                                 String ipTraduccion = getNombreIp().get(sujeto);
                                 if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                    des = des++;
+                                    des++;
                                 } else {
                                     des = des + 2;
                                 }
@@ -739,19 +727,19 @@ public class bd implements Serializable {
                                 getNombreIp().put(nombre, ipLinea);
                             }
 
-                            if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                            if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto.toLowerCase())) {
                                 String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
                                 sujeto = sujeto.substring(0, sujeto.indexOf("] "));
                                 String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
                                 if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                    des = des++;
+                                    des++;
                                 } else {
                                     des = des + 2;
                                 }
                                 op++;
 
                             } else if ((actual.toLowerCase().contains("insert")
-                                    || actual.toLowerCase().contains("remove")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                    || actual.toLowerCase().contains("remove")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto.toLowerCase())) {
                                 String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
                                 sujeto = sujeto.substring(0, sujeto.indexOf("] "));
                                 String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
@@ -761,7 +749,7 @@ public class bd implements Serializable {
                                     des = des + 4;
                                 }
                                 op++;
-                            } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                            } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto.toLowerCase())) {
                                 String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
                                 sujeto = sujeto.substring(0, sujeto.indexOf("] "));
                                 String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
