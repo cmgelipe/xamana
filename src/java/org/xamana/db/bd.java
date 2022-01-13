@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
@@ -244,19 +245,19 @@ public class bd implements Serializable {
         ArrayList arr = null;
         String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
         String queryRelacional = "select " + nombreColumna + ", count(" + nombreColumna + ") as num from " + this.tabla.getNombre() + " group by " + nombreColumna;
-        double nTuplas = this.nTuplas();
+        double nTuplasTabla = this.nTuplasTabla();
         DecimalFormat formateador = new DecimalFormat("##########.##");
         if (this.TipoBD.compareTo("a") == 0) {
             if (this.accexternomysql.conectar()) {
                 arr = this.accexternomysql.ejecutarConsulta(queryRelacional);
                 this.accexternomysql.desconectar();
             }
-        }else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
+        } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
             if (this.accexternopost.conectar()) {
                 arr = this.accexternopost.ejecutarConsulta(queryRelacional);
                 this.accexternopost.desconectar();
             }
-        }else {
+        } else {
             if (this.getAccexternomongo().conectar()) {
                 MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
                 MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
@@ -267,31 +268,31 @@ public class bd implements Serializable {
                     int t = 0;
                     for (Document d : r) {
                         t++;
-                        vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files,"" + (new JSONObject(d.toJson())).get("_id"));
+                        vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files, "" + (new JSONObject(d.toJson())).get("_id"));
                         esquemaHorMultimedia tupla = new esquemaHorMultimedia();
                         tupla.setNombre(this.tabla.getNombre() + "_f" + (t));
                         tupla.setValor("" + (new JSONObject(d.toJson())).get("_id"));
                         tupla.setNTuplas("" + (new JSONObject(d.toJson())).get("num"));
-                        tupla.setPorcentaje(formateador.format((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas));
-                        tupla.setNOperacionesAprox(""+valoresOPDES.getOperaciones());
-                        tupla.setNdesempenio(""+valoresOPDES.getDesempenio());
+                        tupla.setPorcentaje(formateador.format((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplasTabla));
+                        tupla.setNOperacionesAprox("" + valoresOPDES.getOperaciones());
+                        tupla.setNdesempenio("" + valoresOPDES.getDesempenio());
                         res.add(tupla);
                     }
                 }
             }
         }
-        if(this.TipoBD.compareTo("a") == 0 || this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0){
+        if (this.TipoBD.compareTo("a") == 0 || this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
             if (arr != null) {
                 res = new ArrayList<>();
                 for (int t = 0; t < arr.size(); t++) {
                     esquemaHorMultimedia tupla = new esquemaHorMultimedia();
-                    vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files,"" + ((ArrayList) arr.get(t)).get(0));
+                    vOperacionDesempenio valoresOPDES = this.nOperacionesLog(files, "" + ((ArrayList) arr.get(t)).get(0));
                     tupla.setNombre(this.tabla.getNombre() + "_f" + (t + 1));
                     tupla.setValor("" + ((ArrayList) arr.get(t)).get(0));
                     tupla.setNTuplas("" + ((ArrayList) arr.get(t)).get(1));
-                    tupla.setPorcentaje(formateador.format(((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplas)).intValue()));
-                    tupla.setNOperacionesAprox(valoresOPDES.getOperaciones()+"");
-                    tupla.setNdesempenio(valoresOPDES.getDesempenio()+"");
+                    tupla.setPorcentaje(formateador.format(((Double) ((Double.parseDouble(tupla.getNTuplas()) * 100) / nTuplasTabla)).intValue()));
+                    tupla.setNOperacionesAprox(valoresOPDES.getOperaciones() + "");
+                    tupla.setNdesempenio(valoresOPDES.getDesempenio() + "");
                     res.add(tupla);
                 }
             }
@@ -577,12 +578,12 @@ public class bd implements Serializable {
                     if (attMultimedia.getTipo().compareTo("double") == 0 || attMultimedia.getTipo().compareTo("decimal") == 0 || attMultimedia.getTipo().compareTo("int") == 0 || attMultimedia.getTipo().compareTo("long") == 0) {
                         where = new Document(attMultimedia.getNombre(), Double.parseDouble(tupla.getValor()));
                     } else {
-                        
+
                         where = new Document(attMultimedia.getNombre(), tupla.getValor());
                     }
-                    
+
                     MongoCursor<Document> resultado = doc.find(where).iterator();
-                    
+
                     idTuplas = new ArrayList<>();
                     while (resultado.hasNext()) {
                         Document Nuevatupla = resultado.next();
@@ -619,7 +620,7 @@ public class bd implements Serializable {
         }
     }
 
-    public vOperacionDesempenio nOperacionesLog(UploadedFiles files,String conjunto) {
+    public vOperacionDesempenio nOperacionesLog(UploadedFiles files, String conjunto) {
         vOperacionDesempenio ret = new vOperacionDesempenio();
         double op = 0;
         double des = 0;
@@ -720,7 +721,50 @@ public class bd implements Serializable {
                         while ((actual = bufferedReader.readLine()) != null) {
                             String ipLinea = "";
                             String nombre = "";
-                            if (actual.toLowerCase().contains("connection accepted from")) {
+                            try {
+                                JSONObject j = new JSONObject(actual);
+                                String c = j.get("c").toString().toLowerCase().trim();
+                                JSONObject j2 = new JSONObject(j.get("attr").toString());
+                                String ns = j2.get("ns").toString().toLowerCase().trim();
+                                JSONObject j3 = new JSONObject(j2.get("command").toString());
+                                String filter = j3.get("filter").toString().toLowerCase();
+                                ns = ns.substring(ns.indexOf(".") + 1);
+                                if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0 && filter.contains(conjunto.toLowerCase())) {
+                                    try {
+                                        int ValorAsignadoOperacion = 0;
+                                        if (j3.has("find")) {
+                                            ValorAsignadoOperacion = 1;
+                                        } else if (j3.has("insert") || j3.has("remove")) {
+                                            ValorAsignadoOperacion = 2;
+                                        } else if (j3.has("update")) {
+                                            ValorAsignadoOperacion = 3;
+                                        }
+                                        if (ValorAsignadoOperacion != 0) {
+                                            j2 = new JSONObject(j.get("attr").toString());
+                                            String remote = j2.get("remote").toString().toLowerCase().trim();
+                                            ipLinea = remote.substring(0, remote.indexOf(":"));
+                                            if (!this.isNullorEmpty(ns)) {
+                                                getNombreIp().put(ipLinea, ipLinea);
+                                                if(this.dirbd.compareTo(ipLinea)==0){
+                                                    des=des+ValorAsignadoOperacion;
+                                                }else{
+                                                    
+                                                    des=des+(ValorAsignadoOperacion*2);
+                                                }
+                                            }
+                                        }
+
+                                    } catch (JSONException ex) {
+                                        //ex.printStackTrace();
+                                    }
+                                }
+
+                            } catch (JSONException ex) {
+                                //ex.printStackTrace();
+                            }
+
+                            if (actual.toLowerCase().contains("connection accepted")) {
+
                                 ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("connection accepted from") + 25);
                                 nombre = "[conn" + ipLinea.substring(ipLinea.indexOf("#") + 1, ipLinea.indexOf("(") - 1) + "]";
                                 ipLinea = ipLinea.substring(0, ipLinea.indexOf(":"));
@@ -808,7 +852,7 @@ public class bd implements Serializable {
         return ipLocal;
     }
 
-    public double nTuplas() {
+    public double nTuplasTabla() {
         double res = 0;
         ArrayList arr = null;
         try {
@@ -1009,6 +1053,10 @@ public class bd implements Serializable {
         return res;
     }
 
+    public boolean isNullorEmpty(String s) {
+        return (s != null) ? ((!s.isEmpty()) ? false : true) : true;
+    }
+
     /**
      * @return the portbd
      */
@@ -1052,22 +1100,33 @@ public class bd implements Serializable {
     }
 
     public ArrayList<String> esquemaVertical() {
-        ArrayList<String> ret=new ArrayList<>();
+        ArrayList<String> ret = new ArrayList<>();
         return ret;
     }
 
     public boolean isVerticalCBIR() {
-        return this.tabla.getTipoFragment().compareTo("b")==0 && this.tabla.isCBIR();
+        return this.tabla.getTipoFragment().compareTo("b") == 0 && this.tabla.isCBIR();
     }
 
     public void fragmentarVerCBIRMySQL(ArrayList<String> esquemaVerticalCBIR) {
-        
+
     }
 
     public void fragmentarVerCBIRPostgres(ArrayList<String> esquemaVerticalCBIR) {
-        
+
     }
+
     public void fragmentarVerCBIRMongoDB(ArrayList<String> esquemaVerticalCBIR) {
-        
+
+    }
+
+    public double nTuplasOperacionRelacional(String operacion) {
+
+        return 0.0;
+    }
+
+    public double nTuplasRegistroNoSQL(String registro) {
+
+        return 0.0;
     }
 }

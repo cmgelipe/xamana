@@ -12,8 +12,8 @@ public class Tabla {
     private String tipoFragment;
     private boolean CBIR=false;
     private String nombre;
-    private int umbralOP;
-    private int umbralCO;
+    private Double umbralOP;
+    private Double umbralCO;
     private String atributoMultimedia;
     
     private Atributo atributoLlave;
@@ -66,28 +66,28 @@ public class Tabla {
     /**
      * @return the umbralOP
      */
-    public int getUmbralOP() {
+    public Double getUmbralOP() {
         return umbralOP;
     }
 
     /**
      * @param umbralOP the umbralOP to set
      */
-    public void setUmbralOP(int umbralOP) {
+    public void setUmbralOP(Double umbralOP) {
         this.umbralOP = umbralOP;
     }
 
     /**
      * @return the umbralCO
      */
-    public int getUmbralCO() {
+    public Double getUmbralCO() {
         return umbralCO;
     }
 
     /**
      * @param umbralCO the umbralCO to set
      */
-    public void setUmbralCO(int umbralCO) {
+    public void setUmbralCO(Double umbralCO) {
         this.umbralCO = umbralCO;
     }
 

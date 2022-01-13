@@ -47,12 +47,12 @@ and open the template in the editor.
                     <p:outputLabel value="Operation threshold" />
                     <h:outputText id="output1" value="%#{bd.obj.tabla.umbralOP}" />
                     <h:inputHidden id="s1" value="#{bd.obj.tabla.umbralOP}" />
-                    <p:slider for="s1" display="output1" style="width: 200px" displayTemplate="%{value}" minValue="-100.0" maxValue="100.0"/>
+                    <p:slider for="s1" display="output1" style="width: 200px" displayTemplate="{value}%" minValue="0.0" maxValue="100.0" step="0.1"/>
 
-                    <p:outputLabel value="Cost threshold" />
+                    <p:outputLabel value="Performance threshold" />
                     <h:outputText id="output2" value="%#{bd.obj.tabla.umbralCO}" />
                     <h:inputHidden id="s2" value="#{bd.obj.tabla.umbralCO}" />
-                    <p:slider for="s2" display="output2" style="width: 200px" displayTemplate="%{value}" minValue="-100.0" maxValue="100.0" />
+                    <p:slider for="s2" display="output2" style="width: 200px" displayTemplate="{value}%" minValue="0.0" maxValue="100.0" step="0.1"/>
 
                 </p:panelGrid>
                 <br />
