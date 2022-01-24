@@ -5,7 +5,6 @@
  */
 package org.xamana.dbJB;
 
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -17,18 +16,13 @@ import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
-
 import javax.faces.model.SelectItem;
-import javax.faces.model.SelectItemGroup;
 import javax.servlet.ServletContext;
-import org.bson.Document;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFiles;
@@ -42,6 +36,7 @@ import org.xamana.db.esquemaHorMultimedia;
  *
  * @author pipe
  */
+
 @ManagedBean(name = "bd")
 @SessionScoped
 public class BDJB implements Serializable {

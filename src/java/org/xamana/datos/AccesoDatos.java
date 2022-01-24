@@ -27,7 +27,7 @@ public class AccesoDatos implements Serializable {
     public AccesoDatos() throws Exception {
         sUrl = "jdbc:mysql://localhost/xamana?autoReconnect=true&useSSL=false&serverTimezone=UTC";
         sUsr = "root";
-        sPwd = "Sunny_4teamo";
+        sPwd = "1122";
     }
     
     public AccesoDatos(String url, String nombd, String usr, String pwd) throws Exception {
