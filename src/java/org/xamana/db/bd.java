@@ -719,94 +719,79 @@ public class bd implements Serializable {
                         }
                     } else if (this.TipoBD.compareTo("d") == 0) {
                         while ((actual = bufferedReader.readLine()) != null) {
-                            String ipLinea = "";
-                            String nombre = "";
-                            try {
-                                JSONObject j = new JSONObject(actual);
-                                String c = j.get("c").toString().toLowerCase().trim();
-                                JSONObject j2 = new JSONObject(j.get("attr").toString());
-                                String ns = j2.get("ns").toString().toLowerCase().trim();
-                                JSONObject j3 = new JSONObject(j2.get("command").toString());
-                                String filter = j3.get("filter").toString().toLowerCase();
-                                ns = ns.substring(ns.indexOf(".") + 1);
-                                if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0 && filter.contains(conjunto.toLowerCase())) {
-                                    try {
-                                        int ValorAsignadoOperacion = 0;
-                                        if (j3.has("find")) {
-                                            ValorAsignadoOperacion = 1;
-                                        } else if (j3.has("insert") || j3.has("remove")) {
-                                            ValorAsignadoOperacion = 2;
-                                        } else if (j3.has("update")) {
-                                            ValorAsignadoOperacion = 3;
-                                        }
-                                        if (ValorAsignadoOperacion != 0) {
-                                            j2 = new JSONObject(j.get("attr").toString());
-                                            String remote = j2.get("remote").toString().toLowerCase().trim();
-                                            ipLinea = remote.substring(0, remote.indexOf(":"));
-                                            if (!this.isNullorEmpty(ns)) {
-                                                getNombreIp().put(ipLinea, ipLinea);
-                                                if(this.dirbd.compareTo(ipLinea)==0){
-                                                    des=des+ValorAsignadoOperacion;
-                                                }else{
-                                                    
-                                                    des=des+(ValorAsignadoOperacion*2);
+                            if (actual.toLowerCase().contains("command") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                String ipLinea = "";
+                                String nombre = "";
+                                try {
+                                    JSONObject j = new JSONObject(actual);
+                                    String c = j.get("c").toString().toLowerCase().trim();
+                                    JSONObject j2 = new JSONObject(j.get("attr").toString());
+                                    JSONObject j3 = new JSONObject(j2.get("command").toString());
+                                    String ns = "";
+                                    String filter = "";
+                                    if (j3.has("find")) {
+                                        filter = j3.get("filter").toString().toLowerCase();
+                                        ns = j3.get("find").toString().toLowerCase();
+                                    } else if (j3.has("delete")) {
+                                        JSONObject j4 = new JSONObject(j3.getJSONArray("deletes").get(0).toString());
+                                        filter = j4.get("q").toString();
+                                        ns = j3.get("delete").toString().toLowerCase();
+                                    } else if (j3.has("insert")) {
+                                        filter = j3.getJSONArray("documents").toString();
+                                        ns = j3.get("insert").toString().toLowerCase();
+                                    } else if (j3.has("update")) {
+                                        JSONObject j4 = new JSONObject(j3.getJSONArray("updates").get(0).toString());
+                                        filter = j4.get("q").toString();
+                                        ns = j3.get("update").toString().toLowerCase();
+                                    }
+                                    if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0 && filter.contains(conjunto.toLowerCase())) {
+                                        try {
+                                            int ValorAsignadoOperacion = 0;
+                                            if (j3.has("find")) {
+                                                ValorAsignadoOperacion = 1;
+                                            } else if (j3.has("insert") || j3.has("remove")) {
+                                                ValorAsignadoOperacion = 2;
+                                            } else if (j3.has("update")) {
+                                                ValorAsignadoOperacion = 3;
+                                            }
+                                            if (ValorAsignadoOperacion != 0) {
+                                                j2 = new JSONObject(j.get("attr").toString());
+                                                String remote = j2.get("remote").toString().toLowerCase().trim();
+                                                ipLinea = remote.substring(0, remote.indexOf(":"));
+                                                if (!this.isNullorEmpty(ns)) {
+                                                    getNombreIp().put(ipLinea, ipLinea);
+                                                    if (this.dirbd.compareTo(ipLinea) == 0) {
+                                                        des = des + ValorAsignadoOperacion;
+                                                    } else {
+                                                        long ntuplas = 1;
+                                                        if(j3.has("find")){
+                                                            ntuplas = Long.parseLong(j2.get("nreturned").toString());
+                                                        }else if (j3.has("delete") || j3.has("update")) {
+                                                            if (this.accexternomongo.conectar()) {
+                                                                MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
+                                                                MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
+                                                                Document where = Document.parse(filter);
+                                                                ntuplas = doc.countDocuments(where);
+                                                            }
+                                                        } else if (j3.has("insert")) {
+                                                            ntuplas = Long.parseLong(j2.get("ninserted").toString());
+                                                        }
+                                                        des = des + (ValorAsignadoOperacion * 2) * ntuplas;
+                                                    }
                                                 }
                                             }
+
+                                        } catch (JSONException ex) {
+                                            //ex.printStackTrace();
                                         }
-
-                                    } catch (JSONException ex) {
-                                        //ex.printStackTrace();
                                     }
+
+                                } catch (JSONException ex) {
+                                    //ex.printStackTrace();
                                 }
-
-                            } catch (JSONException ex) {
-                                //ex.printStackTrace();
-                            }
-
-                            if (actual.toLowerCase().contains("connection accepted")) {
-
-                                ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("connection accepted from") + 25);
-                                nombre = "[conn" + ipLinea.substring(ipLinea.indexOf("#") + 1, ipLinea.indexOf("(") - 1) + "]";
-                                ipLinea = ipLinea.substring(0, ipLinea.indexOf(":"));
-                                getNombreIp().put(nombre, ipLinea);
-                            }
-
-                            if (actual.toLowerCase().contains("find") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto.toLowerCase())) {
-                                String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
-                                sujeto = sujeto.substring(0, sujeto.indexOf("] "));
-                                String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
-                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                    des++;
-                                } else {
-                                    des = des + 2;
-                                }
-                                op++;
-
-                            } else if ((actual.toLowerCase().contains("insert")
-                                    || actual.toLowerCase().contains("remove")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto.toLowerCase())) {
-                                String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
-                                sujeto = sujeto.substring(0, sujeto.indexOf("] "));
-                                String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
-                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                    des = des + 2;
-                                } else {
-                                    des = des + 4;
-                                }
-                                op++;
-                            } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto.toLowerCase())) {
-                                String sujeto = actual.toLowerCase().substring(actual.toLowerCase().indexOf(" [conn") + 6);
-                                sujeto = sujeto.substring(0, sujeto.indexOf("] "));
-                                String ipTraduccion = getNombreIp().get("[conn" + sujeto + "]");
-                                if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                    des = des + 3;
-                                } else {
-                                    des = des + 6;
-                                }
-                                op++;
                             }
                         }
                     }
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -819,30 +804,6 @@ public class bd implements Serializable {
     }
 
     protected String getIP() {
-        /*String publicIP = "";
-        try {
-            URL tempURL = new URL("https://www.cualesmiip.com");
-            HttpURLConnection tempConn = (HttpURLConnection) tempURL.openConnection();
-            InputStream tempInStream = tempConn.getInputStream();
-            InputStreamReader tempIsr = new InputStreamReader(tempInStream);
-            BufferedReader tempBr = new BufferedReader(tempIsr);
-            String aux = "";
-            while (aux != null) {
-                aux = tempBr.readLine();
-                if (aux != null) {
-                    if (aux.contains("IP es:")) {
-                        publicIP = aux.substring(aux.indexOf("color\">") + 7, aux.indexOf("</b></p>"));
-                    }
-                }
-
-            }
-            tempBr.close();
-            tempInStream.close();
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }*/
-        //return publicIP;
         String ipLocal = "";
         try {
             ipLocal = InetAddress.getLocalHost().getHostAddress();
