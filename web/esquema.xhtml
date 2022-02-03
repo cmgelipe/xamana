@@ -83,12 +83,12 @@
                 <p:fileDownload value="#{bd.descarga}" />
             </p:commandButton>
             <p:dialog id="d5" header="Information" visible="#{bd.infoEsquema1}" modal="true" closable="false">
-                <h:outputText value="Se muestra el primer diseño del esquema propuesto, al aplicarlo se deberán descargar todos los archivos correspondientes"/><br />
-                <h:outputText value="para aplicar la fragmentación dinámica. La descarga la acompaña un archivo con las instrucciones a seguir." /><br />
+                <h:outputText value="The first design of the proposed scheme is shown, when applying it, all the corresponding files must be downloaded to apply"/><br />
+                <h:outputText value="dynamic fragmentation. The download is accompanied by a file with the instructions to follow." /><br />
                 <p:commandButton value="OK" action="#{bd.setInfoEsquema1(false)}" update="f4:d5" />
             </p:dialog>
             <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
-                <h:outputText value="La fragmentación dinámica de este tipo requiere implementarse en Java con los archivos de descarga y utilizar este token" /><br />
+                <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
                 <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
             </p:dialog>
         </h:form>

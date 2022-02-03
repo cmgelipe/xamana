@@ -631,32 +631,48 @@ public class bd implements Serializable {
                     String actual = "";
 
                     if (this.TipoBD.compareTo("a") == 0) {
+                        //generalLogFile activado
                         while ((actual = bufferedReader.readLine()) != null) {
                             String ip = "127.0.0.1";
                             if (actual.contains("Connect\t") && !actual.contains("denied")) {
                                 String y[] = actual.split("\t");
                                 ip = y[2].substring(y[2].indexOf("@") + 1, y[2].indexOf(" ", y[2].indexOf("@") + 1));
                             }
+                            int ValorAsignadoOperacion = 0;
                             if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
-                                if (ip.compareTo(this.dirbd) != 0) {
-                                    des = des + 2;
-                                } else {
-                                    des++;
-                                }
-                                op++;
+                                ValorAsignadoOperacion = 1;
                             } else if ((actual.toLowerCase().contains("delete")
                                     || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
-                                if (ip.compareTo(this.dirbd) != 0) {
-                                    des = des + 4;
-                                } else {
-                                    des = des + 2;
-                                }
-                                op++;
+                                ValorAsignadoOperacion = 2;
                             } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                ValorAsignadoOperacion = 3;
+                            }
+                            if (ValorAsignadoOperacion != 0) {
+                                String y[] = actual.split("\t");
                                 if (ip.compareTo(this.dirbd) != 0) {
-                                    des = des + 6;
+                                    int nTuplas = 1;
+                                    if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
+                                            && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                        String QueryNTuplas = "";
+                                        if (y[2].toLowerCase().contains("where")) {
+                                            String predicado = y[2].substring(y[2].toLowerCase().indexOf("where"));
+                                            QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase() + " " + predicado;
+                                        } else {
+                                            QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase();
+                                        }
+                                        ArrayList rs = null;
+                                        if (this.accexternomysql.conectar()) {
+                                            rs = this.accexternomysql.ejecutarConsulta(QueryNTuplas);
+                                            this.accexternomysql.desconectar();
+                                        }
+                                        if (!this.isNullorEmpty(rs)) {
+                                            nTuplas = Integer.parseInt("" + ((ArrayList) rs.get(0)).get(0));
+                                        }
+                                    }
+                                    //si es insert nTuplas se queda con 1
+                                    des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                 } else {
-                                    des = des + 3;
+                                    des = des + ValorAsignadoOperacion;
                                 }
                                 op++;
                             }
@@ -718,6 +734,7 @@ public class bd implements Serializable {
                             }
                         }
                     } else if (this.TipoBD.compareTo("d") == 0) {
+                        //setProfiling=1 o superior
                         while ((actual = bufferedReader.readLine()) != null) {
                             if (actual.toLowerCase().contains("command") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 String ipLinea = "";
@@ -745,6 +762,7 @@ public class bd implements Serializable {
                                         ns = j3.get("update").toString().toLowerCase();
                                     }
                                     if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0 && filter.contains(conjunto.toLowerCase())) {
+                                        op++;
                                         try {
                                             int ValorAsignadoOperacion = 0;
                                             if (j3.has("find")) {
@@ -764,9 +782,9 @@ public class bd implements Serializable {
                                                         des = des + ValorAsignadoOperacion;
                                                     } else {
                                                         long ntuplas = 1;
-                                                        if(j3.has("find")){
+                                                        if (j3.has("find")) {
                                                             ntuplas = Long.parseLong(j2.get("nreturned").toString());
-                                                        }else if (j3.has("delete") || j3.has("update")) {
+                                                        } else if (j3.has("delete") || j3.has("update")) {
                                                             if (this.accexternomongo.conectar()) {
                                                                 MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
                                                                 MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
