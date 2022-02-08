@@ -632,8 +632,10 @@ public class bd implements Serializable {
 
                     if (this.TipoBD.compareTo("a") == 0) {
                         //generalLogFile activado
+                        String ip = "127.0.0.1";
                         while ((actual = bufferedReader.readLine()) != null) {
-                            String ip = "127.0.0.1";
+                            
+                            //System.out.println(actual.contains("Connect\t")+" "+actual+" ");
                             if (actual.contains("Connect\t") && !actual.contains("denied")) {
                                 String y[] = actual.split("\t");
                                 ip = y[2].substring(y[2].indexOf("@") + 1, y[2].indexOf(" ", y[2].indexOf("@") + 1));
@@ -649,10 +651,11 @@ public class bd implements Serializable {
                             }
                             if (ValorAsignadoOperacion != 0) {
                                 String y[] = actual.split("\t");
+                                //System.out.println(ip+" "+this.dirbd);
                                 if (ip.compareTo(this.dirbd) != 0) {
-                                    int nTuplas = 1;
+                                    double nTuplas = 1.0;
                                     if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
-                                            && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                            && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {//excluir joins
                                         String QueryNTuplas = "";
                                         if (y[2].toLowerCase().contains("where")) {
                                             String predicado = y[2].substring(y[2].toLowerCase().indexOf("where"));
@@ -661,20 +664,29 @@ public class bd implements Serializable {
                                             QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase();
                                         }
                                         ArrayList rs = null;
+                                        System.out.println(QueryNTuplas);
                                         if (this.accexternomysql.conectar()) {
                                             rs = this.accexternomysql.ejecutarConsulta(QueryNTuplas);
                                             this.accexternomysql.desconectar();
                                         }
                                         if (!this.isNullorEmpty(rs)) {
-                                            nTuplas = Integer.parseInt("" + ((ArrayList) rs.get(0)).get(0));
+                                            nTuplas = Double.parseDouble("" + ((ArrayList) rs.get(0)).get(0));
                                         }
+                                        des = des + (ValorAsignadoOperacion * 2) * nTuplas;
+                                        this.getNombreIp().put(ip, ip);
+                                        op++;
                                     }
                                     //si es insert nTuplas se queda con 1
-                                    des = des + (ValorAsignadoOperacion * 2) * nTuplas;
+                                    
                                 } else {
-                                    des = des + ValorAsignadoOperacion;
+                                    if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
+                                            && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
+                                        des = des + ValorAsignadoOperacion;
+                                        this.getNombreIp().put(ip, ip);
+                                        op++;
+                                    }
                                 }
-                                op++;
+                                
                             }
                         }
                     } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {

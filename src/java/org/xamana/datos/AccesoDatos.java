@@ -40,7 +40,7 @@ public class AccesoDatos implements Serializable {
         boolean bRet = false;
         try {
             Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-            System.out.println(sUrl +" " +sUsr+" "+ sPwd);
+            //System.out.println(sUrl +" " +sUsr+" "+ sPwd);
             oConexion = DriverManager.getConnection(sUrl, sUsr, sPwd);
             bRet = true;
         } catch (SQLException e) {
