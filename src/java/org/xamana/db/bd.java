@@ -657,9 +657,8 @@ public class bd implements Serializable {
                             }
                             if (ValorAsignadoOperacion != 0) {
                                 String y[] = actual.split("\t");
-                                //System.out.println(ip+" "+this.dirbd);
                                 String sujeto = y[1].substring(0,y[1].indexOf(" "));
-                                String ipTraduccion = getNombreIp().get(sujeto);
+                                String ipTraduccion = getNombreIp().get(sujeto);                                
                                 if (ipTraduccion.compareTo(this.dirbd) != 0) {
                                     double nTuplas = 1.0;
                                     if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
@@ -672,7 +671,7 @@ public class bd implements Serializable {
                                             QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase();
                                         }
                                         ArrayList rs = null;
-                                        System.out.println(QueryNTuplas);
+                                        System.out.println(conjunto+" remoto "+(ValorAsignadoOperacion*2)+ipTraduccion);
                                         if (this.accexternomysql.conectar()) {
                                             rs = this.accexternomysql.ejecutarConsulta(QueryNTuplas);
                                             this.accexternomysql.desconectar();
@@ -681,7 +680,6 @@ public class bd implements Serializable {
                                             nTuplas = Double.parseDouble("" + ((ArrayList) rs.get(0)).get(0));
                                         }
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
-                                        this.getNombreIp().put(ip, ip);
                                         op++;
                                     }else if(actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)){
                                         //si es insert nTuplas se queda con 1
@@ -693,6 +691,7 @@ public class bd implements Serializable {
                                             && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
                                         des = des + ValorAsignadoOperacion;
                                         op++;
+                                        System.out.println(conjunto+" local "+ValorAsignadoOperacion+ipTraduccion);
                                     }
                                 }
                                 
