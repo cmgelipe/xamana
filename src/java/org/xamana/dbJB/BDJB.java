@@ -5,6 +5,7 @@
  */
 package org.xamana.dbJB;
 
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -16,13 +17,17 @@ import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
+import javax.faces.model.SelectItemGroup;
 import javax.servlet.ServletContext;
+import org.bson.Document;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFiles;
@@ -31,6 +36,7 @@ import org.xamana.datos.AccesoDatosPG;
 import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.db.esquemaHorMultimedia;
+import org.xamana.dhf.DHFragmentation;
 
 /**
  *
@@ -61,6 +67,7 @@ public class BDJB implements Serializable {
     private String seleccion3;
     private ArrayList<String> attsMultimediaDescriptor;
     private ArrayList<String> esquemaVerticalCBIR;
+    private DHFragmentation DHF;
     
     /**
      * Creates a new instance of BD
@@ -276,10 +283,26 @@ public class BDJB implements Serializable {
                 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
            //Jesús
            //Parte vertical sin CBIR
+        }else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
+            // Fragmentacion Horizontal Dinamica                
+            try {
+                DHF = new DHFragmentation(this.obj);
+                DHF.implementMethod(files, obj.getNombd(), obj.getTabla().getNombre());
+                this.infoEsquema1 = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            tipoEsquema= "esquemaFHD.xhtml";
+
         }
         return tipoEsquema;
     }
 
+    public DHFragmentation getDHF() {
+        return DHF;
+    }
+    
     public String configurarFragmentacion() {
         this.bbotonfragmentar = false;
         return "config.xhtml";

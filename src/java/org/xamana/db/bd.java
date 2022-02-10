@@ -1146,4 +1146,11 @@ public class bd implements Serializable {
 
         return 0.0;
     }
+    public AccesoDatos getAccexternomysql() {
+        return accexternomysql;
+    }
+
+    public AccesoDatosPG getAccexternopost() {
+        return accexternopost;
+    }
 }

@@ -1,0 +1,162 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core" 
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+    <h:head>
+        <title>Xamana</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <h:outputStylesheet name="style.css"/>
+
+    </h:head>
+    <h:body style="background-color: #3f3f3f">
+        <header>
+            <text>Esquema</text>
+        </header>
+
+        <h:form id="dh">
+            <p:growl id="growl" showDetail="true" sticky="true"  />
+            <p:tabView>
+
+                <p:tab title="Operaciones encontradas">
+                    <h:panelGrid>
+                        <p:dataTable value="#{bd.DHF.filterInfo.operations}" var="t">
+                            <p:column headerText="Predicado">
+                                <h:outputText value="#{t.predicate}" />
+                            </p:column>
+                            <p:column headerText="Tipo Operacion">
+                                <h:outputText value="#{t.typeOperation}" />
+                            </p:column>
+
+                            <p:column headerText="Tuplas">
+                                <h:outputText value="#{t.tuples}" />
+                            </p:column>
+                            <p:column headerText="Frecuencia">
+                                <h:outputText value="#{t.frequency}" />
+                            </p:column>
+                            <p:column headerText="Costo">
+                                <h:outputText value="#{t.cost}" />
+                            </p:column>
+                            <p:column headerText="Sitio">
+                                <h:outputText value="#{t.site}" />
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGrid>
+                </p:tab>
+
+                <p:tab title="Frecuencias por sitio">
+                    <table class="table">
+                        <tr class="header">
+                            <td class="ui-column-title" rowspan="2">Predicado</td>
+                            <td colspan="#{bd.DHF.MCRUD.sites.size()}">Frecuencia por sitios</td>
+                            <td rowspan="2">Sitio Max Frecuencia</td>
+                            <td rowspan="2">Costo general predicado</td>
+                        </tr>
+
+                        <tr colspan="#{bd.DHF.MCRUD.sites.size()}" class="header">
+                            <ui:repeat value="#{bd.DHF.MCRUD.sites}" var="s" varStatus="status">
+                                <td>S#{status.index+1}</td>
+
+                            </ui:repeat>
+                        </tr>
+                        <ui:repeat value="#{bd.DHF.MCRUD.predicatesByfrecuency}" var="predicate">
+                            <tr>
+                                <td> #{predicate}</td>
+                                <ui:repeat value="#{bd.DHF.MCRUD.getFrecuencySite(predicate)}" var="frecuency">
+                                    <td> #{frecuency}</td>
+                                </ui:repeat>
+                                <td> #{bd.DHF.MCRUD.getSiteMax(predicate)}</td>
+                                <td> #{bd.DHF.MCRUD.getGeneralCost(predicate)} </td>                        
+                            </tr>
+                        </ui:repeat>
+                    </table>
+                    <ul class="list">
+                        <ui:repeat value="#{bd.DHF.MCRUD.sites}" var="s" varStatus="status">
+                            <li>S#{status.index+1}= #{s}</li>
+                        </ui:repeat>
+                    </ul>
+                </p:tab>
+
+                <p:tab title="MCRUD">
+                    <h:panelGrid>
+                        <p:dataTable value="#{bd.DHF.MCRUD.MCRUD}" var="t">
+                            <p:column headerText="Predicado">
+                                <h:outputText value="#{t.predicate}" />
+                            </p:column>
+                            <p:column headerText="Sitio">
+                                <h:outputText value="#{t.site}" />
+                            </p:column>
+                            <p:column headerText="Costo">
+                                <h:outputText value="#{t.cost}" />
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGrid>
+                </p:tab>
+
+                <p:tab title="ALP">
+                    <h:panelGrid>
+                        <p:dataTable value="#{bd.DHF.alp}" var="t">
+                            <p:column headerText="Atributo">
+                                <h:outputText value="#{t.atribute}" />
+                            </p:column>
+                            <p:column headerText="Costo">
+                                <h:outputText value="#{t.cost}" />
+                            </p:column>
+                        </p:dataTable> 
+                    </h:panelGrid>
+                </p:tab>
+
+                <p:tab title="Esquema">
+                    <h:panelGrid>
+                        <p:dataTable value="#{bd.DHF.schema.schema}" var="t">
+                            <p:column headerText="Fragmento">
+                                <h:outputText value="#{t.name}" />
+                            </p:column>
+                            <p:column headerText="Predicado">
+                                <h:outputText value="#{t.predicate}" />
+                            </p:column>
+
+                            <p:column headerText="Sitio">
+                                <h:outputText value="#{t.site}" />
+                            </p:column>
+                            <p:column headerText="Número de tuplas">
+                                <h:outputText value="#{t.tuples}" />
+                            </p:column>
+                            <p:column headerText="Porcentaje">
+                                <h:outputText value="#{t.percent}" />
+                            </p:column>
+                            <p:column headerText="Operaciones aproximadas">
+                                <h:outputText value="#{t.approximateOperations}" />
+                            </p:column>
+                            <p:column headerText="Valor de desempeño">
+                                <h:outputText value="#{t.performance}" />
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGrid>
+                </p:tab>
+            </p:tabView>
+            <p:dialog id="d6" widgetVar="dialogToken" header="Token">
+                <h:outputText value="La fragmentación dinámica de este tipo requiere implementarse en Java con los archivos de descarga y utilizar este token" /><br />
+                <p:inputText readonly="true" value="#{bd.DHF.token}" />
+            </p:dialog>
+            <p:dialog id="d5" header="Información" visible="#{bd.infoEsquema1}" modal="true" closable="false">
+                <h:outputText value="Se muestra el primer diseño del esquema propuesto, al aplicarlo se deberán descargar todos los archivos correspondientes"/><br />
+                <h:outputText value="para aplicar la fragmentación dinámica. La descarga la acompaña un archivo con las instrucciones a seguir." /><br />
+                <p:commandButton value="OK" action="#{bd.setInfoEsquema1(false)}" update="dh:d5" />
+            </p:dialog>
+            <br/>
+            <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.DHF.percent}" labelTemplate="{value}%" styleClass="animated" global="false" >
+                <p:ajax event="complete" update="dh:growl" oncomplete="PF('btnFragmentation').enable();PF('dialogToken').show();"/>
+            </p:progressBar>
+            <br/>
+            <p:commandButton widgetVar="btnFragmentation" value="Hagámoslo" action="#{bd.DHF.buildSchema()}" onclick="PF('pbAjax').start();PF('btnFragmentation').disable();" update="dh:growl dh:d6" />
+        </h:form>
+
+    </h:body>
+</html>
