@@ -37,6 +37,9 @@ import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.db.esquemaHorMultimedia;
 import org.xamana.dhf.DHFragmentation;
+import org.xamana.verticalCBIR.log.archivos;
+import org.xamana.verticalCBIR.model.Query;
+import org.xamana.verticalCBIR.model.TablaCosto;
 
 /**
  *
@@ -68,6 +71,12 @@ public class BDJB implements Serializable {
     private ArrayList<String> attsMultimediaDescriptor;
     private ArrayList<String> esquemaVerticalCBIR;
     private DHFragmentation DHF;
+    private ArrayList<TablaCosto> esquemaVerticalCBIRPostgres;
+    private boolean visible;
+    ArrayList<TablaCosto> TablasCostos;
+    private ArrayList<TablaCosto> esquemaVertical;
+    ArrayList<Query> consultasV;
+    ArrayList<TablaCosto> AsignacionSitio;
     
     /**
      * Creates a new instance of BD
@@ -277,12 +286,17 @@ public class BDJB implements Serializable {
             tipoEsquema="esquema.xhtml";
         } else if (this.obj.getTabla().isCBIR()
                     && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
-            this.setEsquemaVerticalCBIR(this.obj.esquemaVertical());
+            //this.setEsquemaVerticalCBIR(this.obj.esquemaVertical());
+            this.setEsquemaVerticalCBIRPostgres(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
+            this.setConsultasV(this.obj.ConsultasVerLog(this.files));
+            this.setAsignacionSitio(this.obj.AsignacionSitio1(getAttsMultimediaDescriptor(), this.files));
             tipoEsquema="esquemaVerticalCBIR.xhtml";
         } else if(!this.obj.getTabla().isCBIR() 
                 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
-           //Jesús
-           //Parte vertical sin CBIR
+           this.setEsquemaVertical(this.obj.esquemaVertical(this.files));
+            this.setConsultasV(this.obj.ConsultasVerLog(this.files));
+            this.setAsignacionSitio(this.obj.AsignacionSitio(this.files));
+            tipoEsquema = "esquemaVertical.xhtml";
         }else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
             // Fragmentacion Horizontal Dinamica                
             try {
@@ -482,9 +496,19 @@ public class BDJB implements Serializable {
             if (this.obj.getTipoBD().compareTo("a") == 0) {
                 this.obj.fragmentarVerCBIRMySQL(this.esquemaVerticalCBIR);
             } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
-                this.obj.fragmentarVerCBIRPostgres(this.esquemaVerticalCBIR);
+                this.obj.setProgress1(0);
+                this.visible = false;
+                this.obj.fragmentarVerCBIRPostgres(this.AsignacionSitio);
+                this.visible = true;
             } else {
                 this.obj.fragmentarVerCBIRMongoDB(this.esquemaVerticalCBIR);
+            }
+        }else if (!this.obj.isHorizontalCBIR() && !this.obj.isVerticalCBIR()) {
+            if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+                this.obj.setProgress1(0);
+                this.visible = false;
+                this.obj.fragmentarVerCBIRPostgres(this.AsignacionSitio);
+                this.visible = true;
             }
         }
     }
@@ -1079,5 +1103,46 @@ public class BDJB implements Serializable {
      */
     public void setEsquemaVerticalCBIR(ArrayList<String> esquemaVerticalCBIR) {
         this.esquemaVerticalCBIR = esquemaVerticalCBIR;
+    }
+
+    public ArrayList<TablaCosto> getTablasCostos() {
+        return TablasCostos;
+    }
+
+    public void setTablasCostos(ArrayList<TablaCosto> TablasCostos) {
+        this.TablasCostos = TablasCostos;
+    }
+
+    public ArrayList<TablaCosto> getEsquemaVerticalCBIRPostgres() {
+        return esquemaVerticalCBIRPostgres;
+    }
+    public ArrayList<TablaCosto> getAsignacionSitio() {
+        return AsignacionSitio;
+    }
+
+    public void setAsignacionSitio(ArrayList<TablaCosto> AsignacionSitio) {
+        this.AsignacionSitio = AsignacionSitio;
+    }
+
+    public ArrayList<Query> getConsultasV() {
+        return consultasV;
+    }
+
+    public void setConsultasV(ArrayList<Query> consultasV) {
+        this.consultasV = consultasV;
+    }
+
+    public ArrayList<TablaCosto> getEsquemaVertical() {
+        return esquemaVertical;
+    }
+
+    public void setEsquemaVertical(ArrayList<TablaCosto> esquemaVertical) {
+        this.esquemaVertical = esquemaVertical;
+    }
+    /**
+     * @param esquemaVerticalCBIR the esquemaVerticalCBIR to set
+     */
+    public void setEsquemaVerticalCBIRPostgres(ArrayList<TablaCosto> esquemaVerticalCBIR) {
+        this.esquemaVerticalCBIRPostgres = esquemaVerticalCBIR;
     }
 }

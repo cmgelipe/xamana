@@ -210,6 +210,7 @@ public final class AccesoDatosPG implements Serializable {
             vrsettmp = new ArrayList();
             for (i = 1; i <= nNumCols; i++) {
                 switch (rsmd.getColumnType(i)) {
+                    
                     case Types.CHAR:
                     case Types.VARCHAR:
                         String varchar = "" + doubleQuote(rset.getString(i));
@@ -302,6 +303,38 @@ public final class AccesoDatosPG implements Serializable {
         ArrayList<String> ret = new ArrayList<String>();
         try {
             ArrayList arr=this.ejecutarConsulta(q);
+            if(arr!=null){
+                for(Object y:arr){
+                    ret.add(""+((ArrayList)y).get(0));
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return ret;
+    }
+public synchronized ArrayList<String> nomId(String nombreTabla) {
+        String q="SELECT               \n" +
+                "  pg_attribute.attname, \n"
+                + "  format_type(pg_attribute.atttypid, pg_attribute.atttypmod) \n"
+                + "FROM pg_index, pg_class, pg_attribute, pg_namespace \n"
+                + "WHERE \n"
+                + "  pg_class.oid = '"+nombreTabla+"'::regclass AND \n"
+                + "  indrelid = pg_class.oid AND \n"
+                + "  nspname = 'public' AND \n"
+                + "  pg_class.relnamespace = pg_namespace.oid AND \n"
+                + "  pg_attribute.attrelid = pg_class.oid AND \n"
+                + "  pg_attribute.attnum = any(pg_index.indkey)\n"
+                + " AND indisprimary";
+       String r="SELECT a.attname\n" +
+                "FROM   pg_index i\n" +
+                "JOIN   pg_attribute a ON a.attrelid = i.indrelid\n" +
+                "                     AND a.attnum = ANY(i.indkey)\n" +
+                "WHERE  i.indrelid = '"+nombreTabla+"'::regclass\n" +
+                "AND    i.indisprimary;";
+       ArrayList<String> ret = new ArrayList<String>();
+        try {
+            ArrayList arr=this.ejecutarConsulta(r);
             if(arr!=null){
                 for(Object y:arr){
                     ret.add(""+((ArrayList)y).get(0));

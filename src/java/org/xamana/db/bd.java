@@ -18,6 +18,7 @@ import org.xamana.datos.AccesoDatosPG;
 import static com.mongodb.client.model.Aggregates.*;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
@@ -25,10 +26,16 @@ import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
+import org.xamana.crearfrag.BuildTypes;
+import org.xamana.verticalCBIR.log.archivos;
+import org.xamana.verticalCBIR.model.Query;
+import org.xamana.verticalCBIR.model.TablaCosto;
+import org.xamana.verticalCBIR.model.atributo;
 
 /**
  *
@@ -1116,9 +1123,66 @@ public class bd implements Serializable {
         this.NombreIp = NombreIp;
     }
 
-    public ArrayList<String> esquemaVertical() {
-        ArrayList<String> ret = new ArrayList<>();
-        return ret;
+    public ArrayList<TablaCosto> esquemaVertical(UploadedFiles files) throws IOException {
+        ArrayList<TablaCosto> ta = new ArrayList();
+
+        archivos a = new archivos(this.passbd, this.nombd, this.tabla.getNombre(), this.TipoBD, files, this.dirbd);
+        //ta.add(a.noLog(a.obtenerTablaCosto()));
+        ta.addAll(a.obtenerTablaCosto());
+
+        ta = a.nombrar(a.obtenerTablaCosto());
+        
+
+        return ta;
+
+    }
+    public ArrayList<TablaCosto> esquemaVerticalCBIRPostgres(ArrayList<String> attM, UploadedFiles files) throws IOException {
+        archivos a = new archivos(this.passbd, this.nombd, this.tabla.getNombre(), this.TipoBD, files, this.dirbd, attM);
+        ArrayList<TablaCosto> juntos = new ArrayList();
+        juntos.addAll(a.obtenerFragMul());
+        juntos.addAll(a.obtenerTablaCosto());
+        ArrayList<TablaCosto> todos = new ArrayList();
+
+        todos.addAll(juntos);
+        if(a.noLog(juntos)!=null){
+            todos.add(a.noLog(juntos));
+        }
+            
+
+        return a.nombrar(a.obtenerTablaCosto());
+    }
+
+    public ArrayList<Query> ConsultasVerLog(UploadedFiles files) throws IOException {
+        archivos a = new archivos(this.passbd, this.nombd, this.tabla.getNombre(), this.TipoBD, files, this.dirbd);
+
+        return a.arrQuerys(a.getArrCad());
+    }
+
+    public ArrayList<TablaCosto> AsignacionSitio(UploadedFiles files) throws IOException {
+        archivos a = new archivos(this.passbd, this.nombd, this.tabla.getNombre(), this.TipoBD, files, this.dirbd);
+        ArrayList<TablaCosto> ta = new ArrayList<>();
+        ArrayList<TablaCosto> to = new ArrayList<>();
+        ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
+        if(a.noLog(a.obtenerTablaCosto())!=null){
+            ta.add(a.noLog(a.obtenerTablaCosto()));
+        }
+
+        return a.nombrar(ta);
+    }
+
+    public ArrayList<TablaCosto> AsignacionSitio1(ArrayList<String> attsM, UploadedFiles files) throws IOException {
+        archivos a = new archivos(this.passbd, this.nombd, this.tabla.getNombre(), this.TipoBD, files, this.dirbd, attsM);
+        ArrayList<TablaCosto> ta = new ArrayList<>();
+        ArrayList<TablaCosto> to = new ArrayList<>();
+        ta.addAll(a.obtenerFragMul());
+        ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
+        to.addAll(ta);
+        if(a.noLog(ta)!=null){
+            to.add(a.noLog(ta));
+        }
+        
+
+        return a.nombrar(to);
     }
 
     public boolean isVerticalCBIR() {
@@ -1129,10 +1193,107 @@ public class bd implements Serializable {
 
     }
 
-    public void fragmentarVerCBIRPostgres(ArrayList<String> esquemaVerticalCBIR) {
+    public void fragmentarVerCBIRPostgres(ArrayList<TablaCosto> es) {
+        this.progress1 = 1;
+        int percent = 100 / es.size();
 
+        try {
+            for (TablaCosto ta : es) {
+                crearTabla(ta);
+                this.progress1 += percent;
+            }
+            this.progress1 = 100;
+        } catch (Exception e) {
+            System.out.println("Sin conexión");
+        }
     }
 
+    private void crearTabla(TablaCosto frag) {
+
+        try {
+            String sql;
+
+            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio().getIp() + ":" + "5432", this.nombd, this.usubd, this.passbd);
+            if (acc.conectar()) {
+
+                sql = "drop table if exists " + frag.getNombre() + " ; CREATE TABLE " + frag.getNombre() + " ( " + atributosTipos(frag.getArrAtri()) + " );";
+
+                acc.ejecutarComando(sql);
+                acc.desconectar();
+            }
+
+            ArrayList atributos = null;
+            ArrayList n=null;
+            AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + "5432", this.nombd, this.usubd, this.passbd);
+            if (acc2.conectar()) {
+                String numero = "Select count (*) from " + this.getTabla().getNombre() + ";";
+                n = acc2.ejecutarConsulta(numero);
+                acc2.desconectar();
+            }
+            int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
+            int nLote = num / 50;
+            System.out.println("Lotes*********************" + frag.getNombre());
+            for (int i = 0; i < 50; i++) {
+                acc2 = new AccesoDatosPG(this.dirbd + ":" + "5432", this.nombd, this.usubd, this.passbd);
+                if (acc2.conectar()) {
+                    if (i == 0) {
+                        sql = "Select " + atri(frag.getArrAtri()) + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + (i + 1);
+                    } else {
+
+                        sql = "Select " + atri(frag.getArrAtri()) + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + nLote * (i + 1);
+                    }
+                    atributos = acc2.ejecutarConsulta(sql);
+                    acc2.desconectar();
+                }
+                if (atributos != null) {
+                    acc = new AccesoDatosPG(frag.getSitio().getIp() + ":" + "5432", this.nombd, this.usubd, this.passbd);
+                    if (acc.conectar()) {
+                        for (int k = 0; k < atributos.size(); k++) {
+                            String valor = "";
+                            ArrayList tupla = (ArrayList) atributos.get(k);
+                            for (int j = 0; j < tupla.size(); j++) {
+                                valor += "'" + tupla.get(j) + "',";
+                            }
+                            valor = valor.substring(0, valor.length() - 1);
+                            sql = "insert into " + frag.getNombre() + "(" + frag.getAtributos() + ") values (" + valor + ");";
+
+                            acc.ejecutarComando(sql);
+                            
+                        }
+                        acc.desconectar();
+                    }
+
+                }
+
+            }
+            
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private String atri(ArrayList<atributo> arrAtri) {
+        String separador = ", ";
+        @SuppressWarnings("unchecked")
+        ArrayList<String> cad = new ArrayList();
+        arrAtri.forEach((att) -> {
+            cad.add(att.getNombre());
+        });
+        return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
+    }
+
+    private String atributosTipos(ArrayList<atributo> arrAtri) {
+
+        @SuppressWarnings("unchecked")
+        ArrayList<String> cad = new ArrayList();
+        String separador = ", ";
+        arrAtri.forEach((att) -> {
+            cad.add(att.getNombre() + " " + BuildTypes.determineTypes(att.getTipo(), att.getTamanio()));
+        });
+        return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
+    }
+    
     public void fragmentarVerCBIRMongoDB(ArrayList<String> esquemaVerticalCBIR) {
 
     }
