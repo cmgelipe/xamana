@@ -16,6 +16,8 @@ import org.xamana.datos.AccesoDatos;
 import org.xamana.datos.AccesoDatosMG;
 import org.xamana.datos.AccesoDatosPG;
 import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -642,12 +644,12 @@ public class bd implements Serializable {
                         String ip = "127.0.0.1";
                         String nombre = "";
                         while ((actual = bufferedReader.readLine()) != null) {
-                            
+
                             //System.out.println(actual.contains("Connect\t")+" "+actual+" ");
                             if (actual.contains("Connect\t") && !actual.contains("denied")) {
                                 String y[] = actual.split("\t");
                                 ip = y[2].substring(y[2].indexOf("@") + 1, y[2].indexOf(" ", y[2].indexOf("@") + 1));
-                                nombre = y[1].substring(0,y[1].indexOf(" "));
+                                nombre = y[1].substring(0, y[1].indexOf(" "));
                                 if (ip.toLowerCase().compareTo("localhost") == 0 || ip.toLowerCase().compareTo("::1") == 0) {
                                     ip = "127.0.0.1";
                                 }
@@ -664,8 +666,8 @@ public class bd implements Serializable {
                             }
                             if (ValorAsignadoOperacion != 0) {
                                 String y[] = actual.split("\t");
-                                String sujeto = y[1].substring(0,y[1].indexOf(" "));
-                                String ipTraduccion = getNombreIp().get(sujeto);                                
+                                String sujeto = y[1].substring(0, y[1].indexOf(" "));
+                                String ipTraduccion = getNombreIp().get(sujeto);
                                 if (ipTraduccion.compareTo(this.dirbd) != 0) {
                                     double nTuplas = 1.0;
                                     if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
@@ -678,7 +680,7 @@ public class bd implements Serializable {
                                             QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase();
                                         }
                                         ArrayList rs = null;
-                                        System.out.println(conjunto+" remoto "+(ValorAsignadoOperacion*2)+ipTraduccion);
+                                        System.out.println(conjunto + " remoto " + (ValorAsignadoOperacion * 2) + ipTraduccion);
                                         if (this.accexternomysql.conectar()) {
                                             rs = this.accexternomysql.ejecutarConsulta(QueryNTuplas);
                                             this.accexternomysql.desconectar();
@@ -688,7 +690,7 @@ public class bd implements Serializable {
                                         }
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                         op++;
-                                    }else if(actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)){
+                                    } else if (actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
                                         //si es insert nTuplas se queda con 1
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                         op++;
@@ -698,10 +700,10 @@ public class bd implements Serializable {
                                             && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
                                         des = des + ValorAsignadoOperacion;
                                         op++;
-                                        System.out.println(conjunto+" local "+ValorAsignadoOperacion+ipTraduccion);
+                                        System.out.println(conjunto + " local " + ValorAsignadoOperacion + ipTraduccion);
                                     }
                                 }
-                                
+
                             }
                         }
                     } else if (this.TipoBD.compareTo("b") == 0 || this.TipoBD.compareTo("c") == 0) {
@@ -739,7 +741,7 @@ public class bd implements Serializable {
                             } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
                                 ValorAsignadoOperacion = 3;
                             }
-                            if(ValorAsignadoOperacion!=0){
+                            if (ValorAsignadoOperacion != 0) {
                                 String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                                 String ipTraduccion = getNombreIp().get(sujeto);
                                 if (ipTraduccion.compareTo(this.dirbd) == 0) {
@@ -748,7 +750,7 @@ public class bd implements Serializable {
                                         des = des + ValorAsignadoOperacion;
                                         op++;
                                     }
-                                }else{
+                                } else {
                                     double nTuplas = 1.0;
                                     if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
                                             && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {//excluir joins
@@ -770,7 +772,7 @@ public class bd implements Serializable {
                                         }
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                         op++;
-                                    }else if(actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)){
+                                    } else if (actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
                                         //si es insert nTuplas se queda con 1
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                         op++;
@@ -806,46 +808,61 @@ public class bd implements Serializable {
                                         filter = j4.get("q").toString();
                                         ns = j3.get("update").toString().toLowerCase();
                                     }
-                                    if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0 && filter.contains(conjunto.toLowerCase())) {
-                                        op++;
-                                        try {
-                                            int ValorAsignadoOperacion = 0;
-                                            if (j3.has("find")) {
-                                                ValorAsignadoOperacion = 1;
-                                            } else if (j3.has("insert") || j3.has("remove")) {
-                                                ValorAsignadoOperacion = 2;
-                                            } else if (j3.has("update")) {
-                                                ValorAsignadoOperacion = 3;
+                                    if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0) {
+                                        boolean perteneceConjunto = false;
+                                        if (filter.toLowerCase().compareTo("{}") == 0) {
+                                            perteneceConjunto = true;
+                                        } else {
+                                            if (this.accexternomongo.conectar()) {
+                                                MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
+                                                MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
+                                                String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
+                                                Document where = Document.parse(filter);
+                                                long coincidencias = doc.countDocuments(and((where), eq(nombreColumna, conjunto)));
+                                                perteneceConjunto = (coincidencias > 0) ? true : false;
                                             }
-                                            if (ValorAsignadoOperacion != 0) {
-                                                j2 = new JSONObject(j.get("attr").toString());
-                                                String remote = j2.get("remote").toString().toLowerCase().trim();
-                                                ipLinea = remote.substring(0, remote.indexOf(":"));
-                                                if (!this.isNullorEmpty(ns)) {
-                                                    getNombreIp().put(ipLinea, ipLinea);
-                                                    if (this.dirbd.compareTo(ipLinea) == 0) {
-                                                        des = des + ValorAsignadoOperacion;
-                                                    } else {
-                                                        long ntuplas = 1;
-                                                        if (j3.has("find")) {
-                                                            ntuplas = Long.parseLong(j2.get("nreturned").toString());
-                                                        } else if (j3.has("delete") || j3.has("update")) {
-                                                            if (this.accexternomongo.conectar()) {
-                                                                MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
-                                                                MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
-                                                                Document where = Document.parse(filter);
-                                                                ntuplas = doc.countDocuments(where);
+                                        }
+                                        if (perteneceConjunto) {
+                                            op++;
+                                            try {
+                                                int ValorAsignadoOperacion = 0;
+                                                if (j3.has("find")) {
+                                                    ValorAsignadoOperacion = 1;
+                                                } else if (j3.has("insert") || j3.has("remove")) {
+                                                    ValorAsignadoOperacion = 2;
+                                                } else if (j3.has("update")) {
+                                                    ValorAsignadoOperacion = 3;
+                                                }
+                                                if (ValorAsignadoOperacion != 0) {
+                                                    j2 = new JSONObject(j.get("attr").toString());
+                                                    String remote = j2.get("remote").toString().toLowerCase().trim();
+                                                    ipLinea = remote.substring(0, remote.indexOf(":"));
+                                                    if (!this.isNullorEmpty(ns)) {
+                                                        getNombreIp().put(ipLinea, ipLinea);
+                                                        if (this.dirbd.compareTo(ipLinea) == 0) {
+                                                            des = des + ValorAsignadoOperacion;
+                                                        } else {
+                                                            long ntuplas = 1;
+                                                            if (j3.has("find")) {
+                                                                ntuplas = Long.parseLong(j2.get("nreturned").toString());
+                                                            } else if (j3.has("delete") || j3.has("update")) {
+                                                                if (this.accexternomongo.conectar()) {
+                                                                    MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
+                                                                    MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
+                                                                    Document where = Document.parse(filter);
+                                                                    ntuplas = doc.countDocuments(where);
+                                                                }
+                                                            } else if (j3.has("insert")) {
+                                                                ntuplas = Long.parseLong(j2.get("ninserted").toString());
                                                             }
-                                                        } else if (j3.has("insert")) {
-                                                            ntuplas = Long.parseLong(j2.get("ninserted").toString());
+                                                            des = des + (ValorAsignadoOperacion * 2) * ntuplas;
                                                         }
-                                                        des = des + (ValorAsignadoOperacion * 2) * ntuplas;
                                                     }
                                                 }
-                                            }
 
-                                        } catch (JSONException ex) {
-                                            //ex.printStackTrace();
+                                            } catch (JSONException ex) {
+                                                //ex.printStackTrace();
+                                            }
                                         }
                                     }
 
@@ -1131,11 +1148,11 @@ public class bd implements Serializable {
         ta.addAll(a.obtenerTablaCosto());
 
         ta = a.nombrar(a.obtenerTablaCosto());
-        
 
         return ta;
 
     }
+
     public ArrayList<TablaCosto> esquemaVerticalCBIRPostgres(ArrayList<String> attM, UploadedFiles files) throws IOException {
         archivos a = new archivos(this.passbd, this.nombd, this.tabla.getNombre(), this.TipoBD, files, this.dirbd, attM);
         ArrayList<TablaCosto> juntos = new ArrayList();
@@ -1144,10 +1161,9 @@ public class bd implements Serializable {
         ArrayList<TablaCosto> todos = new ArrayList();
 
         todos.addAll(juntos);
-        if(a.noLog(juntos)!=null){
+        if (a.noLog(juntos) != null) {
             todos.add(a.noLog(juntos));
         }
-            
 
         return a.nombrar(a.obtenerTablaCosto());
     }
@@ -1163,7 +1179,7 @@ public class bd implements Serializable {
         ArrayList<TablaCosto> ta = new ArrayList<>();
         ArrayList<TablaCosto> to = new ArrayList<>();
         ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
-        if(a.noLog(a.obtenerTablaCosto())!=null){
+        if (a.noLog(a.obtenerTablaCosto()) != null) {
             ta.add(a.noLog(a.obtenerTablaCosto()));
         }
 
@@ -1177,10 +1193,9 @@ public class bd implements Serializable {
         ta.addAll(a.obtenerFragMul());
         ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
         to.addAll(ta);
-        if(a.noLog(ta)!=null){
+        if (a.noLog(ta) != null) {
             to.add(a.noLog(ta));
         }
-        
 
         return a.nombrar(to);
     }
@@ -1223,7 +1238,7 @@ public class bd implements Serializable {
             }
 
             ArrayList atributos = null;
-            ArrayList n=null;
+            ArrayList n = null;
             AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + "5432", this.nombd, this.usubd, this.passbd);
             if (acc2.conectar()) {
                 String numero = "Select count (*) from " + this.getTabla().getNombre() + ";";
@@ -1258,7 +1273,7 @@ public class bd implements Serializable {
                             sql = "insert into " + frag.getNombre() + "(" + frag.getAtributos() + ") values (" + valor + ");";
 
                             acc.ejecutarComando(sql);
-                            
+
                         }
                         acc.desconectar();
                     }
@@ -1266,7 +1281,6 @@ public class bd implements Serializable {
                 }
 
             }
-            
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -1293,7 +1307,7 @@ public class bd implements Serializable {
         });
         return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
-    
+
     public void fragmentarVerCBIRMongoDB(ArrayList<String> esquemaVerticalCBIR) {
 
     }
@@ -1307,6 +1321,7 @@ public class bd implements Serializable {
 
         return 0.0;
     }
+
     public AccesoDatos getAccexternomysql() {
         return accexternomysql;
     }
