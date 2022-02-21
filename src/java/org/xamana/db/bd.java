@@ -801,15 +801,34 @@ public class bd implements Serializable {
                                         filter = j4.get("q").toString();
                                         ns = j3.get("delete").toString().toLowerCase();
                                     } else if (j3.has("insert")) {
-                                        filter = j3.getJSONArray("documents").toString();
+                                        filter = j3.getJSONArray("documents").get(0).toString();
                                         ns = j3.get("insert").toString().toLowerCase();
                                     } else if (j3.has("update")) {
                                         JSONObject j4 = new JSONObject(j3.getJSONArray("updates").get(0).toString());
                                         filter = j4.get("q").toString();
                                         ns = j3.get("update").toString().toLowerCase();
                                     }
+
+                                    //posprocesar "$oid" a "ObjectId"
+                                    JSONObject f1 = new JSONObject(filter);
+                                    if (f1.has("_id")) {
+                                        try {
+                                            JSONObject f2 = new JSONObject(f1.get("_id").toString());
+                                            if (f2.has("$oid")) {
+                                                String oid = f2.getString("$oid");
+                                                String head = filter.substring(0, filter.indexOf("{\"$oid\""));
+                                                String tail = filter.substring(filter.indexOf(oid) + oid.length() + 2);
+                                                filter = head + "ObjectId(\"" + oid + "\")" + tail;
+                                            }
+                                        } catch (Exception e) {
+                                            //e.printStackTrace();
+                                            //no hacer nada, no tiene oid, solo valor
+                                        }
+                                    }
+
                                     if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0) {
                                         boolean perteneceConjunto = false;
+                                        
                                         if (filter.toLowerCase().compareTo("{}") == 0) {
                                             perteneceConjunto = true;
                                         } else {
@@ -819,6 +838,7 @@ public class bd implements Serializable {
                                                 String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
                                                 Document where = Document.parse(filter);
                                                 long coincidencias = doc.countDocuments(and((where), eq(nombreColumna, conjunto)));
+                                                
                                                 perteneceConjunto = (coincidencias > 0) ? true : false;
                                             }
                                         }
@@ -828,11 +848,12 @@ public class bd implements Serializable {
                                                 int ValorAsignadoOperacion = 0;
                                                 if (j3.has("find")) {
                                                     ValorAsignadoOperacion = 1;
-                                                } else if (j3.has("insert") || j3.has("remove")) {
+                                                } else if (j3.has("insert") || j3.has("delete")) {
                                                     ValorAsignadoOperacion = 2;
                                                 } else if (j3.has("update")) {
                                                     ValorAsignadoOperacion = 3;
                                                 }
+                                                
                                                 if (ValorAsignadoOperacion != 0) {
                                                     j2 = new JSONObject(j.get("attr").toString());
                                                     String remote = j2.get("remote").toString().toLowerCase().trim();
@@ -840,6 +861,7 @@ public class bd implements Serializable {
                                                     if (!this.isNullorEmpty(ns)) {
                                                         getNombreIp().put(ipLinea, ipLinea);
                                                         if (this.dirbd.compareTo(ipLinea) == 0) {
+                                                            System.out.println(ValorAsignadoOperacion+" local "+ conjunto);
                                                             des = des + ValorAsignadoOperacion;
                                                         } else {
                                                             long ntuplas = 1;
@@ -855,19 +877,24 @@ public class bd implements Serializable {
                                                             } else if (j3.has("insert")) {
                                                                 ntuplas = Long.parseLong(j2.get("ninserted").toString());
                                                             }
+                                                            System.out.println(ValorAsignadoOperacion+" "+ntuplas+" remoto "+conjunto);
                                                             des = des + (ValorAsignadoOperacion * 2) * ntuplas;
                                                         }
+                                                    }else{
+                                                        System.out.println("ns esta vacio");
                                                     }
+                                                }else{
+                                                    System.out.println("valor asignado de operación es 0");
                                                 }
 
                                             } catch (JSONException ex) {
-                                                //ex.printStackTrace();
+                                                ex.printStackTrace();
                                             }
                                         }
                                     }
 
                                 } catch (JSONException ex) {
-                                    //ex.printStackTrace();
+                                    ex.printStackTrace();
                                 }
                             }
                         }
