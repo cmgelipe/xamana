@@ -45,7 +45,6 @@ import org.xamana.verticalCBIR.model.TablaCosto;
  *
  * @author pipe
  */
-
 @ManagedBean(name = "bd")
 @SessionScoped
 public class BDJB implements Serializable {
@@ -77,12 +76,12 @@ public class BDJB implements Serializable {
     private ArrayList<TablaCosto> esquemaVertical;
     ArrayList<Query> consultasV;
     ArrayList<TablaCosto> AsignacionSitio;
-    
+
     /**
      * Creates a new instance of BD
      */
     public BDJB() {
-        attsMultimediaDescriptor=new ArrayList<>();
+        attsMultimediaDescriptor = new ArrayList<>();
     }
 
     public void configuracion() {
@@ -121,21 +120,21 @@ public class BDJB implements Serializable {
                 }
                 this.dcolumna = true;
                 this.blog = true;
-            } else if(this.obj.getTabla().isCBIR()
-                    && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
+            } else if (this.obj.getTabla().isCBIR()
+                    && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
                 if (this.obj.getTipoBD().compareTo("a") == 0) {
-                    atributos=this.obj.listaAtributosMySQL();
+                    atributos = this.obj.listaAtributosMySQL();
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
-                    atributos=this.obj.listaAtributosPostgreSQL();
+                    atributos = this.obj.listaAtributosPostgreSQL();
                 } else if (this.obj.getTipoBD().compareTo("d") == 0) {
-                    atributos=this.obj.listaAtributosMongoDB();
+                    atributos = this.obj.listaAtributosMongoDB();
                 }
-                
-                this.dcolumnas=true;  
+
+                this.dcolumnas = true;
             } else {
                 this.dcolumna = false;
                 this.blog = false;
-                this.dcolumnas=false;
+                this.dcolumnas = false;
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -143,7 +142,7 @@ public class BDJB implements Serializable {
     }
 
     public String btnesquema() {
-        String tipoEsquema="";
+        String tipoEsquema = "";
         if (this.obj.getTabla().isCBIR()
                 && this.obj.getTabla().getTipoFragment().compareTo("a") == 0) {
             try {
@@ -283,21 +282,30 @@ public class BDJB implements Serializable {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-            tipoEsquema="esquema.xhtml";
+            tipoEsquema = "esquema.xhtml";
         } else if (this.obj.getTabla().isCBIR()
-                    && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
+                && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
             //this.setEsquemaVerticalCBIR(this.obj.esquemaVertical());
-            this.setEsquemaVerticalCBIRPostgres(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
-            this.setConsultasV(this.obj.ConsultasVerLog(this.files));
-            this.setAsignacionSitio(this.obj.AsignacionSitio1(getAttsMultimediaDescriptor(), this.files));
-            tipoEsquema="esquemaVerticalCBIR.xhtml";
-        } else if(!this.obj.getTabla().isCBIR() 
-                && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
-           this.setEsquemaVertical(this.obj.esquemaVertical(this.files));
-            this.setConsultasV(this.obj.ConsultasVerLog(this.files));
-            this.setAsignacionSitio(this.obj.AsignacionSitio(this.files));
+            try {
+                this.setEsquemaVerticalCBIRPostgres(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
+                this.setConsultasV(this.obj.ConsultasVerLog(this.files));
+                this.setAsignacionSitio(this.obj.AsignacionSitio1(getAttsMultimediaDescriptor(), this.files));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            tipoEsquema = "esquemaVerticalCBIR.xhtml";
+        } else if (!this.obj.getTabla().isCBIR()
+                && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
+            try {
+                this.setEsquemaVertical(this.obj.esquemaVertical(this.files));
+                this.setConsultasV(this.obj.ConsultasVerLog(this.files));
+                this.setAsignacionSitio(this.obj.AsignacionSitio(this.files));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             tipoEsquema = "esquemaVertical.xhtml";
-        }else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
+        } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
             // Fragmentacion Horizontal Dinamica                
             try {
                 DHF = new DHFragmentation(this.obj);
@@ -307,7 +315,7 @@ public class BDJB implements Serializable {
                 e.printStackTrace();
             }
 
-            tipoEsquema= "esquemaFHD.xhtml";
+            tipoEsquema = "esquemaFHD.xhtml";
 
         }
         return tipoEsquema;
@@ -316,7 +324,7 @@ public class BDJB implements Serializable {
     public DHFragmentation getDHF() {
         return DHF;
     }
-    
+
     public String configurarFragmentacion() {
         this.bbotonfragmentar = false;
         return "config.xhtml";
@@ -440,7 +448,7 @@ public class BDJB implements Serializable {
 
     public void esquemaCBIRHorizontal() {
         this.dcolumna = false;
-        this.dcolumnas=false;
+        this.dcolumnas = false;
     }
 
     /**
@@ -492,7 +500,7 @@ public class BDJB implements Serializable {
             }
 
             this.setBToken(true);
-        }else if(this.obj.isVerticalCBIR()){
+        } else if (this.obj.isVerticalCBIR()) {
             if (this.obj.getTipoBD().compareTo("a") == 0) {
                 this.obj.fragmentarVerCBIRMySQL(this.esquemaVerticalCBIR);
             } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
@@ -503,7 +511,7 @@ public class BDJB implements Serializable {
             } else {
                 this.obj.fragmentarVerCBIRMongoDB(this.esquemaVerticalCBIR);
             }
-        }else if (!this.obj.isHorizontalCBIR() && !this.obj.isVerticalCBIR()) {
+        } else if (!this.obj.isHorizontalCBIR() && !this.obj.isVerticalCBIR()) {
             if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 this.obj.setProgress1(0);
                 this.visible = false;
@@ -976,7 +984,7 @@ public class BDJB implements Serializable {
                 + "\n"
                 + "CREATE EVENT TRIGGER test_trigger_modificar ON ddl_command_end WHEN TAG IN ('ALTER TABLE')\n"
                 + "EXECUTE FUNCTION trg_alter_test_modificar();";
-        return a1 + a2 + a3+a4+a5;
+        return a1 + a2 + a3 + a4 + a5;
     }
 
     String stringArchivoF() {
@@ -997,15 +1005,15 @@ public class BDJB implements Serializable {
                 + "	res2=(select split_part(original,'::',1));\n"
                 + "	res3=(select split_part(original,'::',2));\n"
                 + "	for nTablas in SELECT table_name FROM information_schema.tables \n"
-                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '"+this.obj.getTabla().getNombre()+"_%'\n"
+                + "					WHERE table_schema='public' AND table_type='BASE TABLE' and table_name like '" + this.obj.getTabla().getNombre() + "_%'\n"
                 + "		loop\n"
                 + "			if modo=1 then\n"
                 + "				consulta='alter table '|| nTablas.table_name ||' rename column '||res2||' to '||res3;\n"
-                + "				perform dblink_exec('dbname="+this.obj.getNombd()+" user="+this.obj.getUsubd()+" password="+this.obj.getPassbd()+"',consulta);\n"
+                + "				perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);\n"
                 + "			end if;\n"
                 + "			if modo=2 then\n"
                 + "				consulta='alter table '|| nTablas.table_name ||' alter column '||res2||' set data type '||res3;\n"
-                + "				perform dblink_exec('dbname="+this.obj.getNombd()+" user="+this.obj.getUsubd()+" password="+this.obj.getPassbd()+"',consulta);\n"
+                + "				perform dblink_exec('dbname=" + this.obj.getNombd() + " user=" + this.obj.getUsubd() + " password=" + this.obj.getPassbd() + "',consulta);\n"
                 + "			end if;\n"
                 + "		end loop;\n"
                 + "	raise notice '%-%',res2,res3;\n"
@@ -1070,11 +1078,13 @@ public class BDJB implements Serializable {
     public void setSeleccion2(String seleccion2) {
         this.seleccion2 = seleccion2;
     }
-    public void agregarAtts(){
-        this.attsMultimediaDescriptor.add(seleccion1+","+seleccion2);
+
+    public void agregarAtts() {
+        this.attsMultimediaDescriptor.add(seleccion1 + "," + seleccion2);
     }
-    public void eliminarAtts(){
-        this.attsMultimediaDescriptor.removeIf(x->(x.compareTo(this.seleccion3)==0));
+
+    public void eliminarAtts() {
+        this.attsMultimediaDescriptor.removeIf(x -> (x.compareTo(this.seleccion3) == 0));
     }
 
     /**
@@ -1116,6 +1126,7 @@ public class BDJB implements Serializable {
     public ArrayList<TablaCosto> getEsquemaVerticalCBIRPostgres() {
         return esquemaVerticalCBIRPostgres;
     }
+
     public ArrayList<TablaCosto> getAsignacionSitio() {
         return AsignacionSitio;
     }
@@ -1139,6 +1150,7 @@ public class BDJB implements Serializable {
     public void setEsquemaVertical(ArrayList<TablaCosto> esquemaVertical) {
         this.esquemaVertical = esquemaVertical;
     }
+
     /**
      * @param esquemaVerticalCBIR the esquemaVerticalCBIR to set
      */
