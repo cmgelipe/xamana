@@ -670,28 +670,43 @@ public class bd implements Serializable {
                                 String ipTraduccion = getNombreIp().get(sujeto);
                                 if (ipTraduccion.compareTo(this.dirbd) != 0) {
                                     double nTuplas = 1.0;
-                                    if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
-                                            && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {//excluir joins
+                                    if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete")
+                                            || actual.toLowerCase().contains("update")) && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {//excluir joins
                                         String QueryNTuplas = "";
+                                        boolean perteneceConjunto = false;
                                         if (y[2].toLowerCase().contains("where")) {
                                             String predicado = y[2].substring(y[2].toLowerCase().indexOf("where"));
                                             QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase() + " " + predicado;
+                                            String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
+                                            ArrayList subConsulta = null;
+                                            if (this.accexternomysql.conectar()) {
+                                                subConsulta = this.accexternomysql.ejecutarConsulta("select count(*) from (select tipo from multimedia_records " + predicado + ") as t1 where " + nombreColumna + "='" + conjunto + "';");
+                                                this.accexternomysql.desconectar();
+                                            }
+                                            if (!this.isNullorEmpty(subConsulta)) {
+                                                perteneceConjunto = (Double.parseDouble("" + ((ArrayList) subConsulta.get(0)).get(0)) > 0) ? true : false;
+                                            }
                                         } else {
+                                            perteneceConjunto = true;
                                             QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase();
                                         }
-                                        ArrayList rs = null;
-                                        System.out.println(conjunto + " remoto " + (ValorAsignadoOperacion * 2) + ipTraduccion);
-                                        if (this.accexternomysql.conectar()) {
-                                            rs = this.accexternomysql.ejecutarConsulta(QueryNTuplas);
-                                            this.accexternomysql.desconectar();
+                                        if (perteneceConjunto) {
+                                            ArrayList rs = null;
+                                            System.out.println(conjunto + " remoto " + (ValorAsignadoOperacion * 2) + ipTraduccion);
+                                            if (this.accexternomysql.conectar()) {
+                                                rs = this.accexternomysql.ejecutarConsulta(QueryNTuplas);
+                                                this.accexternomysql.desconectar();
+                                            }
+                                            if (!this.isNullorEmpty(rs)) {
+                                                nTuplas = Double.parseDouble("" + ((ArrayList) rs.get(0)).get(0));
+                                            }
+                                            des = des + (ValorAsignadoOperacion * 2) * nTuplas;
+                                            op++;
                                         }
-                                        if (!this.isNullorEmpty(rs)) {
-                                            nTuplas = Double.parseDouble("" + ((ArrayList) rs.get(0)).get(0));
-                                        }
-                                        des = des + (ValorAsignadoOperacion * 2) * nTuplas;
-                                        op++;
+
                                     } else if (actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
                                         //si es insert nTuplas se queda con 1
+
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                         op++;
                                     }
@@ -828,7 +843,7 @@ public class bd implements Serializable {
 
                                     if (c.compareTo("command") == 0 && ns.compareTo(this.tabla.getNombre().toLowerCase()) == 0) {
                                         boolean perteneceConjunto = false;
-                                        
+
                                         if (filter.toLowerCase().compareTo("{}") == 0) {
                                             perteneceConjunto = true;
                                         } else {
@@ -838,7 +853,7 @@ public class bd implements Serializable {
                                                 String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
                                                 Document where = Document.parse(filter);
                                                 long coincidencias = doc.countDocuments(and((where), eq(nombreColumna, conjunto)));
-                                                
+
                                                 perteneceConjunto = (coincidencias > 0) ? true : false;
                                             }
                                         }
@@ -853,7 +868,7 @@ public class bd implements Serializable {
                                                 } else if (j3.has("update")) {
                                                     ValorAsignadoOperacion = 3;
                                                 }
-                                                
+
                                                 if (ValorAsignadoOperacion != 0) {
                                                     j2 = new JSONObject(j.get("attr").toString());
                                                     String remote = j2.get("remote").toString().toLowerCase().trim();
@@ -861,7 +876,7 @@ public class bd implements Serializable {
                                                     if (!this.isNullorEmpty(ns)) {
                                                         getNombreIp().put(ipLinea, ipLinea);
                                                         if (this.dirbd.compareTo(ipLinea) == 0) {
-                                                            System.out.println(ValorAsignadoOperacion+" local "+ conjunto);
+                                                            System.out.println(ValorAsignadoOperacion + " local " + conjunto);
                                                             des = des + ValorAsignadoOperacion;
                                                         } else {
                                                             long ntuplas = 1;
@@ -877,13 +892,13 @@ public class bd implements Serializable {
                                                             } else if (j3.has("insert")) {
                                                                 ntuplas = Long.parseLong(j2.get("ninserted").toString());
                                                             }
-                                                            System.out.println(ValorAsignadoOperacion+" "+ntuplas+" remoto "+conjunto);
+                                                            System.out.println(ValorAsignadoOperacion + " " + ntuplas + " remoto " + conjunto);
                                                             des = des + (ValorAsignadoOperacion * 2) * ntuplas;
                                                         }
-                                                    }else{
+                                                    } else {
                                                         System.out.println("ns esta vacio");
                                                     }
-                                                }else{
+                                                } else {
                                                     System.out.println("valor asignado de operación es 0");
                                                 }
 
