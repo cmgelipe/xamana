@@ -28,6 +28,7 @@ import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -706,7 +707,6 @@ public class bd implements Serializable {
 
                                     } else if (actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
                                         //si es insert nTuplas se queda con 1
-
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                         op++;
                                     }
@@ -922,6 +922,87 @@ public class bd implements Serializable {
         System.out.println("op:" + op + " des: " + des);
         ret.setOperaciones(op);
         ret.setDesempenio(des);
+        return ret;
+    }
+
+    private ArrayList<String> predicados(String q) {
+        ArrayList<String> ret = new ArrayList<>();
+        if (q.toUpperCase().contains("INSERT ") && !q.toUpperCase().contains(" SET ")) {
+            boolean existeOrden = false;
+            for (int i = 0; i < this.tabla.getAtributos().size(); i++) {
+                if (q.indexOf(this.tabla.getAtributos().get(i).getNombre()) != -1 && q.indexOf(this.tabla.getAtributos().get(i).getNombre()) < q.toUpperCase().indexOf(" VALUES")) {
+                    existeOrden = true;
+                }
+            }
+            String valores1 = q.substring(q.indexOf("(", q.toUpperCase().indexOf(" VALUES") + 1) + 1, q.indexOf(")", q.toUpperCase().indexOf(" VALUES") + 1));
+            valores1.replace("(", "");
+            valores1.replace(")", "");
+            String[] valores2 = valores1.split(",");
+            if (existeOrden) {
+                String col = q.substring(q.indexOf("(") + 1, q.indexOf(")"));
+                col.replace("(", "");
+                col.replace(")", "");
+                String[] col1 = col.split(",");
+                if (col1.length == valores2.length) {
+                    for (int t = 0; t < col1.length; t++) {
+                        ret.add(col1[t] + "=" + valores2[t].trim());
+                    }
+                }
+            } else {
+                if (valores2.length == this.tabla.getAtributos().size()) {
+                    for (int t = 0; t < valores2.length; t++) {
+                        ret.add(this.tabla.getAtributos().get(t).getNombre() + "=" + valores2[t].trim());
+                    }
+                }
+            }
+        } else {
+            StringTokenizer tokens = new StringTokenizer(q, " ");
+            while (tokens.hasMoreTokens()) {
+                String token = tokens.nextToken();
+                if (token.contains("!=")) {
+                    StringTokenizer valores = new StringTokenizer(token, "!=");
+                    if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                        ret.add(token);
+                    }
+                } else if (token.contains("<=")) {
+                    StringTokenizer valores = new StringTokenizer(token, "<=");
+                    if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                        ret.add(token);
+                    }
+                } else if (token.contains(">=")) {
+                    StringTokenizer valores = new StringTokenizer(token, ">=");
+                    if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                        ret.add(token);
+                    }
+                } else if (token.contains("<")) {
+                    StringTokenizer valores = new StringTokenizer(token, "<");
+                    if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                        ret.add(token);
+                    }
+                } else if (token.contains(">")) {
+                    StringTokenizer valores = new StringTokenizer(token, ">");
+                    if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                        ret.add(token);
+                    }
+                } else if (token.contains("=")) {
+                    StringTokenizer valores = new StringTokenizer(token, "=");
+                    if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                        ret.add(token);
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+    private boolean unaColumna(String izq, String der) {
+        boolean ret = true;
+
+        for (Atributo att : this.tabla.getAtributos()) {
+            if ((izq.contains("`" + att.getNombre() + "`") || izq.contains("." + att.getNombre()) || izq.contains(" " + att.getNombre()))
+                    && (der.contains("`" + att.getNombre() + "`") || der.contains("." + att.getNombre()) || der.contains(att.getNombre() + " "))) {
+                ret = false;
+            }
+        }
         return ret;
     }
 
@@ -1188,7 +1269,6 @@ public class bd implements Serializable {
         archivos a = new archivos(this.passbd, this.nombd, this.tabla.getNombre(), this.TipoBD, files, this.dirbd);
         //ta.add(a.noLog(a.obtenerTablaCosto()));
         ta.addAll(a.obtenerTablaCosto());
-
         ta = a.nombrar(a.obtenerTablaCosto());
 
         return ta;
