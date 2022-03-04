@@ -694,7 +694,7 @@ public vOperacionDesempenio nOperacionesLog(UploadedFiles files, String conjunto
                                 if (perteneceConjunto) {
                                     if (ipTraduccion.compareTo(this.dirbd) != 0) {
                                         ArrayList rs = null;
-                                        
+
                                         if (this.accexternomysql.conectar()) {
                                             rs = this.accexternomysql.ejecutarConsulta(QueryNTuplas);
                                             this.accexternomysql.desconectar();
@@ -702,14 +702,14 @@ public vOperacionDesempenio nOperacionesLog(UploadedFiles files, String conjunto
                                         if (!this.isNullorEmpty(rs)) {
                                             nTuplas = Double.parseDouble("" + ((ArrayList) rs.get(0)).get(0));
                                         }
-                                        System.out.println(conjunto + " remoto " + ipTraduccion+" "+ QueryNTuplas);
-                                        
+                                        System.out.println(conjunto + " remoto " + ipTraduccion + " " + QueryNTuplas);
+
                                         des = des + (ValorAsignadoOperacion * 2) * nTuplas;
                                         op++;
                                     } else {
                                         des = des + ValorAsignadoOperacion;
                                         op++;
-                                        System.out.println(conjunto + " local " + ipTraduccion +" "+QueryNTuplas);
+                                        System.out.println(conjunto + " local " + ipTraduccion + " " + QueryNTuplas);
                                     }
                                 }
 
@@ -722,7 +722,7 @@ public vOperacionDesempenio nOperacionesLog(UploadedFiles files, String conjunto
                                     predicado += p + " AND ";
                                 }
                                 String consultaContiene = "select count(*) from " + this.tabla.getNombre() + " where " + predicado + this.getTabla().getAtributoMultimedia().split(":")[0] + "='" + conjunto + "'";
-                                
+
                                 ArrayList resConsultaContiene = null;
                                 if (this.accexternomysql.conectar()) {
                                     resConsultaContiene = this.accexternomysql.ejecutarConsulta(consultaContiene);
@@ -738,7 +738,7 @@ public vOperacionDesempenio nOperacionesLog(UploadedFiles files, String conjunto
                                     } else {
                                         des = des + ValorAsignadoOperacion;
                                         op++;
-                                        System.out.println(conjunto + " local " + ValorAsignadoOperacion + ipTraduccion+" "+consultaContiene);
+                                        System.out.println(conjunto + " local " + ValorAsignadoOperacion + ipTraduccion + " " + consultaContiene);
                                     }
                                 }
                             }
@@ -783,37 +783,106 @@ public vOperacionDesempenio nOperacionesLog(UploadedFiles files, String conjunto
                             String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                             String ipTraduccion = getNombreIp().get(sujeto);
                             if (ipTraduccion.compareTo(this.dirbd) == 0) {
-                                if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update") || actual.toLowerCase().contains("insert"))
-                                        && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
-                                    des = des + ValorAsignadoOperacion;
-                                    op++;
+                                if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
+                                        && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                    boolean perteneceConjunto = false;
+                                    if (actual.toLowerCase().contains("where")) {
+                                        String predicado = actual.substring(actual.toLowerCase().indexOf("where"));
+                                        String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
+                                        ArrayList subConsulta = null;
+                                        if (this.accexternopost.conectar()) {
+                                            subConsulta = this.accexternopost.ejecutarConsulta("select count(*) from (select tipo from " + this.tabla.getNombre() + " " + predicado + ") as t1 where " + nombreColumna + "='" + conjunto + "';");
+                                            this.accexternopost.desconectar();
+                                        }
+                                        if (!this.isNullorEmpty(subConsulta)) {
+                                            perteneceConjunto = (Double.parseDouble("" + ((ArrayList) subConsulta.get(0)).get(0)) > 0) ? true : false;
+                                        }
+                                    } else {
+                                        perteneceConjunto = true;
+                                    }
+                                    if (perteneceConjunto) {
+                                        des = des + ValorAsignadoOperacion;
+                                        op++;
+                                    }
+                                } else if (actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                    boolean perteneceConjunto = false;
+                                    ArrayList<String> predicados = this.predicados(actual.substring(actual.indexOf("insert")));
+                                    String predicado = "";
+                                    for (String p : predicados) {
+                                        predicado += p + " AND ";
+                                    }
+                                    String consultaContiene = "select count(*) from " + this.tabla.getNombre() + " where " + predicado + this.getTabla().getAtributoMultimedia().split(":")[0] + "='" + conjunto + "'";
+
+                                    ArrayList resConsultaContiene = null;
+                                    if (this.accexternomysql.conectar()) {
+                                        resConsultaContiene = this.accexternomysql.ejecutarConsulta(consultaContiene);
+                                        this.accexternomysql.desconectar();
+                                    }
+                                    if (!this.isNullorEmpty(resConsultaContiene)) {
+                                        perteneceConjunto = (Double.parseDouble("" + ((ArrayList) resConsultaContiene.get(0)).get(0)) > 0) ? true : false;
+                                    }
+                                    if (perteneceConjunto) {
+                                        des = des + ValorAsignadoOperacion;
+                                        op++;
+                                    }
                                 }
                             } else {
                                 double nTuplas = 1.0;
                                 if ((actual.toLowerCase().contains("select") || actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update"))
-                                        && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {//excluir joins
+                                        && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {//excluir joins
                                     String QueryNTuplas = "";
+                                    boolean perteneceConjunto = false;
                                     if (actual.toLowerCase().contains("where")) {
                                         String predicado = actual.substring(actual.toLowerCase().indexOf("where"));
                                         QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase() + " " + predicado;
+                                        String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
+                                        ArrayList subConsulta = null;
+                                        if (this.accexternopost.conectar()) {
+                                            subConsulta = this.accexternopost.ejecutarConsulta("select count(*) from (select tipo from " + this.tabla.getNombre() + " " + predicado + ") as t1 where " + nombreColumna + "='" + conjunto + "';");
+                                            this.accexternopost.desconectar();
+                                        }
+                                        if (!this.isNullorEmpty(subConsulta)) {
+                                            perteneceConjunto = (Double.parseDouble("" + ((ArrayList) subConsulta.get(0)).get(0)) > 0) ? true : false;
+                                        }
                                     } else {
+                                        perteneceConjunto = true;
                                         QueryNTuplas = "select count(*) from " + this.tabla.getNombre().toLowerCase();
                                     }
-                                    ArrayList rs = null;
-                                    System.out.println(QueryNTuplas);
+                                    if (perteneceConjunto) {
+                                        ArrayList rs = null;
+                                        System.out.println(QueryNTuplas);
+                                        if (this.accexternopost.conectar()) {
+                                            rs = this.accexternopost.ejecutarConsulta(QueryNTuplas);
+                                            this.accexternopost.desconectar();
+                                        }
+                                        if (!this.isNullorEmpty(rs)) {
+                                            nTuplas = Double.parseDouble("" + ((ArrayList) rs.get(0)).get(0));
+                                        }
+                                        des = des + (ValorAsignadoOperacion * 2) * nTuplas;
+                                        op++;
+                                    }
+                                } else if (actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase())) {
+                                    //si es insert nTuplas se queda con 1
+                                    boolean perteneceConjunto = false;
+                                    ArrayList<String> predicados = this.predicados(actual.substring(actual.indexOf("insert")));
+                                    String predicado = "";
+                                    for (String p : predicados) {
+                                        predicado += p + " AND ";
+                                    }
+                                    String consultaContiene = "select count(*) from " + this.tabla.getNombre() + " where " + predicado + this.getTabla().getAtributoMultimedia().split(":")[0] + "='" + conjunto + "'";
+
+                                    ArrayList resConsultaContiene = null;
                                     if (this.accexternopost.conectar()) {
-                                        rs = this.accexternopost.ejecutarConsulta(QueryNTuplas);
+                                        resConsultaContiene = this.accexternopost.ejecutarConsulta(consultaContiene);
                                         this.accexternopost.desconectar();
                                     }
-                                    if (!this.isNullorEmpty(rs)) {
-                                        nTuplas = Double.parseDouble("" + ((ArrayList) rs.get(0)).get(0));
+                                    if (!this.isNullorEmpty(resConsultaContiene)) {
+                                        perteneceConjunto = (Double.parseDouble("" + ((ArrayList) resConsultaContiene.get(0)).get(0)) > 0) ? true : false;
                                     }
-                                    des = des + (ValorAsignadoOperacion * 2) * nTuplas;
-                                    op++;
-                                } else if (actual.toLowerCase().contains("insert") && actual.toLowerCase().contains(this.tabla.getNombre().toLowerCase()) && actual.toLowerCase().contains(conjunto)) {
-                                    //si es insert nTuplas se queda con 1
-                                    des = des + (ValorAsignadoOperacion * 2) * nTuplas;
-                                    op++;
+                                    if (perteneceConjunto) {
+                                        des = des + (ValorAsignadoOperacion * 2) * nTuplas;
+                                        op++;
+                                    }
                                 }
                             }
                         }
@@ -968,13 +1037,21 @@ public ArrayList<String> predicados(String q) {
             String[] col1 = col.split(",");
             if (col1.length == valores2.length) {
                 for (int t = 0; t < col1.length; t++) {
-                    ret.add(col1[t] + "=" + valores2[t].trim());
+                    if (valores2[t].trim().toLowerCase().compareTo("null") == 0) {
+                        ret.add(col1[t] + " is null");
+                    } else {
+                        ret.add(col1[t] + "=" + valores2[t].trim());
+                    }
                 }
             }
         } else {
             if (valores2.length == this.tabla.getAtributos().size()) {
                 for (int t = 0; t < valores2.length; t++) {
-                    ret.add(this.tabla.getAtributos().get(t).getNombre() + "=" + valores2[t].trim());
+                    if (valores2[t].trim().toLowerCase().compareTo("null") == 0) {
+                        ret.add(this.tabla.getAtributos().get(t).getNombre() + " is null");
+                    } else {
+                        ret.add(this.tabla.getAtributos().get(t).getNombre() + "=" + valores2[t].trim());
+                    }
                 }
             }
         }
