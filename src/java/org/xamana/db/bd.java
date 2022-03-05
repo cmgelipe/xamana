@@ -814,9 +814,9 @@ public vOperacionDesempenio nOperacionesLog(UploadedFiles files, String conjunto
                                     String consultaContiene = "select count(*) from " + this.tabla.getNombre() + " where " + predicado + this.getTabla().getAtributoMultimedia().split(":")[0] + "='" + conjunto + "'";
 
                                     ArrayList resConsultaContiene = null;
-                                    if (this.accexternomysql.conectar()) {
-                                        resConsultaContiene = this.accexternomysql.ejecutarConsulta(consultaContiene);
-                                        this.accexternomysql.desconectar();
+                                    if (this.accexternopost.conectar()) {
+                                        resConsultaContiene = this.accexternopost.ejecutarConsulta(consultaContiene);
+                                        this.accexternopost.desconectar();
                                     }
                                     if (!this.isNullorEmpty(resConsultaContiene)) {
                                         perteneceConjunto = (Double.parseDouble("" + ((ArrayList) resConsultaContiene.get(0)).get(0)) > 0) ? true : false;
