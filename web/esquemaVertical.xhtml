@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <h:head>
+        <title>Xamana</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <h:outputStylesheet name="style.css"/>
+        <script type="text/javascript">
+            //<![CDATA[
+            function start2() {
+                PF('statusDialog').show();
+            }
+
+            function stop2() {
+                PF('statusDialog').hide();
+            }
+            function start() {
+                PF('startButton1').disable();
+
+                window['progress'] = setInterval(function () {
+                    var pbClient = PF('pbClient'),
+                            oldValue = pbClient.getValue(),
+                            newValue = oldValue + 10;
+
+                    pbClient.setValue(pbClient.getValue() + 10);
+
+                    if (newValue === 100) {
+                        clearInterval(window['progress']);
+                    }
+
+
+                }, 1000);
+            }
+
+            function cancel() {
+                clearInterval(window['progress']);
+                PF('pbClient').setValue(0);
+                PF('startButton1').enable();
+            }
+            //]]>
+        </script>
+    </h:head>
+    <h:body style="background-color: #3f3f3f">
+        <header>
+            <text>Scheme</text>
+        </header>
+        <p:tabView id="tabView" dynamic="true" cache="true">
+            <p:tab title="Consultas">
+                <h:panelGrid columns="2" cellpadding="10">
+                    <h:form id="f6">
+                        <p:growl id="growl" showDetail="true" sticky="true"  />
+                        <p:dataTable value="#{bd.consultasV}" var="t" >
+                            <p:column headerText="Atributos involucrados">
+                                <h:outputText value="#{t.atributos}" />
+                            </p:column>
+                            <p:column headerText="Sitio">
+                                <h:outputText value="#{t.sitio.nombre}" />
+                            </p:column>
+                            <p:column headerText="Tipo de Operacion">
+                                <h:outputText value="#{t.tipoOpera}" />
+                            </p:column>
+                            <p:column headerText="Frecuencia ">
+                                <h:outputText value="#{t.frecuencia}" />
+                            </p:column>
+                        </p:dataTable>
+
+                    </h:form>
+                </h:panelGrid>
+            </p:tab>
+            <p:tab title="Tabla de costo">
+                <h:panelGrid columns="2" cellpadding="10">
+                    <h:form id="f7">
+                        <p:growl id="growl" showDetail="true" sticky="true"  />
+                        <p:dataTable value="#{bd.esquemaVertical}" var="t" >
+                            <p:column headerText="Nombre de Frag.">
+                                <h:outputText value="#{t.nombre}" />
+                            </p:column>
+                            <p:column headerText="Sitio">
+                                <h:outputText value="#{t.sitio.nombre}" />
+                            </p:column>
+                            <p:column headerText="Atributos">
+                                <h:outputText value="#{t.atributo.nombre}" />
+                            </p:column>
+                            <p:column headerText="Costo">
+                                <h:outputText value="#{t.costo}" />
+                            </p:column>
+                        </p:dataTable>
+
+                    </h:form>
+                </h:panelGrid>
+            </p:tab>
+            <p:tab title="Asignacion de atributos a Sitios">
+                <h:panelGrid columns="2" cellpadding="10">
+                    <h:form id="f8">
+                        <p:growl id="growl" showDetail="true" sticky="true"  />
+                        <p:dataTable value="#{bd.asignacionSitio}" var="t" >
+                            <p:column headerText="Nombre de Frag.">
+                                <h:outputText value="#{t.nombre}" />
+                            </p:column>
+                            <p:column headerText="Sitio">
+                                <h:outputText value="#{t.sitio.ip}" />
+                            </p:column>
+                            <p:column headerText="Atributos">
+                                <h:outputText value="#{t.atributos}" />
+                            </p:column>
+
+                        </p:dataTable>
+                        <br/>
+                        <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
+                            <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
+                        </p:progressBar>
+                        <br/>
+                        <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:d6" />
+                        <p:dialog id="d6" visible="false" header="Token">
+                            <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />
+                        </p:dialog>
+                        <p:dialog id="d15"  header="successful" modal="true" visible="#{bd.visible}">
+                            <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />
+                        </p:dialog>
+                    </h:form>
+                </h:panelGrid>
+            </p:tab>
+        </p:tabView>
+
+    </h:body>
+</html>

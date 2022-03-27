@@ -7,6 +7,7 @@ package org.xamana.verticalCBIR.model;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import org.xamana.db.Atributo;
 
 /**
  *
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
  */
 public class Query {
     sitio sitio;
-    ArrayList <atributo> atr;
+    ArrayList <Atributo> atr;
     String tipoOpera;
     double frecuencia; 
 
@@ -28,11 +29,11 @@ public class Query {
     public Query() {
       
     }
-    public ArrayList<atributo> getAtr() {
+    public ArrayList<Atributo> getAtr() {
         return atr;
     }
 
-    public void setAtr(ArrayList<atributo> atr) {
+    public void setAtr(ArrayList<Atributo> atr) {
         this.atr = atr;
     }
 

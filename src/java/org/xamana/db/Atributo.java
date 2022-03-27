@@ -10,10 +10,11 @@ package org.xamana.db;
  * @author pipe
  */
 public class Atributo {
+    private String idAtributo;
     private String nombre;
     private String tipo;
     private String tamanio;
-
+    private boolean multimedia;
     /**
      * @return the nombre
      */
@@ -54,6 +55,34 @@ public class Atributo {
      */
     public void setTamanio(String tamanio) {
         this.tamanio = tamanio;
+    }
+
+    /**
+     * @return the idAtributo
+     */
+    public String getIdAtributo() {
+        return idAtributo;
+    }
+
+    /**
+     * @param idAtributo the idAtributo to set
+     */
+    public void setIdAtributo(String idAtributo) {
+        this.idAtributo = idAtributo;
+    }
+
+    /**
+     * @return the multimedia
+     */
+    public boolean isMultimedia() {
+        return multimedia;
+    }
+
+    /**
+     * @param multimedia the multimedia to set
+     */
+    public void setMultimedia(boolean multimedia) {
+        this.multimedia = multimedia;
     }
     
 }

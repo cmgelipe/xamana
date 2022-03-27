@@ -10,30 +10,26 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.crearfrag.BuildTypes;
+import org.xamana.db.Atributo;
+import org.xamana.db.bd;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
-import org.xamana.verticalCBIR.model.atributo;
 import org.xamana.verticalCBIR.model.sitio;
 
 public class archivos {
 
-    String pass;
-    String nomDB;
-    String nomTabla;
-    String usu;
+    bd oBD;
     String archivo;
-    String direccion;
-    String id;
-    ArrayList<atributo> arrAtri;
+    ArrayList<Atributo> arrAtri;
     ArrayList<String> arrCad;
-    ArrayList<atributo> arrNoLog;
+    ArrayList<Atributo> arrNoLog;
     ArrayList<String> arrAM;
 
-    public ArrayList<atributo> getArrNoLog() {
+    public ArrayList<Atributo> getArrNoLog() {
         return arrNoLog;
     }
 
-    public void setArrNoLog(ArrayList<atributo> arrNoLog) {
+    public void setArrNoLog(ArrayList<Atributo> arrNoLog) {
         this.arrNoLog = arrNoLog;
     }
 
@@ -45,16 +41,10 @@ public class archivos {
         this.arrAM = arrAM;
     }
 
-    public archivos(String pass, String nomDB, String nomTabla, String usu, UploadedFiles files, String direccion, ArrayList<String> attM) throws IOException {
-        this.pass = pass;
-        this.nomDB = nomDB;
-        this.nomTabla = nomTabla;
-        this.usu = usu;
+    public archivos(bd oBD, UploadedFiles files, ArrayList<String> attM) throws IOException {
+        this.oBD = oBD;
         this.arrCad = leerTxt(files);
-        this.direccion = direccion;
-        this.id = nomId(nomTabla, nomDB, pass);
-        this.arrAtri = listaAtributos(nomTabla, nomDB, pass);
-
+        this.arrAtri = listaAtributos();
         if (attM.isEmpty()) {
             this.arrAM = null;
         } else {
@@ -62,64 +52,11 @@ public class archivos {
         }
     }
 
-    public archivos(String pass, String nomDB, String nomTabla, String usu, UploadedFiles files, String direccion) throws IOException {
-        this.pass = pass;
-        this.nomDB = nomDB;
-        this.nomTabla = nomTabla;
-        this.usu = usu;
+    public archivos(bd oBD, UploadedFiles files) throws IOException {
+        this.oBD = oBD;
         this.arrCad = leerTxt(files);
-        this.direccion = direccion;
-        this.id = nomId(nomTabla, nomDB, pass);
-        this.arrAtri = listaAtributos(nomTabla, nomDB, pass);
+        this.arrAtri = listaAtributos();
 
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getPass() {
-        return pass;
-    }
-
-    public void setPass(String pass) {
-        this.pass = pass;
-    }
-
-    public String getNomDB() {
-        return nomDB;
-    }
-
-    public void setNomDB(String nomDB) {
-        this.nomDB = nomDB;
-    }
-
-    public String getNomTabla() {
-        return nomTabla;
-    }
-
-    public void setNomTabla(String nomTabla) {
-        this.nomTabla = nomTabla;
-    }
-
-    public String getUsu() {
-        return usu;
-    }
-
-    public void setUsu(String usu) {
-        this.usu = usu;
     }
 
     public String getArchivo() {
@@ -138,11 +75,11 @@ public class archivos {
         this.arrCad = arrCad;
     }
 
-    public ArrayList<atributo> getArrAtri() {
+    public ArrayList<Atributo> getArrAtri() {
         return arrAtri;
     }
 
-    public void setArrAtri(ArrayList<atributo> arrAtri) {
+    public void setArrAtri(ArrayList<Atributo> arrAtri) {
         this.arrAtri = arrAtri;
     }
 
@@ -163,7 +100,7 @@ public class archivos {
         ArrayList<String> lineaArchivo = new ArrayList();
 
         cad.getFiles().stream().filter((f) -> (f != null && !"".equals(f.getFileName()))).forEachOrdered((f) -> {
-            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+            try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
                 String actual = "";
 
                 while ((actual = bufferedReader.readLine()) != null) {
@@ -177,77 +114,38 @@ public class archivos {
         return lineaArchivo;
     }
 
-    public ArrayList<atributo> listaAtributos(String tabla, String nomdb, String pass) {
+    public ArrayList<Atributo> listaAtributos() {
         @SuppressWarnings("unchecked")
-        ArrayList<atributo> atts = new ArrayList();
-        String id = nomId(tabla, nomdb, pass);
+        ArrayList<Atributo> atts = new ArrayList();
         ArrayList<String> arr;
 
         try {
-            AccesoDatosPG acc = new AccesoDatosPG(this.direccion, nomdb, "postgres", this.pass);
-
+            AccesoDatosPG acc = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
             if (acc.conectar()) {
-                arr = acc.atributos(nomdb, tabla);
+                arr = acc.atributos(this.oBD.getNombd(), this.oBD.getTabla().getNombre());
                 acc.desconectar();
                 for (int i = 0; i < arr.size(); i++) {
-
                     String[] t = arr.get(i).split(":");
-                    if (t[0].compareTo(id) == 0) {
-                        atributo att = new atributo(t[0], t[1], t[2], true);
-                        atts.add(att);
-                    } else {
-                        atributo att = new atributo(t[0], t[1], t[2], false);
-                        atts.add(att);
-                    }
-
+                    Atributo att = new Atributo();
+                    att.setNombre(t[0]);
+                    att.setTipo(t[1]);
+                    att.setTamanio(t[2]);
+                    atts.add(att);
                 }
             } else {
-
                 System.out.print("no hay conexion");
             }
-
         } catch (Exception ex) {
-            Logger.getLogger(archivos.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
-
         return atts;
-    }
-
-    public String nomId(String tabla, String nomdb, String pass) {
-        @SuppressWarnings("unchecked")
-        ArrayList<atributo> atts = new ArrayList();
-        ArrayList<String> arr;
-        String cad = null;
-
-        try {
-            AccesoDatosPG acc = new AccesoDatosPG(this.direccion, nomdb, "postgres", this.pass);
-
-            if (acc.conectar()) {
-                arr = acc.nomId(tabla);
-                acc.desconectar();
-                for (int i = 0; i < arr.size(); i++) {
-
-                    String[] t = arr.get(i).split(":");
-                    cad = t[0];
-
-                }
-            } else {
-
-                System.out.print("no hay conexion");
-            }
-
-        } catch (Exception ex) {
-            Logger.getLogger(archivos.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        return cad;
     }
 
     public Query obtenerQuery(ArrayList<String> log, String cad) {
         String tipoOperacion;
         tipoOperacion = "";
         sitio s = obtenerSitio(cad);
-        ArrayList<atributo> att = obtenerAttParticipantes(this.arrAtri, cad);
+        ArrayList<Atributo> att = obtenerAttParticipantes(this.arrAtri, cad);
         tipoOperacion = obtenerTipo(cad);
         Query obj = new Query();
 
@@ -259,17 +157,14 @@ public class archivos {
         return obj;
     }
 
-    public ArrayList<atributo> obtenerAttParticipantes(ArrayList<atributo> atributos, String consulta) {
+    public ArrayList<Atributo> obtenerAttParticipantes(ArrayList<Atributo> atributos, String consulta) {
         @SuppressWarnings("unchecked")
-        ArrayList<atributo> listaAt = new ArrayList();
-
+        ArrayList<Atributo> listaAt = new ArrayList();
         atributos.forEach(c -> {
-            if (consulta.contains(c.getNombre()) && !c.isBan()) {
+            if (consulta.contains(c.getNombre()) && c.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())!=0) {
                 listaAt.add(c);
             }
-
         });
-
         return listaAt;
     }
 
@@ -286,14 +181,14 @@ public class archivos {
         return con;
     }
 
-    public double obtenerFrecuencia(ArrayList<String> log, sitio s, String tipoOperacion, ArrayList<atributo> att) {
+    public double obtenerFrecuencia(ArrayList<String> log, sitio s, String tipoOperacion, ArrayList<Atributo> att) {
         double f = 0;
         ArrayList<String> cons = obtenerConsulta(log);
-        ArrayList<atributo> atributos = listaAtributos(this.nomTabla, this.nomDB, this.pass);
+        ArrayList<Atributo> atributos = listaAtributos();
         ArrayList<String> consultalimpia = obtenerConTipo(obtenerConsultasIp(s, cons), tipoOperacion);
 
         for (int j = 0; j < consultalimpia.size(); j++) {
-            ArrayList<atributo> attParticipan = obtenerAttParticipantes(atributos, consultalimpia.get(j));
+            ArrayList<Atributo> attParticipan = obtenerAttParticipantes(atributos, consultalimpia.get(j));
             if (attParticipan.size() == att.size()) {
                 for (int i = 0; i < att.size(); i++) {
                     if (att.get(i).getNombre().equals(attParticipan.get(i).getNombre())) {
@@ -382,12 +277,9 @@ public class archivos {
     public ArrayList<TablaCosto> nombrar(ArrayList<TablaCosto> ori) {
 
         for (int i = 0; i < ori.size(); i++) {
-            ori.get(i).setNombre(this.nomTabla + "_" + (i + 1));
-
+            ori.get(i).setNombre(this.oBD.getTabla().getNombre() + "_" + (i + 1));
         }
-
         return ori;
-
     }
 
     public ArrayList<TablaCosto> mismoSitio(ArrayList<TablaCosto> ta) {
@@ -404,9 +296,8 @@ public class archivos {
         }
         for (sitio s : si) {
             @SuppressWarnings("unchecked")
-            ArrayList<atributo> arraux = new ArrayList();
+            ArrayList<Atributo> arraux = new ArrayList();
             TablaCosto aux = new TablaCosto();
-
             aux.setNombre("");
             aux.setSitio(s);
             aux.setCosto(0.0);
@@ -438,9 +329,8 @@ public class archivos {
     }
 
     public TablaCosto noLog(ArrayList<TablaCosto> t) {
-
-        ArrayList<atributo> aa = new ArrayList();
-        ArrayList<atributo> attTa = new ArrayList();
+        ArrayList<Atributo> aa = new ArrayList();
+        ArrayList<Atributo> attTa = new ArrayList();
         ArrayList<String> log = new ArrayList();
         ArrayList<String> atris = new ArrayList();
         aa.add(obteneratributoid());
@@ -449,11 +339,9 @@ public class archivos {
         }
         attTa.forEach(atr -> log.add(atr.getNombre()));
         this.arrAtri.forEach(att -> atris.add(att.getNombre()));
-
         atris.removeAll(log);
-        this.arrAtri.get(0).isBan();
         this.arrAtri.forEach(atrib -> {
-            if (!atrib.isBan()) {
+            if (atrib.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())!=0) {
                 atris.forEach(j -> {
                     if (j.toLowerCase().compareTo(atrib.getNombre().toLowerCase()) == 0) {
                         aa.add(atrib);
@@ -462,29 +350,26 @@ public class archivos {
             }
         });
         TablaCosto nueva = new TablaCosto();
-        if(aa.size()!=1){
-            
+        if (aa.size() != 1) {
+
             nueva.setArrAtri(aa);
             nueva.setCosto(0);
-            nueva.setSitio(new sitio("localhost", this.direccion));
-         }
-        else{
-            nueva=null;
+            nueva.setSitio(new sitio("localhost", this.oBD.getDirbd()));
+        } else {
+            nueva = null;
         }
         return nueva;
     }
 
     public ArrayList<TablaCosto> obtenerFragMul() {
         ArrayList<TablaCosto> arr = new ArrayList<>();
-        ArrayList<atributo> listaAtr;
-
+        ArrayList<Atributo> listaAtr;
         for (String str : this.arrAM) {
             listaAtr = new ArrayList<>();
             TablaCosto tabla = new TablaCosto();
-            tabla.setSitio(new sitio("localhost", this.direccion));
+            tabla.setSitio(new sitio("localhost", this.oBD.getDirbd()));
             listaAtr.add(obteneratributoid());
-            for (atributo atr : this.arrAtri) {
-
+            for (Atributo atr : this.arrAtri) {
                 if (str.contains(atr.getNombre())) {
                     listaAtr.add(atr);
                 }
@@ -493,14 +378,13 @@ public class archivos {
             tabla.setCosto(0);
             arr.add(tabla);
         }
-        
         return arr;
     }
 
-    private atributo obteneratributoid() {
-        atributo atri = new atributo();
+    private Atributo obteneratributoid() {
+        Atributo atri = new Atributo();
         for (int i = 0; i < this.arrAtri.size(); i++) {
-            if (this.arrAtri.get(i).isBan()) {
+            if (this.arrAtri.get(i).getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())==0) {
                 atri = this.arrAtri.get(i);
             }
         }
@@ -527,15 +411,14 @@ public class archivos {
         @SuppressWarnings("unchecked")
         ArrayList<TablaCosto> tabla = new ArrayList();
         tablafrecuencia.forEach(new Consumer<Query>() {
-
             public void accept(Query t) {
                 for (int i = 0; i < t.getAtr().size(); i++) {
                     int vo = 0;
                     double f = 0;
                     int ta = 0;
-                    atributo a = t.getAtr().get(i);
-                    atributo id = obteneratributoid();
-                    ArrayList<atributo> arrT = new ArrayList<>();
+                    Atributo a = t.getAtr().get(i);
+                    Atributo id = obteneratributoid();
+                    ArrayList<Atributo> arrT = new ArrayList<>();
                     arrT.add(id);
                     TablaCosto costo = new TablaCosto();
 
@@ -562,29 +445,21 @@ public class archivos {
                 }
             }
         });
-
         return sumar(tabla);
         // return tabla;
     }
 
     public ArrayList<String> obtenerConsulta(ArrayList<String> cad) {
-
         @SuppressWarnings("unchecked")
         ArrayList<String> tipoC = new ArrayList();
-
         for (int i = 0; i < cad.size(); i++) {
-
-            if (cad.get(i).toLowerCase().contains("sentencia:") && cad.get(i).toLowerCase().contains(this.nomTabla)) {
-
+            if (cad.get(i).toLowerCase().contains("sentencia:")
+                    && cad.get(i).toLowerCase().contains(this.oBD.getTabla().getNombre())) {
                 String tipo = cad.get(i);
-
                 tipoC.add(tipo);
-            } else {
-
             }
         }
         return tipoC;
-
     }
 
     public void imprimeQ(Query q) {
@@ -706,26 +581,20 @@ public class archivos {
         try {
             String sql;
             ArrayList atributos = null;
-            AccesoDatosPG acc2 = new AccesoDatosPG(this.direccion + ":" + "5432", this.nomDB, "postgres", this.pass);
+            AccesoDatosPG acc2 = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
             if (acc2.conectar()) {
-
-                sql = "Select " + atri(frag.getArrAtri()) + " from " + this.nomTabla + " ;";
+                sql = "Select " + atri(frag.getArrAtri()) + " from " + this.oBD.getTabla().getNombre() + " ;";
                 System.out.println(sql);
-
                 atributos = acc2.ejecutarConsulta(sql);
-
                 //sql="alter table "+frag.getNombre()+" ADD PRIMARY KEY ("+atributos.get(0)+");";
             }
-            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio().getIp() + ":" + "5432", this.nomDB, this.usu, this.pass);
+            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio().getIp() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
             //AccesoDatosPG acc= new AccesoDatosPG(this.direccion,this.nomDB,"postgres",this.pass);
             if (acc.conectar()) {
-
                 sql = "drop table if exists " + frag.getNombre() + " ; CREATE TABLE " + frag.getNombre() + " ( " + atributosTipos(frag.getArrAtri()) + " );";
-
                 System.out.println(sql);
                 acc.ejecutarComando(sql);
                 if (atributos != null) {
-
                     for (int i = 0; i < atributos.size(); i++) {
                         String valor = "";
                         ArrayList tupla = (ArrayList) atributos.get(i);
@@ -747,7 +616,7 @@ public class archivos {
 
     }
 
-    private String atri(ArrayList<atributo> arrAtri) {
+    private String atri(ArrayList<Atributo> arrAtri) {
         String separador = ", ";
         @SuppressWarnings("unchecked")
         ArrayList<String> cad = new ArrayList();
@@ -757,8 +626,7 @@ public class archivos {
         return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
 
-    private String atributosTipos(ArrayList<atributo> arrAtri) {
-
+    private String atributosTipos(ArrayList<Atributo> arrAtri) {
         @SuppressWarnings("unchecked")
         ArrayList<String> cad = new ArrayList();
         String separador = ", ";

@@ -314,7 +314,7 @@ public final class AccesoDatosPG implements Serializable {
         return ret;
     }
 public synchronized ArrayList<String> nomId(String nombreTabla) {
-        String q="SELECT               \n" +
+        /*String q="SELECT               \n" +
                 "  pg_attribute.attname, \n"
                 + "  format_type(pg_attribute.atttypid, pg_attribute.atttypmod) \n"
                 + "FROM pg_index, pg_class, pg_attribute, pg_namespace \n"
@@ -325,7 +325,7 @@ public synchronized ArrayList<String> nomId(String nombreTabla) {
                 + "  pg_class.relnamespace = pg_namespace.oid AND \n"
                 + "  pg_attribute.attrelid = pg_class.oid AND \n"
                 + "  pg_attribute.attnum = any(pg_index.indkey)\n"
-                + " AND indisprimary";
+                + " AND indisprimary";*/
        String r="SELECT a.attname\n" +
                 "FROM   pg_index i\n" +
                 "JOIN   pg_attribute a ON a.attrelid = i.indrelid\n" +

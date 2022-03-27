@@ -286,23 +286,26 @@ public class BDJB implements Serializable {
         } else if (this.obj.getTabla().isCBIR()
                 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
             //this.setEsquemaVerticalCBIR(this.obj.esquemaVertical());
-            try {
-                this.setEsquemaVerticalCBIRPostgres(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
-                this.setConsultasV(this.obj.ConsultasVerLog(this.files));
-                this.setAsignacionSitio(this.obj.AsignacionSitio1(getAttsMultimediaDescriptor(), this.files));
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+                try {
+                    this.setEsquemaVerticalCBIRPostgres(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
+                    this.setConsultasV(this.obj.ConsultasVerLog(this.files));
+                    this.setAsignacionSitio(this.obj.AsignacionSitio1(getAttsMultimediaDescriptor(), this.files));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-
             tipoEsquema = "esquemaVerticalCBIR.xhtml";
         } else if (!this.obj.getTabla().isCBIR()
                 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
-            try {
-                this.setEsquemaVertical(this.obj.esquemaVertical(this.files));
-                this.setConsultasV(this.obj.ConsultasVerLog(this.files));
-                this.setAsignacionSitio(this.obj.AsignacionSitio(this.files));
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+                try {
+                    this.setEsquemaVertical(this.obj.esquemaVertical(this.files));
+                    this.setConsultasV(this.obj.ConsultasVerLog(this.files));
+                    this.setAsignacionSitio(this.obj.AsignacionSitio(this.files));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             tipoEsquema = "esquemaVertical.xhtml";
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
@@ -511,7 +514,7 @@ public class BDJB implements Serializable {
             } else {
                 this.obj.fragmentarVerCBIRMongoDB(this.esquemaVerticalCBIR);
             }
-        } else if (!this.obj.isHorizontalCBIR() && !this.obj.isVerticalCBIR()) {
+        } else if (this.obj.getTabla().getTipoFragment().compareTo("b")==0 && !this.obj.getTabla().isCBIR()) {
             if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 this.obj.setProgress1(0);
                 this.visible = false;

@@ -8,6 +8,7 @@ package org.xamana.verticalCBIR.model;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import org.xamana.db.Atributo;
 
 /**
  *
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
  */
 public class TablaCosto {
     sitio sitio;
-    atributo atributo;
+    Atributo atributo;
     double costo;
     String nombre;
 
@@ -27,13 +28,13 @@ public class TablaCosto {
         this.nombre = nombre;
     }
 
-    ArrayList<atributo> arrAtri;
+    ArrayList<Atributo> arrAtri;
 
-    public ArrayList<atributo> getArrAtri() {
+    public ArrayList<Atributo> getArrAtri() {
         return arrAtri;
     }
 
-    public void setArrAtri(ArrayList<atributo> arrAtri) {
+    public void setArrAtri(ArrayList<Atributo> arrAtri) {
         this.arrAtri = arrAtri;
     }
 
@@ -54,17 +55,17 @@ public class TablaCosto {
         this.sitio = sitio;
     }
 
-    public atributo getAtributo() {
+    public Atributo getAtributo() {
         return atributo;
     }
 
-    public void setAtributo(atributo atributo) {
+    public void setAtributo(Atributo atributo) {
         this.atributo = atributo;
     }
     public String getAtributos(){
     ArrayList <String> cad = new ArrayList<>();
     String separador=", ";
-    for(atributo at: this.getArrAtri()){
+    for(Atributo at: this.getArrAtri()){
         cad.add(at.getNombre());
     }
     
