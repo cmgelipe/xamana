@@ -1211,7 +1211,6 @@ public class bd implements Serializable {
     }
 
     public Atributo llavePostgres(AccesoDatosPG acc, String nombreBase, String nombreTabla) {
-
         Atributo att = null;
         ArrayList res = null;
         try {
@@ -1226,15 +1225,19 @@ public class bd implements Serializable {
                         + "where INFORMATION_SCHEMA.COLUMNS.TABLE_NAME='" + nombreTabla + "' "
                         + "and INFORMATION_SCHEMA.COLUMNS.TABLE_CATALOG='" + nombreBase + "';";
                 res = acc.ejecutarConsulta(q);
+                if (!this.isNullorEmpty(res)) {
+                    String a=acc.atributo(nombreBase, nombreTabla, "" + ((ArrayList) res.get(0)).get(0));
+                    att = new Atributo();
+                    att.setNombre(a.split(":")[0]);
+                    att.setTipo(a.split(":")[1]);
+                    att.setTamanio(a.split(":")[2]);
+                } else {
+                    System.out.println("TABLA SIN LLAVE PRIMARIA");
+                }
                 acc.desconectar();
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-        if (res != null) {
-            att = new Atributo();
-            att.setNombre("" + ((ArrayList) res.get(0)).get(0));
-            att.setTipo("" + ((ArrayList) res.get(0)).get(1));
         }
         return att;
     }
@@ -1365,7 +1368,7 @@ public class bd implements Serializable {
 
     public ArrayList<TablaCosto> esquemaVertical(UploadedFiles files) throws IOException {
         ArrayList<TablaCosto> ta = new ArrayList();
-        archivos a = new archivos(this,files);
+        archivos a = new archivos(this, files);
         //ta.add(a.noLog(a.obtenerTablaCosto()));
         ta.addAll(a.obtenerTablaCosto());
         ta = a.nombrar(a.obtenerTablaCosto());
@@ -1373,19 +1376,23 @@ public class bd implements Serializable {
 
     }
 
-    public ArrayList<TablaCosto> esquemaVerticalCBIRPostgres(ArrayList<String> attM, UploadedFiles files) throws IOException {
-        archivos a = new archivos(this,files, attM);
+    //PIPE  
+    public ArrayList<TablaCosto> esquemaVerticalCBIRPostgres(ArrayList<String> attM, UploadedFiles files) throws Exception {
+        AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+        if (acc2.conectar()) {
+            this.getTabla().setAtributoLlave(this.llavePostgres(acc2, this.getNombd(), this.getTabla().getNombre()));
+            acc2.desconectar();
+        }
+        archivos a = new archivos(this, files, attM);
         ArrayList<TablaCosto> juntos = new ArrayList();
-        juntos.addAll(a.obtenerFragMul());
-        juntos.addAll(a.obtenerTablaCosto());
-        ArrayList<TablaCosto> todos = new ArrayList();
-
+        juntos.addAll(a.obtenerFragmentosMultimedia());
+        juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
+        /*ArrayList<TablaCosto> todos = new ArrayList();
         todos.addAll(juntos);
         if (a.noLog(juntos) != null) {
             todos.add(a.noLog(juntos));
-        }
-
-        return a.nombrar(a.obtenerTablaCosto());
+        }*/
+        return a.nombrar(juntos);
     }
 
     public ArrayList<Query> ConsultasVerLog(UploadedFiles files) throws IOException {
@@ -1395,7 +1402,7 @@ public class bd implements Serializable {
     }
 
     public ArrayList<TablaCosto> AsignacionSitio(UploadedFiles files) throws IOException {
-        archivos a = new archivos(this,files);
+        archivos a = new archivos(this, files);
         ArrayList<TablaCosto> ta = new ArrayList<>();
         ArrayList<TablaCosto> to = new ArrayList<>();
         ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
@@ -1410,7 +1417,7 @@ public class bd implements Serializable {
         archivos a = new archivos(this, files, attsM);
         ArrayList<TablaCosto> ta = new ArrayList<>();
         ArrayList<TablaCosto> to = new ArrayList<>();
-        ta.addAll(a.obtenerFragMul());
+        ta.addAll(a.obtenerFragmentosMultimedia());
         ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
         to.addAll(ta);
         if (a.noLog(ta) != null) {
@@ -1445,16 +1452,16 @@ public class bd implements Serializable {
     private void crearTabla(TablaCosto frag) {
         try {
             String sql;
-            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio().getIp() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
             if (acc.conectar()) {
-                sql = "drop table if exists " + frag.getNombre() + " ; CREATE TABLE " + frag.getNombre() + " ( " + atributosTipos(frag.getArrAtri()) + " );";
+                sql = "drop table if exists " + frag.getNombre() + "; "
+                        + "CREATE TABLE " + frag.getNombre() + " ( " + atributosTipos(frag.getArrAtri()) + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
                 acc.ejecutarComando(sql);
                 acc.desconectar();
             }
             ArrayList atributos = null;
             ArrayList n = null;
             AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
-            this.getTabla().setAtributoLlave(this.llavePostgres(acc2, this.getNombd(), this.getTabla().getNombre()));
             if (acc2.conectar()) {
                 String numero = "Select count (*) from " + this.getTabla().getNombre() + ";";
                 n = acc2.ejecutarConsulta(numero);
@@ -1462,50 +1469,67 @@ public class bd implements Serializable {
             }
             int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
             int nLote = num / 50;
-            System.out.println("Lotes*********************" + frag.getNombre());
-            for (int i = 0; i < 50; i++) {
+            if (nLote > 0) {
+                for (int i = 0; i < 50; i++) {
+                    acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                    if (acc2.conectar()) {
+                        if (i == 0) {
+                            sql = "Select " + frag.getAtributos() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + (i + 1);
+                        } else {
+                            sql = "Select " + frag.getAtributos() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + nLote * (i + 1);
+                        }
+                        atributos = acc2.ejecutarConsulta(sql);
+                        acc2.desconectar();
+                    }
+                    if (atributos != null) {
+                        acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                        if (acc.conectar()) {
+                            for (int k = 0; k < atributos.size(); k++) {
+                                String valor = "";
+                                ArrayList tupla = (ArrayList) atributos.get(k);
+                                for (int j = 0; j < tupla.size(); j++) {
+                                    valor += "'" + tupla.get(j) + "',";
+                                }
+                                valor = valor.substring(0, valor.length() - 1);
+                                sql = "insert into " + frag.getNombre() + "(" + frag.getAtributos() + ") values (" + valor + ");";
+                                acc.ejecutarComando(sql);
+                            }
+                            acc.desconectar();
+                        }
+                    }
+                }
+            } else {
                 acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
                 if (acc2.conectar()) {
-                    if (i == 0) {
-                        sql = "Select " + atri(frag.getArrAtri()) + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + (i + 1);
-                    } else {
-
-                        sql = "Select " + atri(frag.getArrAtri()) + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + nLote * (i + 1);
-                    }
+                    sql = "Select " + frag.getAtributos() + " from " + this.getTabla().getNombre();
                     atributos = acc2.ejecutarConsulta(sql);
                     acc2.desconectar();
                 }
                 if (atributos != null) {
-                    acc = new AccesoDatosPG(frag.getSitio().getIp() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                    acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
                     if (acc.conectar()) {
                         for (int k = 0; k < atributos.size(); k++) {
                             String valor = "";
                             ArrayList tupla = (ArrayList) atributos.get(k);
                             for (int j = 0; j < tupla.size(); j++) {
-                                valor += "'" + tupla.get(j) + "',";
+                                if (this.transTipoDato(frag.getArrAtri().get(j).getTipo()) == 0 || this.transTipoDato(frag.getArrAtri().get(j).getTipo()) == 2) {
+                                    valor += "'" + tupla.get(j) + "',";
+                                } else {
+                                    valor += tupla.get(j) + ",";
+                                }
                             }
                             valor = valor.substring(0, valor.length() - 1);
                             sql = "insert into " + frag.getNombre() + "(" + frag.getAtributos() + ") values (" + valor + ");";
-                            //Insertar a XAMANA
                             acc.ejecutarComando(sql);
                         }
                         acc.desconectar();
                     }
                 }
             }
+            //Insertar a XAMANA
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    private String atri(ArrayList<Atributo> arrAtri) {
-        String separador = ", ";
-        @SuppressWarnings("unchecked")
-        ArrayList<String> cad = new ArrayList();
-        arrAtri.forEach((att) -> {
-            cad.add(att.getNombre());
-        });
-        return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
 
     private String atributosTipos(ArrayList<Atributo> arrAtri) {

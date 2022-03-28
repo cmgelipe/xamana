@@ -14,7 +14,7 @@ import org.xamana.db.Atributo;
  * @author aldoo
  */
 public class Query {
-    sitio sitio;
+    String sitio;
     ArrayList <Atributo> atr;
     String tipoOpera;
     double frecuencia; 
@@ -46,11 +46,11 @@ public class Query {
     }
 
     
-    public sitio getSitio() {
+    public String getSitio() {
         return sitio;
     }
 
-    public void setSitio(sitio sitio) {
+    public void setSitio(String sitio) {
         this.sitio = sitio;
     }
     public String getAtributos(){

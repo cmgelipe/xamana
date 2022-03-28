@@ -4,17 +4,22 @@ import org.xamana.datos.AccesoDatosPG;
 import java.io.*;
 import static java.lang.Integer.parseInt;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.crearfrag.BuildTypes;
 import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
-import org.xamana.verticalCBIR.model.sitio;
 
 public class archivos {
 
@@ -24,6 +29,26 @@ public class archivos {
     ArrayList<String> arrCad;
     ArrayList<Atributo> arrNoLog;
     ArrayList<String> arrAM;
+    UploadedFiles files;
+
+    public archivos(bd oBD, UploadedFiles files, ArrayList<String> attM) throws IOException {
+        this.oBD = oBD;
+        this.files = files;
+        this.arrCad = leerTxt(files);
+        this.arrAtri = listaAtributos();
+        if (attM.isEmpty()) {
+            this.arrAM = null;
+        } else {
+            this.arrAM = attM;
+        }
+    }
+
+    public archivos(bd oBD, UploadedFiles files) throws IOException {
+        this.oBD = oBD;
+        this.arrCad = leerTxt(files);
+        this.arrAtri = listaAtributos();
+
+    }
 
     public ArrayList<Atributo> getArrNoLog() {
         return arrNoLog;
@@ -39,24 +64,6 @@ public class archivos {
 
     public void setArrAM(ArrayList<String> arrAM) {
         this.arrAM = arrAM;
-    }
-
-    public archivos(bd oBD, UploadedFiles files, ArrayList<String> attM) throws IOException {
-        this.oBD = oBD;
-        this.arrCad = leerTxt(files);
-        this.arrAtri = listaAtributos();
-        if (attM.isEmpty()) {
-            this.arrAM = null;
-        } else {
-            this.arrAM = attM;
-        }
-    }
-
-    public archivos(bd oBD, UploadedFiles files) throws IOException {
-        this.oBD = oBD;
-        this.arrCad = leerTxt(files);
-        this.arrAtri = listaAtributos();
-
     }
 
     public String getArchivo() {
@@ -87,7 +94,7 @@ public class archivos {
 
         System.out.println("------Imprime Query-------");
         System.out.println("Tipo de operacion: " + q.getTipoOpera());
-        System.out.println("Sitio: " + q.getSitio().getNombre());
+        System.out.println("Sitio: " + q.getSitio());
         System.out.println("Atributos:***** ");
 
         q.getAtr().forEach(att -> {
@@ -144,16 +151,14 @@ public class archivos {
     public Query obtenerQuery(ArrayList<String> log, String cad) {
         String tipoOperacion;
         tipoOperacion = "";
-        sitio s = obtenerSitio(cad);
+        String s = obtenerSitio(cad);
         ArrayList<Atributo> att = obtenerAttParticipantes(this.arrAtri, cad);
         tipoOperacion = obtenerTipo(cad);
         Query obj = new Query();
-
         obj.setAtr(att);
         obj.setSitio(s);
         obj.setTipoOpera(tipoOperacion);
         obj.setFrecuencia(obtenerFrecuencia(log, s, tipoOperacion, att));
-
         return obj;
     }
 
@@ -161,32 +166,30 @@ public class archivos {
         @SuppressWarnings("unchecked")
         ArrayList<Atributo> listaAt = new ArrayList();
         atributos.forEach(c -> {
-            if (consulta.contains(c.getNombre()) && c.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())!=0) {
+            if (consulta.contains(c.getNombre()) && c.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) != 0) {
                 listaAt.add(c);
             }
         });
         return listaAt;
     }
 
-    public ArrayList<String> obtenerConsultasIp(sitio s, ArrayList<String> cad) {
+    public ArrayList<String> obtenerConsultasIp(String s, ArrayList<String> cad) {
         @SuppressWarnings("unchecked")
         ArrayList<String> con = new ArrayList();
         ArrayList<String> consu = obtenerConsulta(cad);
-
-        consu.forEach(c -> {
+        /*consu.forEach(c -> {
             if (c.contains(s.getNombre())) {
                 con.add(c);
             }
-        });
+        });*/
         return con;
     }
 
-    public double obtenerFrecuencia(ArrayList<String> log, sitio s, String tipoOperacion, ArrayList<Atributo> att) {
+    public double obtenerFrecuencia(ArrayList<String> log, String s, String tipoOperacion, ArrayList<Atributo> att) {
         double f = 0;
         ArrayList<String> cons = obtenerConsulta(log);
         ArrayList<Atributo> atributos = listaAtributos();
         ArrayList<String> consultalimpia = obtenerConTipo(obtenerConsultasIp(s, cons), tipoOperacion);
-
         for (int j = 0; j < consultalimpia.size(); j++) {
             ArrayList<Atributo> attParticipan = obtenerAttParticipantes(atributos, consultalimpia.get(j));
             if (attParticipan.size() == att.size()) {
@@ -197,7 +200,6 @@ public class archivos {
                 }
             }
         }
-
         return (f / att.size());
     }
 
@@ -207,7 +209,7 @@ public class archivos {
         for (int i = 0; i < original.size(); i++) {
             boolean flag = false;
             for (TablaCosto u : tabla) {
-                if (u.getSitio().getNombre().compareTo(original.get(i).getSitio().getNombre()) == 0 && u.getAtributo().getNombre().compareTo(original.get(i).getAtributo().getNombre()) == 0) {
+                if (u.getSitio().compareTo(original.get(i).getSitio()) == 0 && u.getAtributo().getNombre().compareTo(original.get(i).getAtributo().getNombre()) == 0) {
                     u.setCosto(u.getCosto() + original.get(i).getCosto());
                     flag = true;
                 }
@@ -274,8 +276,8 @@ public class archivos {
         return r;
     }
 
+    //PIPE
     public ArrayList<TablaCosto> nombrar(ArrayList<TablaCosto> ori) {
-
         for (int i = 0; i < ori.size(); i++) {
             ori.get(i).setNombre(this.oBD.getTabla().getNombre() + "_" + (i + 1));
         }
@@ -286,7 +288,7 @@ public class archivos {
 
         ArrayList<TablaCosto> t = new ArrayList<>();
         @SuppressWarnings("unchecked")
-        ArrayList<sitio> si = new ArrayList();
+        ArrayList<String> si = new ArrayList();
         for (TablaCosto t1 : ta) {
             if (si.isEmpty()) {
                 si.add(t1.getSitio());
@@ -294,33 +296,30 @@ public class archivos {
                 si.add(t1.getSitio());
             }
         }
-        for (sitio s : si) {
+        for (String s : si) {
             @SuppressWarnings("unchecked")
             ArrayList<Atributo> arraux = new ArrayList();
             TablaCosto aux = new TablaCosto();
             aux.setNombre("");
             aux.setSitio(s);
             aux.setCosto(0.0);
-            arraux.add(obteneratributoid());
-
+            arraux.add(this.oBD.getTabla().getAtributoLlave());
             for (TablaCosto t2 : ta) {
-
-                if (t2.getSitio().getIp().compareTo(s.getIp()) == 0) {
+                if (t2.getSitio().compareTo(s) == 0) {
                     arraux.add(t2.getAtributo());
                 }
             }
             aux.setArrAtri(arraux);
-            // aux.getArrAtri().forEach(at->System.out.println(at.getNombre()));
             t.add(aux);
         }
 
         return t;
     }
 
-    private boolean existeEnArrSitio(TablaCosto t1, ArrayList<sitio> si) {
+    private boolean existeEnArrSitio(TablaCosto t1, ArrayList<String> si) {
         boolean r = false;
-        for (sitio s : si) {
-            if (s.getNombre().compareTo(t1.getSitio().getNombre()) == 0) {
+        for (String s : si) {
+            if (s.compareTo(t1.getSitio()) == 0) {
                 r = true;
             }
 
@@ -333,7 +332,7 @@ public class archivos {
         ArrayList<Atributo> attTa = new ArrayList();
         ArrayList<String> log = new ArrayList();
         ArrayList<String> atris = new ArrayList();
-        aa.add(obteneratributoid());
+        aa.add(this.oBD.getTabla().getAtributoLlave());
         for (TablaCosto ta : t) {
             attTa.addAll(ta.getArrAtri());
         }
@@ -341,7 +340,7 @@ public class archivos {
         this.arrAtri.forEach(att -> atris.add(att.getNombre()));
         atris.removeAll(log);
         this.arrAtri.forEach(atrib -> {
-            if (atrib.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())!=0) {
+            if (atrib.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) != 0) {
                 atris.forEach(j -> {
                     if (j.toLowerCase().compareTo(atrib.getNombre().toLowerCase()) == 0) {
                         aa.add(atrib);
@@ -351,45 +350,88 @@ public class archivos {
         });
         TablaCosto nueva = new TablaCosto();
         if (aa.size() != 1) {
-
             nueva.setArrAtri(aa);
             nueva.setCosto(0);
-            nueva.setSitio(new sitio("localhost", this.oBD.getDirbd()));
+            nueva.setSitio(this.oBD.getDirbd());
         } else {
             nueva = null;
         }
         return nueva;
     }
 
-    public ArrayList<TablaCosto> obtenerFragMul() {
+    //PIPE
+    public ArrayList<TablaCosto> obtenerFragmentosMultimedia() {
         ArrayList<TablaCosto> arr = new ArrayList<>();
-        ArrayList<Atributo> listaAtr;
         for (String str : this.arrAM) {
-            listaAtr = new ArrayList<>();
             TablaCosto tabla = new TablaCosto();
-            tabla.setSitio(new sitio("localhost", this.oBD.getDirbd()));
-            listaAtr.add(obteneratributoid());
-            for (Atributo atr : this.arrAtri) {
-                if (str.contains(atr.getNombre())) {
-                    listaAtr.add(atr);
-                }
+            ArrayList<Atributo> listaAtr = new ArrayList<>();
+            String[] atributos = str.split(",");
+            listaAtr.add(this.oBD.getTabla().getAtributoLlave());
+            for (String item : atributos) {
+                String[] sAtributo = item.split(":");
+                Atributo a = new Atributo();
+                a.setNombre(sAtributo[0]);
+                a.setTipo(sAtributo[1]);
+                a.setTamanio(sAtributo[2]);
+                listaAtr.add(a);
             }
             tabla.setArrAtri(listaAtr);
-            tabla.setCosto(0);
+            //¿A dónde se debe asignar?
+            //¿Cúal es el costo total?
+            //Primera posición sitio, segunda costo
+            ArrayList<String> sitioCosto = costoxSitio(listaAtr);
+            tabla.setSitio(sitioCosto.get(0));
+            tabla.setCosto(Double.parseDouble(sitioCosto.get(1)));
             arr.add(tabla);
         }
         return arr;
     }
 
-    private Atributo obteneratributoid() {
-        Atributo atri = new Atributo();
-        for (int i = 0; i < this.arrAtri.size(); i++) {
-            if (this.arrAtri.get(i).getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())==0) {
-                atri = this.arrAtri.get(i);
+    //PIPE
+    public TablaCosto obtenerOtroFragmento() {
+        TablaCosto ret = new TablaCosto();
+        //OBTENER ATRIBUTOS MULTIMEDIA
+        ArrayList<String> nombreAttsMultimedia = new ArrayList<>();
+        for (String str : this.arrAM) {
+            String[] atributos = str.split(",");
+            for (String item : atributos) {
+                String[] sAtributo = item.split(":");
+                nombreAttsMultimedia.add(sAtributo[0]);
             }
         }
-
-        return atri;
+        //OBTENER TODOS LOS ATRIBUTOS
+        ArrayList<String> arr = new ArrayList<>();
+        try {
+            AccesoDatosPG acc = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+            if (acc.conectar()) {
+                arr = acc.atributos(this.oBD.getNombd(), this.oBD.getTabla().getNombre());
+                acc.desconectar();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //EXCLUIR MULTIMEDIA
+        ArrayList<Atributo> normales = new ArrayList<>();
+        for (String item : arr) {
+            String nombreAtributo = item.split(":")[0];
+            if (!nombreAttsMultimedia.contains(nombreAtributo)) {
+                Atributo a = new Atributo();
+                a.setNombre(nombreAtributo);
+                a.setTipo(item.split(":")[1]);
+                a.setTamanio(item.split(":")[2]);
+                normales.add(a);
+            }
+        }
+        if (!this.oBD.isNullorEmpty(normales)) {
+            ret.setArrAtri(normales);
+            //Primera posición sitio, segunda costo
+            ArrayList<String> sitioCosto = costoxSitio(normales);
+            ret.setSitio(sitioCosto.get(0));
+            ret.setCosto(Double.parseDouble(sitioCosto.get(1)));
+        } else {
+            ret = null;
+        }
+        return ret;
     }
 
     public ArrayList<String> obtenerConTipo(ArrayList<String> cad, String tipo) {
@@ -408,43 +450,39 @@ public class archivos {
     public ArrayList<TablaCosto> obtenerTablaCosto() {
         ArrayList<String> cad = this.arrCad;
         ArrayList<Query> tablafrecuencia = arrQuerys(cad);
-        @SuppressWarnings("unchecked")
         ArrayList<TablaCosto> tabla = new ArrayList();
-        tablafrecuencia.forEach(new Consumer<Query>() {
-            public void accept(Query t) {
-                for (int i = 0; i < t.getAtr().size(); i++) {
-                    int vo = 0;
-                    double f = 0;
-                    int ta = 0;
-                    Atributo a = t.getAtr().get(i);
-                    Atributo id = obteneratributoid();
-                    ArrayList<Atributo> arrT = new ArrayList<>();
-                    arrT.add(id);
-                    TablaCosto costo = new TablaCosto();
-
-                    if (t.getTipoOpera().contains("select")) {
-                        vo = 1;
-                    }
-                    if (t.getTipoOpera().contains("create")) {
-                        vo = 2;
-                    }
-                    if (t.getTipoOpera().contains("delete")) {
-                        vo = 2;
-                    }
-                    if (t.getTipoOpera().contains("update")) {
-                        vo = 3;
-                    }
-                    f = t.getFrecuencia();
-                    ta = parseInt(a.getTamanio());
-                    costo.setAtributo(a);
-                    arrT.add(a);
-                    costo.setArrAtri(arrT);
-                    costo.setSitio(t.getSitio());
-                    costo.setCosto((vo * f * ta));
-                    tabla.add(costo);
+        for (Query t : tablafrecuencia) {
+            for (int i = 0; i < t.getAtr().size(); i++) {
+                int vo = 0;
+                double f = 0;
+                int ta = 0;
+                Atributo a = t.getAtr().get(i);
+                Atributo id = this.oBD.getTabla().getAtributoLlave();
+                ArrayList<Atributo> arrT = new ArrayList<>();
+                arrT.add(id);
+                TablaCosto costo = new TablaCosto();
+                if (t.getTipoOpera().contains("select")) {
+                    vo = 1;
                 }
+                if (t.getTipoOpera().contains("create")) {
+                    vo = 2;
+                }
+                if (t.getTipoOpera().contains("delete")) {
+                    vo = 2;
+                }
+                if (t.getTipoOpera().contains("update")) {
+                    vo = 3;
+                }
+                f = t.getFrecuencia();
+                ta = parseInt(a.getTamanio());
+                costo.setAtributo(a);
+                arrT.add(a);
+                costo.setArrAtri(arrT);
+                costo.setSitio(t.getSitio());
+                costo.setCosto((vo * f * ta));
+                tabla.add(costo);
             }
-        });
+        }
         return sumar(tabla);
         // return tabla;
     }
@@ -453,7 +491,7 @@ public class archivos {
         @SuppressWarnings("unchecked")
         ArrayList<String> tipoC = new ArrayList();
         for (int i = 0; i < cad.size(); i++) {
-            if (cad.get(i).toLowerCase().contains("sentencia:")
+            if ((cad.get(i).toLowerCase().contains("sentencia:") || (cad.get(i).toLowerCase().contains("statement:")))
                     && cad.get(i).toLowerCase().contains(this.oBD.getTabla().getNombre())) {
                 String tipo = cad.get(i);
                 tipoC.add(tipo);
@@ -465,7 +503,7 @@ public class archivos {
     public void imprimeQ(Query q) {
         System.out.println(" ===Query ===");
         System.out.println("Tipo de operacion " + q.getTipoOpera());
-        System.out.println(" Sitio " + q.getSitio().getIp());
+        System.out.println(" Sitio " + q.getSitio());
         System.out.println(" Atributos involucrados " + q.getAtributos());
         System.out.println("Frecuencia " + q.getFrecuencia());
         System.out.println("==========");
@@ -473,13 +511,10 @@ public class archivos {
 
     }
 
-    public sitio obtenerSitio(String cad) {
-
+    public String obtenerSitio(String cad) {
         String nom = cad.toLowerCase().substring(cad.toLowerCase().indexOf("[") + 1, cad.toLowerCase().indexOf("]"));
         String ip = cad.toLowerCase().substring(cad.toLowerCase().indexOf("-_-") + 3, cad.toLowerCase().indexOf("l"));
-
-        sitio s = new sitio(nom, ip);
-
+        String s = ip;
         return s;
     }
 
@@ -506,8 +541,6 @@ public class archivos {
     }
 
     public ArrayList<Query> arrQuerys(ArrayList<String> cad) {
-
-        @SuppressWarnings("unchecked")
         ArrayList<Query> frec = new ArrayList();
         ArrayList<Query> repetidos = new ArrayList();
         ArrayList<Query> unicos = new ArrayList();
@@ -526,12 +559,9 @@ public class archivos {
         return unicos;
     }
 
-///////////// aqui lo debo quitar cosas
+    // aqui lo debo quitar cosas
     public ArrayList<Query> limpiar(ArrayList<Query> cad) {
-
-        @SuppressWarnings("unchecked")
         ArrayList<Query> list = new ArrayList();
-
         for (int i = 0; i < cad.size(); i++) {
             if (list.isEmpty()) {
                 list.add(cad.get(i));
@@ -545,10 +575,9 @@ public class archivos {
 
     public boolean existe(ArrayList<Query> cad, Query q) {
         boolean r = false;
-
         for (int i = 0; i < cad.size(); i++) {
             if (q.getFrecuencia() == cad.get(i).getFrecuencia()) {
-                if (q.getSitio().getIp().compareTo(cad.get(i).getSitio().getIp()) == 0) {
+                if (q.getSitio().compareTo(cad.get(i).getSitio()) == 0) {
                     if (q.getAtributos().compareTo(cad.get(i).getAtributos()) == 0) {
                         r = true;
                     } else {
@@ -588,7 +617,7 @@ public class archivos {
                 atributos = acc2.ejecutarConsulta(sql);
                 //sql="alter table "+frag.getNombre()+" ADD PRIMARY KEY ("+atributos.get(0)+");";
             }
-            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio().getIp() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
             //AccesoDatosPG acc= new AccesoDatosPG(this.direccion,this.nomDB,"postgres",this.pass);
             if (acc.conectar()) {
                 sql = "drop table if exists " + frag.getNombre() + " ; CREATE TABLE " + frag.getNombre() + " ( " + atributosTipos(frag.getArrAtri()) + " );";
@@ -636,4 +665,105 @@ public class archivos {
         return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
 
+    private ArrayList<String> costoxSitio(ArrayList<Atributo> listaAtr) {
+        //Posición 1 sitio, posición 2 costo
+        ArrayList<String> ret = new ArrayList<>();
+        HashMap<String, String> NombreIp = new HashMap<>();
+        HashMap<String, Double> SitioCosto = new HashMap<>();
+        double costoTotal = 0;
+        System.out.println("-----------COSTOS PIPE-------------");
+        for (UploadedFile f : this.files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    String ipLinea = "";
+                    String nombre = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (actual.toLowerCase().contains("conexion autorizada") || actual.toLowerCase().contains("connection authorized")) {
+                            ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("-_-") + 3, actual.toLowerCase().indexOf("log"));
+                            nombre = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
+                            if (ipLinea.toLowerCase().compareTo("localhost") == 0 || ipLinea.toLowerCase().compareTo("::1") == 0) {
+                                ipLinea = "127.0.0.1";
+                            }
+                            NombreIp.put(nombre, ipLinea);
+                        }
+                        int ValorAsignadoOperacion = 0;
+                        if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 1;
+                        } else if ((actual.toLowerCase().contains("delete")
+                                || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 2;
+                        } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 3;
+                        }
+                        if (ValorAsignadoOperacion != 0) {
+                            String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
+                            String ipTraduccion = NombreIp.get(sujeto);
+                            System.out.println(actual);
+                            System.out.println("SITIO: "+ipTraduccion);
+                            if (ipTraduccion.compareTo(this.oBD.getDirbd()) != 0) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            System.out.println("VAO: "+ValorAsignadoOperacion);
+                            int nJoins = incidencias(actual.toLowerCase(), " join ");
+                            System.out.println("CR: "+nJoins);
+                            double costoOperacion=0.0;
+                            for (Atributo a : listaAtr) {
+                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                    System.out.println("\tTamaño de atributo "+a.getNombre()+": "+Double.parseDouble(a.getTamanio()));
+                                    costoOperacion+= ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    costoTotal += costoOperacion;
+                                    //COSTO POR SITIO
+                                    if (SitioCosto.get(ipTraduccion) != null) {
+                                        SitioCosto.put(ipTraduccion, SitioCosto.get(ipTraduccion) + costoOperacion);
+                                    } else {
+                                        SitioCosto.put(ipTraduccion, costoOperacion);
+                                    }
+                                    System.out.println("Costo de operación: "+costoOperacion);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        //DETERMINAR SITIO MÁS COSTOSO PARA FRAGMENTO
+        Double max = -1.0;
+        try {
+            max = Collections.max(SitioCosto.values());
+        } catch (Exception e) {
+            max=0.0;
+        }
+        for (Entry<String, Double> entry : SitioCosto.entrySet()) {
+            if (entry.getValue() >= max) {
+                if (ret.size() > 0) {
+                    ret.set(0, entry.getKey());
+                } else {
+                    ret.add(entry.getKey());
+                }
+
+            }
+        }
+        if (ret.size() > 1) {
+            ret.set(1, "" + costoTotal);
+        } else if (ret.size() == 1) {
+            ret.add("" + costoTotal);
+        } else if (ret.isEmpty()) {
+            ret.add(this.oBD.getDirbd());
+            ret.add("" + costoTotal);
+        }
+        return ret;
+    }
+
+    private int incidencias(String origen, String palabra) {
+        //costo de reuniones=n+1 
+        int i = 1;
+        while (origen.indexOf(palabra) > -1) {
+            origen = origen.substring(origen.indexOf(palabra) + palabra.length(), origen.length());
+            i++;
+        }
+        return i;
+    }
 }

@@ -68,9 +68,8 @@ public class BDJB implements Serializable {
     private String seleccion2;
     private String seleccion3;
     private ArrayList<String> attsMultimediaDescriptor;
-    private ArrayList<String> esquemaVerticalCBIR;
     private DHFragmentation DHF;
-    private ArrayList<TablaCosto> esquemaVerticalCBIRPostgres;
+    private ArrayList<TablaCosto> esquemaVerticalCBIR;
     private boolean visible;
     ArrayList<TablaCosto> TablasCostos;
     private ArrayList<TablaCosto> esquemaVertical;
@@ -285,10 +284,9 @@ public class BDJB implements Serializable {
             tipoEsquema = "esquema.xhtml";
         } else if (this.obj.getTabla().isCBIR()
                 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
-            //this.setEsquemaVerticalCBIR(this.obj.esquemaVertical());
             if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 try {
-                    this.setEsquemaVerticalCBIRPostgres(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
+                    this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
                     this.setConsultasV(this.obj.ConsultasVerLog(this.files));
                     this.setAsignacionSitio(this.obj.AsignacionSitio1(getAttsMultimediaDescriptor(), this.files));
                 } catch (Exception e) {
@@ -505,14 +503,14 @@ public class BDJB implements Serializable {
             this.setBToken(true);
         } else if (this.obj.isVerticalCBIR()) {
             if (this.obj.getTipoBD().compareTo("a") == 0) {
-                this.obj.fragmentarVerCBIRMySQL(this.esquemaVerticalCBIR);
+                //this.obj.fragmentarVerCBIRMySQL(this.esquemaVerticalCBIR);
             } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 this.obj.setProgress1(0);
                 this.visible = false;
                 this.obj.fragmentarVerCBIRPostgres(this.AsignacionSitio);
                 this.visible = true;
             } else {
-                this.obj.fragmentarVerCBIRMongoDB(this.esquemaVerticalCBIR);
+                //this.obj.fragmentarVerCBIRMongoDB(this.esquemaVerticalCBIR);
             }
         } else if (this.obj.getTabla().getTipoFragment().compareTo("b")==0 && !this.obj.getTabla().isCBIR()) {
             if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
@@ -1104,30 +1102,12 @@ public class BDJB implements Serializable {
         this.seleccion3 = seleccion3;
     }
 
-    /**
-     * @return the esquemaVerticalCBIR
-     */
-    public ArrayList<String> getEsquemaVerticalCBIR() {
-        return esquemaVerticalCBIR;
-    }
-
-    /**
-     * @param esquemaVerticalCBIR the esquemaVerticalCBIR to set
-     */
-    public void setEsquemaVerticalCBIR(ArrayList<String> esquemaVerticalCBIR) {
-        this.esquemaVerticalCBIR = esquemaVerticalCBIR;
-    }
-
     public ArrayList<TablaCosto> getTablasCostos() {
         return TablasCostos;
     }
 
     public void setTablasCostos(ArrayList<TablaCosto> TablasCostos) {
         this.TablasCostos = TablasCostos;
-    }
-
-    public ArrayList<TablaCosto> getEsquemaVerticalCBIRPostgres() {
-        return esquemaVerticalCBIRPostgres;
     }
 
     public ArrayList<TablaCosto> getAsignacionSitio() {
@@ -1157,7 +1137,11 @@ public class BDJB implements Serializable {
     /**
      * @param esquemaVerticalCBIR the esquemaVerticalCBIR to set
      */
-    public void setEsquemaVerticalCBIRPostgres(ArrayList<TablaCosto> esquemaVerticalCBIR) {
-        this.esquemaVerticalCBIRPostgres = esquemaVerticalCBIR;
+    public void setEsquemaVerticalCBIR(ArrayList<TablaCosto> esquemaVerticalCBIR) {
+        this.esquemaVerticalCBIR = esquemaVerticalCBIR;
+    }
+    
+    public ArrayList<TablaCosto> getEsquemaVerticalCBIR() {
+        return esquemaVerticalCBIR;
     }
 }

@@ -5,7 +5,6 @@
  */
 package org.xamana.verticalCBIR.model;
 
-
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import org.xamana.db.Atributo;
@@ -15,10 +14,12 @@ import org.xamana.db.Atributo;
  * @author aldoo
  */
 public class TablaCosto {
-    sitio sitio;
+
+    String sitio;
     Atributo atributo;
     double costo;
     String nombre;
+    ArrayList<Atributo> arrAtri;
 
     public String getNombre() {
         return nombre;
@@ -27,8 +28,6 @@ public class TablaCosto {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
-    ArrayList<Atributo> arrAtri;
 
     public ArrayList<Atributo> getArrAtri() {
         return arrAtri;
@@ -45,13 +44,12 @@ public class TablaCosto {
     public void setCosto(double costo) {
         this.costo = costo;
     }
-    
 
-    public sitio getSitio() {
+    public String getSitio() {
         return sitio;
     }
 
-    public void setSitio(sitio sitio) {
+    public void setSitio(String sitio) {
         this.sitio = sitio;
     }
 
@@ -62,14 +60,13 @@ public class TablaCosto {
     public void setAtributo(Atributo atributo) {
         this.atributo = atributo;
     }
-    public String getAtributos(){
-    ArrayList <String> cad = new ArrayList<>();
-    String separador=", ";
-    for(Atributo at: this.getArrAtri()){
-        cad.add(at.getNombre());
-    }
-    
-    return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
-    
+
+    public String getAtributos() {
+        ArrayList<String> cad = new ArrayList<>();
+        String separador = ", ";
+        for (Atributo at : this.getArrAtri()) {
+            cad.add(at.getNombre());
+        }
+        return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
 }

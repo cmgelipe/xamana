@@ -60,13 +60,23 @@ and open the template in the editor.
                 <text>Scheme</text>
             </header>
             <p:growl id="growl" showDetail="true" sticky="true"  />
-            <p:dataTable value="#{bd.esquemaVerticalCBIR}" var="t" >
-                <p:column headerText="Atributtes">
-                    <h:outputText value="#{t}" />
+            <p:dataTable value="#{bd.esquemaVerticalCBIR}" var="x">
+                <p:column headerText="Fragment name">
+                    <h:outputText value="#{x.nombre}" />
                 </p:column>
+                <p:column headerText="Site">
+                    <h:outputText value="#{x.sitio}" />
+                </p:column>
+                <p:column headerText="Atributtes">
+                    <h:outputText value="#{x.atributos}" />
+                </p:column>
+                <p:column headerText="Cost">
+                    <h:outputText value="#{x.costo}" />
+                </p:column>
+                
             </p:dataTable>
             <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
-                <p:ajax event="complete" listener="#{bd.onComplete}" update="f4:growl" oncomplete="PF('startButton2').enable()"/>
+                <p:ajax event="complete" listener="#{bd.onComplete}" update="f5:growl" oncomplete="PF('startButton2').enable()"/>
             </p:progressBar>
             <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f5:growl f5:d6" />
             <p:dialog id="d6" visible="false" header="Token">

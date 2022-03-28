@@ -288,7 +288,7 @@ public final class AccesoDatosPG implements Serializable {
         ArrayList<String> ret = new ArrayList<String>();
         try {
             DatabaseMetaData metadata = oConexion.getMetaData();
-            ResultSet atributos = metadata.getColumns(null, null, nombre, null);
+            ResultSet atributos = metadata.getColumns(nombreBase, null, nombre, null);
             while (atributos.next()) {
                 String tam=Double.parseDouble(atributos.getString("COLUMN_SIZE"))>10000000?"10000000":atributos.getString("COLUMN_SIZE");
                 ret.add(atributos.getString("COLUMN_NAME") + ":" + atributos.getString("TYPE_NAME") + ":" + tam);
@@ -298,6 +298,22 @@ public final class AccesoDatosPG implements Serializable {
         }
         return ret;
     }
+    
+    public synchronized String atributo(String nombreBase, String nombre, String nAtributo) {
+        String ret = "";
+        try {
+            DatabaseMetaData metadata = oConexion.getMetaData();
+            ResultSet atributos = metadata.getColumns(nombreBase, null, nombre, nAtributo);
+            while (atributos.next()) {
+                String tam=Double.parseDouble(atributos.getString("COLUMN_SIZE"))>10000000?"10000000":atributos.getString("COLUMN_SIZE");
+                ret=atributos.getString("COLUMN_NAME") + ":" + atributos.getString("TYPE_NAME") + ":" + tam;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AccesoDatos.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
+    
     public synchronized ArrayList<String> tablas(String nombreBase) {
         String q="select table_name from information_schema.tables where table_type='BASE TABLE' and table_schema='public' and table_catalog='"+nombreBase+"'";
         ArrayList<String> ret = new ArrayList<String>();
