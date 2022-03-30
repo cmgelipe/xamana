@@ -1226,7 +1226,7 @@ public class bd implements Serializable {
                         + "and INFORMATION_SCHEMA.COLUMNS.TABLE_CATALOG='" + nombreBase + "';";
                 res = acc.ejecutarConsulta(q);
                 if (!this.isNullorEmpty(res)) {
-                    String a=acc.atributo(nombreBase, nombreTabla, "" + ((ArrayList) res.get(0)).get(0));
+                    String a = acc.atributo(nombreBase, nombreTabla, "" + ((ArrayList) res.get(0)).get(0));
                     att = new Atributo();
                     att.setNombre(a.split(":")[0]);
                     att.setTipo(a.split(":")[1]);
@@ -1387,11 +1387,6 @@ public class bd implements Serializable {
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
         juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
-        /*ArrayList<TablaCosto> todos = new ArrayList();
-        todos.addAll(juntos);
-        if (a.noLog(juntos) != null) {
-            todos.add(a.noLog(juntos));
-        }*/
         return a.nombrar(juntos);
     }
 
@@ -1431,31 +1426,68 @@ public class bd implements Serializable {
         return this.tabla.getTipoFragment().compareTo("b") == 0 && this.tabla.isCBIR();
     }
 
-    public void fragmentarVerCBIRMySQL(ArrayList<String> esquemaVerticalCBIR) {
+    public void crearTablaVerticalMySQL(TablaCosto frag) {
 
     }
 
-    public void fragmentarVerCBIRPostgres(ArrayList<TablaCosto> es) {
+    public void fragmentarVertical(ArrayList<TablaCosto> es) {
         this.progress1 = 1;
         int percent = 100 / es.size();
-        try {
+        if (this.getTipoBD().compareTo("a") == 0) {
             for (TablaCosto ta : es) {
-                crearTabla(ta);
+                crearTablaVerticalMySQL(ta);
                 this.progress1 += percent;
             }
-            this.progress1 = 100;
-        } catch (Exception e) {
-            System.out.println("Sin conexión");
+        } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
+            for (TablaCosto ta : es) {
+                crearTablaVerticalPostgres(ta);
+                this.progress1 += percent;
+            }
+        } else if (this.getTipoBD().compareTo("d") == 0) {
+            for (TablaCosto ta : es) {
+                crearTablaVerticalMongo(ta);
+                this.progress1 += percent;
+            }
         }
+
+        this.progress1 = 100;
     }
 
-    private void crearTabla(TablaCosto frag) {
+    private void crearTablaVerticalPostgres(TablaCosto frag) {
         try {
             String sql;
             AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            String att_tipo = "";
+            for (Atributo r : frag.getArrAtri()) {
+                if (this.transTipoDato(r.getTipo()) != 0) {
+                    if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
+                        att_tipo += r.getNombre() + " " + r.getTipo() + " PRIMARY KEY, ";
+                    } else {
+                        att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                    }
+
+                } else {
+                    if (r.getTipo().compareTo("BIT") != 0) {
+                        if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + ") PRIMARY KEY, ";
+                        } else {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                        }
+                    } else {
+                        if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
+                            att_tipo += r.getNombre() + " TINYINT PRIMARY KEY, ";
+                        } else {
+                            att_tipo += r.getNombre() + " TINYINT, ";
+                        }
+                    }
+                }
+            }
+            att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
             if (acc.conectar()) {
+                sql = "insert into Sitio (direccion) values('" + frag.getSitio() + "')";
+                acc.ejecutarComando(sql);
                 sql = "drop table if exists " + frag.getNombre() + "; "
-                        + "CREATE TABLE " + frag.getNombre() + " ( " + atributosTipos(frag.getArrAtri()) + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
+                        + "CREATE TABLE " + frag.getNombre() + " ( " + att_tipo + ");";
                 acc.ejecutarComando(sql);
                 acc.desconectar();
             }
@@ -1474,9 +1506,9 @@ public class bd implements Serializable {
                     acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
                     if (acc2.conectar()) {
                         if (i == 0) {
-                            sql = "Select " + frag.getAtributos() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + (i + 1);
+                            sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + (i + 1);
                         } else {
-                            sql = "Select " + frag.getAtributos() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + nLote * (i + 1);
+                            sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + nLote * (i + 1);
                         }
                         atributos = acc2.ejecutarConsulta(sql);
                         acc2.desconectar();
@@ -1488,10 +1520,15 @@ public class bd implements Serializable {
                                 String valor = "";
                                 ArrayList tupla = (ArrayList) atributos.get(k);
                                 for (int j = 0; j < tupla.size(); j++) {
-                                    valor += "'" + tupla.get(j) + "',";
+                                    if(this.transTipoDato(frag.getArrAtri().get(j).getTipo())==0 || this.transTipoDato(frag.getArrAtri().get(j).getTipo())==2){
+                                        valor += "'" + tupla.get(j) + "',";
+                                    }else{
+                                        valor += tupla.get(j) + ",";
+                                    }
+                                    
                                 }
                                 valor = valor.substring(0, valor.length() - 1);
-                                sql = "insert into " + frag.getNombre() + "(" + frag.getAtributos() + ") values (" + valor + ");";
+                                sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosxComa() + ") values (" + valor + ");";
                                 acc.ejecutarComando(sql);
                             }
                             acc.desconectar();
@@ -1501,7 +1538,7 @@ public class bd implements Serializable {
             } else {
                 acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
                 if (acc2.conectar()) {
-                    sql = "Select " + frag.getAtributos() + " from " + this.getTabla().getNombre();
+                    sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre();
                     atributos = acc2.ejecutarConsulta(sql);
                     acc2.desconectar();
                 }
@@ -1519,7 +1556,7 @@ public class bd implements Serializable {
                                 }
                             }
                             valor = valor.substring(0, valor.length() - 1);
-                            sql = "insert into " + frag.getNombre() + "(" + frag.getAtributos() + ") values (" + valor + ");";
+                            sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosxComa() + ") values (" + valor + ");";
                             acc.ejecutarComando(sql);
                         }
                         acc.desconectar();
@@ -1533,7 +1570,6 @@ public class bd implements Serializable {
     }
 
     private String atributosTipos(ArrayList<Atributo> arrAtri) {
-        @SuppressWarnings("unchecked")
         ArrayList<String> cad = new ArrayList();
         String separador = ", ";
         arrAtri.forEach((att) -> {
@@ -1542,7 +1578,7 @@ public class bd implements Serializable {
         return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
 
-    public void fragmentarVerCBIRMongoDB(ArrayList<String> esquemaVerticalCBIR) {
+    public void crearTablaVerticalMongo(TablaCosto esquemaVerticalCBIR) {
 
     }
 

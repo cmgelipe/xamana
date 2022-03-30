@@ -4,14 +4,9 @@ import org.xamana.datos.AccesoDatosPG;
 import java.io.*;
 import static java.lang.Integer.parseInt;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
@@ -631,7 +626,7 @@ public class archivos {
                             valor += "'" + tupla.get(j) + "',";
                         }
                         valor = valor.substring(0, valor.length() - 1);
-                        sql = "insert into " + frag.getNombre() + "(" + frag.getAtributos() + ") values (" + valor + ");";
+                        sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosxComa() + ") values (" + valor + ");";
                         System.out.println(sql);
                         acc.ejecutarComando(sql);
                     }
@@ -665,6 +660,7 @@ public class archivos {
         return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
 
+    //PIPE
     private ArrayList<String> costoxSitio(ArrayList<Atributo> listaAtr) {
         //Posición 1 sitio, posición 2 costo
         ArrayList<String> ret = new ArrayList<>();
@@ -757,6 +753,7 @@ public class archivos {
         return ret;
     }
 
+    //PIPE
     private int incidencias(String origen, String palabra) {
         //costo de reuniones=n+1 
         int i = 1;

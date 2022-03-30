@@ -61,12 +61,11 @@ public class TablaCosto {
         this.atributo = atributo;
     }
 
-    public String getAtributos() {
-        ArrayList<String> cad = new ArrayList<>();
-        String separador = ", ";
+    public String getAtributosxComa() {
+        String cad = "";
         for (Atributo at : this.getArrAtri()) {
-            cad.add(at.getNombre());
+            cad+=at.getNombre()+",";
         }
-        return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
+        return cad.substring(0, cad.length()-1);
     }
 }

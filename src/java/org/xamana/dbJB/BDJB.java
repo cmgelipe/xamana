@@ -287,8 +287,6 @@ public class BDJB implements Serializable {
             if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 try {
                     this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
-                    this.setConsultasV(this.obj.ConsultasVerLog(this.files));
-                    this.setAsignacionSitio(this.obj.AsignacionSitio1(getAttsMultimediaDescriptor(), this.files));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -502,23 +500,13 @@ public class BDJB implements Serializable {
 
             this.setBToken(true);
         } else if (this.obj.isVerticalCBIR()) {
-            if (this.obj.getTipoBD().compareTo("a") == 0) {
-                //this.obj.fragmentarVerCBIRMySQL(this.esquemaVerticalCBIR);
-            } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 this.obj.setProgress1(0);
-                this.visible = false;
-                this.obj.fragmentarVerCBIRPostgres(this.AsignacionSitio);
-                this.visible = true;
-            } else {
-                //this.obj.fragmentarVerCBIRMongoDB(this.esquemaVerticalCBIR);
-            }
+                this.obj.fragmentarVertical(this.esquemaVerticalCBIR);
         } else if (this.obj.getTabla().getTipoFragment().compareTo("b")==0 && !this.obj.getTabla().isCBIR()) {
-            if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 this.obj.setProgress1(0);
                 this.visible = false;
-                this.obj.fragmentarVerCBIRPostgres(this.AsignacionSitio);
+                this.obj.fragmentarVertical(this.AsignacionSitio);
                 this.visible = true;
-            }
         }
     }
 
