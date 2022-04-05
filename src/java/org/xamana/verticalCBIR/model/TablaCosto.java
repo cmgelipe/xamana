@@ -20,6 +20,7 @@ public class TablaCosto {
     double costo;
     String nombre;
     ArrayList<Atributo> arrAtri;
+    private boolean multimedia;
 
     public String getNombre() {
         return nombre;
@@ -67,5 +68,19 @@ public class TablaCosto {
             cad+=at.getNombre()+",";
         }
         return cad.substring(0, cad.length()-1);
+    }
+
+    /**
+     * @return the multimedia
+     */
+    public boolean isMultimedia() {
+        return multimedia;
+    }
+
+    /**
+     * @param multimedia the multimedia to set
+     */
+    public void setMultimedia(boolean multimedia) {
+        this.multimedia = multimedia;
     }
 }

@@ -73,7 +73,9 @@ and open the template in the editor.
                 <p:column headerText="Cost">
                     <h:outputText value="#{x.costo}" />
                 </p:column>
-                
+                <p:column headerText="Multimedia">
+                    <h:outputText value="#{x.multimedia}" />
+                </p:column>
             </p:dataTable>
             <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
                 <p:ajax event="complete" listener="#{bd.onComplete}" update="f5:growl" oncomplete="PF('startButton2').enable()"/>

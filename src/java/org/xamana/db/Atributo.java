@@ -15,6 +15,7 @@ public class Atributo {
     private String tipo;
     private String tamanio;
     private boolean multimedia;
+    private boolean descriptor;
     /**
      * @return the nombre
      */
@@ -83,6 +84,20 @@ public class Atributo {
      */
     public void setMultimedia(boolean multimedia) {
         this.multimedia = multimedia;
+    }
+
+    /**
+     * @return the descriptor
+     */
+    public boolean isDescriptor() {
+        return descriptor;
+    }
+
+    /**
+     * @param descriptor the descriptor to set
+     */
+    public void setDescriptor(boolean descriptor) {
+        this.descriptor = descriptor;
     }
     
 }

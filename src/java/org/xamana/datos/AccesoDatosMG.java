@@ -90,7 +90,13 @@ public class AccesoDatosMG implements Serializable {
                 Bson group=project(Projections.computed(key, Document.parse("{$type: '$"+key+"'}")));
                 List<Document> r=collection.aggregate(Arrays.asList(group)).into(new ArrayList<>());
                 String tipo=""+(new JSONObject(r.get(0).toJson()).get(key));
-                res.add(key+":"+tipo);
+                String size=this.sizeTiposConocidos(tipo);
+                if(!size.isEmpty()){
+                    res.add(key+":"+tipo+":"+size);
+                }else{
+                    res.add(key+":"+tipo);
+                }
+                
             }
         } catch (JSONException ex) {
             ex.printStackTrace();
@@ -117,5 +123,29 @@ public class AccesoDatosMG implements Serializable {
      */
     public void setMongoClient(MongoClient mongoClient) {
         this.mongoClient = mongoClient;
+    }
+    
+    //Megabytes
+    public String sizeTiposConocidos(String tipo){
+        switch(tipo){
+            /*case "double":
+                return "0.000008";
+            case "objectId":
+                return "0.000012";
+            case "bool":
+                return "0.000002";
+            case "date":
+                return "0.000008";
+            case "int":
+                return "0.000004";
+            case "timestamp":
+                return "0.000008";
+            case "long":
+                return "0.000008";
+            case "decimal":
+                return "0.000016";*/
+            default:
+                return "";
+        }
     }
 }

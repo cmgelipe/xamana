@@ -7,7 +7,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.crearfrag.BuildTypes;
@@ -26,7 +30,7 @@ public class archivos {
     ArrayList<String> arrAM;
     UploadedFiles files;
 
-    public archivos(bd oBD, UploadedFiles files, ArrayList<String> attM) throws IOException {
+    public archivos(bd oBD, UploadedFiles files, ArrayList<String> attM) {
         this.oBD = oBD;
         this.files = files;
         this.arrCad = leerTxt(files);
@@ -98,9 +102,8 @@ public class archivos {
         System.out.println("Frecuencia: " + q.getFrecuencia());
     }
 
-    public ArrayList<String> leerTxt(UploadedFiles cad) throws FileNotFoundException, IOException {
+    public ArrayList<String> leerTxt(UploadedFiles cad) {
         ArrayList<String> lineaArchivo = new ArrayList();
-
         cad.getFiles().stream().filter((f) -> (f != null && !"".equals(f.getFileName()))).forEachOrdered((f) -> {
             try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
                 String actual = "";
@@ -110,9 +113,9 @@ public class archivos {
                 }
 
             } catch (Exception e) {
+                e.printStackTrace();
             }
         });
-
         return lineaArchivo;
     }
 
@@ -362,21 +365,27 @@ public class archivos {
             ArrayList<Atributo> listaAtr = new ArrayList<>();
             String[] atributos = str.split(",");
             listaAtr.add(this.oBD.getTabla().getAtributoLlave());
-            for (String item : atributos) {
-                String[] sAtributo = item.split(":");
-                Atributo a = new Atributo();
-                a.setNombre(sAtributo[0]);
-                a.setTipo(sAtributo[1]);
-                a.setTamanio(sAtributo[2]);
-                listaAtr.add(a);
-            }
+            this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[0].split(":")[0])).setDescriptor(true);
+            this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[0].split(":")[0])).setMultimedia(false);
+            listaAtr.add(this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[0].split(":")[0])));
+            this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[1].split(":")[0])).setMultimedia(true);
+            this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[1].split(":")[0])).setDescriptor(false);
+            listaAtr.add(this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[1].split(":")[0])));
             tabla.setArrAtri(listaAtr);
             //¿A dónde se debe asignar?
             //¿Cúal es el costo total?
             //Primera posición sitio, segunda costo
-            ArrayList<String> sitioCosto = costoxSitio(listaAtr);
+            ArrayList<String> sitioCosto = new ArrayList<>();
+            if (this.oBD.getTipoBD().compareTo("a") == 0) {
+                sitioCosto = costoxSitioMySQL(listaAtr);
+            } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+                sitioCosto = costoxSitioPostgres(listaAtr);
+            } else {
+                sitioCosto = costoxSitioMongo(listaAtr);
+            }
             tabla.setSitio(sitioCosto.get(0));
             tabla.setCosto(Double.parseDouble(sitioCosto.get(1)));
+            tabla.setMultimedia(true);
             arr.add(tabla);
         }
         return arr;
@@ -385,44 +394,27 @@ public class archivos {
     //PIPE
     public TablaCosto obtenerOtroFragmento() {
         TablaCosto ret = new TablaCosto();
-        //OBTENER ATRIBUTOS MULTIMEDIA
-        ArrayList<String> nombreAttsMultimedia = new ArrayList<>();
-        for (String str : this.arrAM) {
-            String[] atributos = str.split(",");
-            for (String item : atributos) {
-                String[] sAtributo = item.split(":");
-                nombreAttsMultimedia.add(sAtributo[0]);
-            }
-        }
-        //OBTENER TODOS LOS ATRIBUTOS
-        ArrayList<String> arr = new ArrayList<>();
-        try {
-            AccesoDatosPG acc = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
-            if (acc.conectar()) {
-                arr = acc.atributos(this.oBD.getNombd(), this.oBD.getTabla().getNombre());
-                acc.desconectar();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        //EXCLUIR MULTIMEDIA
         ArrayList<Atributo> normales = new ArrayList<>();
-        for (String item : arr) {
-            String nombreAtributo = item.split(":")[0];
-            if (!nombreAttsMultimedia.contains(nombreAtributo)) {
-                Atributo a = new Atributo();
-                a.setNombre(nombreAtributo);
-                a.setTipo(item.split(":")[1]);
-                a.setTamanio(item.split(":")[2]);
+        normales.add(this.oBD.getTabla().getAtributoLlave());
+        for (Atributo a : this.oBD.getTabla().getAtributos()) {
+            if (!a.isDescriptor() && !a.isMultimedia()) {
                 normales.add(a);
             }
         }
         if (!this.oBD.isNullorEmpty(normales)) {
             ret.setArrAtri(normales);
             //Primera posición sitio, segunda costo
-            ArrayList<String> sitioCosto = costoxSitio(normales);
+            ArrayList<String> sitioCosto = new ArrayList<>();
+            if (this.oBD.getTipoBD().compareTo("a") == 0) {
+                sitioCosto = costoxSitioMySQL(normales);
+            } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+                sitioCosto = costoxSitioPostgres(normales);
+            } else {
+
+            }
             ret.setSitio(sitioCosto.get(0));
             ret.setCosto(Double.parseDouble(sitioCosto.get(1)));
+            ret.setMultimedia(false);
         } else {
             ret = null;
         }
@@ -661,7 +653,102 @@ public class archivos {
     }
 
     //PIPE
-    private ArrayList<String> costoxSitio(ArrayList<Atributo> listaAtr) {
+    private ArrayList<String> costoxSitioMySQL(ArrayList<Atributo> listaAtr) {
+        //Posición 1 sitio, posición 2 costo
+        ArrayList<String> ret = new ArrayList<>();
+        HashMap<String, String> NombreIp = new HashMap<>();
+        HashMap<String, Double> SitioCosto = new HashMap<>();
+        double costoTotal = 0;
+        System.out.println("-----------COSTOS PIPE-------------");
+        for (UploadedFile f : this.files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    String ipLinea = "";
+                    String nombre = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (actual.contains("Connect\t") && !actual.contains("denied")) {
+                            String y[] = actual.split("\t");
+                            ipLinea = y[2].substring(y[2].indexOf("@") + 1, y[2].indexOf(" ", y[2].indexOf("@") + 1));
+                            nombre = y[1].substring(0, y[1].indexOf(" "));
+                            if (ipLinea.toLowerCase().compareTo("localhost") == 0 || ipLinea.toLowerCase().compareTo("::1") == 0) {
+                                ipLinea = "127.0.0.1";
+                            }
+                            NombreIp.put(nombre, ipLinea);
+                        }
+                        int ValorAsignadoOperacion = 0;
+                        if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 1;
+                        } else if ((actual.toLowerCase().contains("delete")
+                                || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 2;
+                        } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 3;
+                        }
+                        if (ValorAsignadoOperacion != 0) {
+                            String y[] = actual.split("\t");
+                            String sujeto = y[1].substring(0, y[1].indexOf(" "));
+                            String ipTraduccion = NombreIp.get(sujeto);
+                            System.out.println(actual);
+                            System.out.println("SITIO: " + ipTraduccion);
+                            if (ipTraduccion.compareTo(this.oBD.getDirbd()) != 0) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            System.out.println("VAO: " + ValorAsignadoOperacion);
+                            int nJoins = incidencias(actual.toLowerCase(), " join ");
+                            System.out.println("CR: " + nJoins);
+                            double costoOperacion = 0.0;
+                            for (Atributo a : listaAtr) {
+                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                    System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
+                                    costoOperacion += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    costoTotal += costoOperacion;
+                                    //COSTO POR SITIO
+                                    if (SitioCosto.get(ipTraduccion) != null) {
+                                        SitioCosto.put(ipTraduccion, SitioCosto.get(ipTraduccion) + costoOperacion);
+                                    } else {
+                                        SitioCosto.put(ipTraduccion, costoOperacion);
+                                    }
+                                    System.out.println("Costo de operación: " + costoOperacion);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        //DETERMINAR SITIO MÁS COSTOSO PARA FRAGMENTO
+        Double max = -1.0;
+        try {
+            max = Collections.max(SitioCosto.values());
+        } catch (Exception e) {
+            max = 0.0;
+        }
+        for (Entry<String, Double> entry : SitioCosto.entrySet()) {
+            if (entry.getValue() >= max) {
+                if (ret.size() > 0) {
+                    ret.set(0, entry.getKey());
+                } else {
+                    ret.add(entry.getKey());
+                }
+
+            }
+        }
+        if (ret.size() > 1) {
+            ret.set(1, "" + costoTotal);
+        } else if (ret.size() == 1) {
+            ret.add("" + costoTotal);
+        } else if (ret.isEmpty()) {
+            ret.add(this.oBD.getDirbd());
+            ret.add("" + costoTotal);
+        }
+        return ret;
+    }
+
+    //PIPE
+    private ArrayList<String> costoxSitioPostgres(ArrayList<Atributo> listaAtr) {
         //Posición 1 sitio, posición 2 costo
         ArrayList<String> ret = new ArrayList<>();
         HashMap<String, String> NombreIp = new HashMap<>();
@@ -696,18 +783,18 @@ public class archivos {
                             String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                             String ipTraduccion = NombreIp.get(sujeto);
                             System.out.println(actual);
-                            System.out.println("SITIO: "+ipTraduccion);
+                            System.out.println("SITIO: " + ipTraduccion);
                             if (ipTraduccion.compareTo(this.oBD.getDirbd()) != 0) {
                                 ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                             }
-                            System.out.println("VAO: "+ValorAsignadoOperacion);
+                            System.out.println("VAO: " + ValorAsignadoOperacion);
                             int nJoins = incidencias(actual.toLowerCase(), " join ");
-                            System.out.println("CR: "+nJoins);
-                            double costoOperacion=0.0;
+                            System.out.println("CR: " + nJoins);
+                            double costoOperacion = 0.0;
                             for (Atributo a : listaAtr) {
                                 if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
-                                    System.out.println("\tTamaño de atributo "+a.getNombre()+": "+Double.parseDouble(a.getTamanio()));
-                                    costoOperacion+= ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
+                                    costoOperacion += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
                                     costoTotal += costoOperacion;
                                     //COSTO POR SITIO
                                     if (SitioCosto.get(ipTraduccion) != null) {
@@ -715,7 +802,7 @@ public class archivos {
                                     } else {
                                         SitioCosto.put(ipTraduccion, costoOperacion);
                                     }
-                                    System.out.println("Costo de operación: "+costoOperacion);
+                                    System.out.println("Costo de operación: " + costoOperacion);
                                 }
                             }
                         }
@@ -730,7 +817,7 @@ public class archivos {
         try {
             max = Collections.max(SitioCosto.values());
         } catch (Exception e) {
-            max=0.0;
+            max = 0.0;
         }
         for (Entry<String, Double> entry : SitioCosto.entrySet()) {
             if (entry.getValue() >= max) {
@@ -753,7 +840,80 @@ public class archivos {
         return ret;
     }
 
+    private ArrayList<String> costoxSitioMongo(ArrayList<Atributo> listaAtr) {
+        ArrayList<String> ret = new ArrayList<>();
+        HashMap<String, String> NombreIp = new HashMap<>();
+        HashMap<String, Double> SitioCosto = new HashMap<>();
+        double costoTotal = 0;
+        System.out.println("-----------COSTOS PIPE-------------");
+        for (UploadedFile f : this.files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    String ipLinea = "";
+                    String nombre = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (actual.toLowerCase().contains("command") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            JSONObject j = new JSONObject(actual);
+                            String c = j.get("c").toString().toLowerCase().trim();
+                            JSONObject j2 = new JSONObject(j.get("attr").toString());
+                            JSONObject j3 = new JSONObject(j2.get("command").toString());
+                            String ns = "";
+                            int ValorAsignadoOperacion = 0;
+                            if (j3.has("find")) {
+                                ValorAsignadoOperacion = 1;
+                                ns = j3.get("find").toString().toLowerCase();
+                            } else if (j3.has("delete")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("delete").toString().toLowerCase();
+                            } else if (j3.has("insert")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("insert").toString().toLowerCase();
+                            } else if (j3.has("update")) {
+                                ValorAsignadoOperacion = 3;
+                                ns = j3.get("update").toString().toLowerCase();
+                            }
+                            if (ValorAsignadoOperacion != 0 && c.compareTo("command") == 0 && ns.compareTo(this.oBD.getTabla().getNombre().toLowerCase()) == 0) {
+                                j2 = new JSONObject(j.get("attr").toString());
+                                String remote = j2.get("remote").toString().toLowerCase().trim();
+                                ipLinea = remote.substring(0, remote.indexOf(":"));
+                                System.out.println(actual);
+                                System.out.println("SITIO: " + ipLinea);
+                                if (this.oBD.getDirbd().compareTo(ipLinea) != 0) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                System.out.println("VAO: " + ValorAsignadoOperacion);
+                                int nJoins = incidencias(actual.toLowerCase(), "$lookup");
+                                System.out.println("CR: " + nJoins);
+                                double costoOperacion = 0.0;
+                                for (Atributo a : listaAtr) {
+                                    if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                        System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
+                                        costoOperacion += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                        costoTotal += costoOperacion;
+                                        //COSTO POR SITIO
+                                        if (SitioCosto.get(ipLinea) != null) {
+                                            SitioCosto.put(ipLinea, SitioCosto.get(ipLinea) + costoOperacion);
+                                        } else {
+                                            SitioCosto.put(ipLinea, costoOperacion);
+                                        }
+                                        System.out.println("Costo de operación: " + costoOperacion);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        return ret;
+    }
     //PIPE
+
     private int incidencias(String origen, String palabra) {
         //costo de reuniones=n+1 
         int i = 1;

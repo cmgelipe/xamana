@@ -15,7 +15,6 @@ public class Tabla {
     private Double umbralOP;
     private Double umbralCO;
     private String atributoMultimedia;
-    
     private Atributo atributoLlave;
     private ArrayList<Atributo> Atributos;
     private String idTabla; //mi tabla que se llama tabla, no la remota
@@ -144,5 +143,15 @@ public class Tabla {
      */
     public void setIdTabla(String idTabla) {
         this.idTabla = idTabla;
+    }
+    
+    public int buscaIndiceAttxNombre(String nombre){
+        int r=-1;
+        for(int i=0;i<this.getAtributos().size();i++){
+            if(this.getAtributos().get(i).getNombre().compareTo(nombre)==0){
+                r=i;
+            }
+        }
+        return r;
     }
 }

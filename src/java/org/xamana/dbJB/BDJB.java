@@ -53,7 +53,6 @@ public class BDJB implements Serializable {
     private boolean bconfig = false;
     private boolean bbotonfragmentar = false;
     private boolean bdatosincorrectos = false;
-    private boolean blog = true;
     private boolean dcolumna = false;
     private boolean dcolumnas = false;
     private UploadedFiles files;
@@ -75,6 +74,7 @@ public class BDJB implements Serializable {
     private ArrayList<TablaCosto> esquemaVertical;
     ArrayList<Query> consultasV;
     ArrayList<TablaCosto> AsignacionSitio;
+    private boolean dtamanios=false;
 
     /**
      * Creates a new instance of BD
@@ -118,21 +118,24 @@ public class BDJB implements Serializable {
                     atributos = this.obj.listaAtributosMongoDB();
                 }
                 this.dcolumna = true;
-                this.blog = true;
             } else if (this.obj.getTabla().isCBIR()
                     && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
                 if (this.obj.getTipoBD().compareTo("a") == 0) {
                     atributos = this.obj.listaAtributosMySQL();
+                    this.dcolumnas = true;
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                     atributos = this.obj.listaAtributosPostgreSQL();
+                    this.dcolumnas = true;
                 } else if (this.obj.getTipoBD().compareTo("d") == 0) {
-                    atributos = this.obj.listaAtributosMongoDB();
+                    //llenar atributos combinando dialogo de tamaños y listaatributosMongoDB()
+                    this.obj.listaAtributosMongoDB();
+                    this.dtamanios=true;
+                    //atributos = 
+                    
                 }
 
-                this.dcolumnas = true;
             } else {
                 this.dcolumna = false;
-                this.blog = false;
                 this.dcolumnas = false;
             }
         } catch (Exception ex) {
@@ -282,15 +285,8 @@ public class BDJB implements Serializable {
                 ex.printStackTrace();
             }
             tipoEsquema = "esquema.xhtml";
-        } else if (this.obj.getTabla().isCBIR()
-                && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
-            if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
-                try {
-                    this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIRPostgres(getAttsMultimediaDescriptor(), this.files));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+        } else if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
+            this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIR(getAttsMultimediaDescriptor(), this.files));
             tipoEsquema = "esquemaVerticalCBIR.xhtml";
         } else if (!this.obj.getTabla().isCBIR()
                 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
@@ -404,20 +400,6 @@ public class BDJB implements Serializable {
     }
 
     /**
-     * @return the blog
-     */
-    public boolean isBlog() {
-        return blog;
-    }
-
-    /**
-     * @param blog the blog to set
-     */
-    public void setBlog(boolean blog) {
-        this.blog = blog;
-    }
-
-    /**
      * @return the dcolumna
      */
     public boolean isDcolumna() {
@@ -446,8 +428,13 @@ public class BDJB implements Serializable {
     }
 
     public void esquemaCBIRHorizontal() {
-        this.dcolumna = false;
-        this.dcolumnas = false;
+        if(!this.attsMultimediaDescriptor.isEmpty()){
+            this.dcolumna = false;
+            this.dcolumnas = false;
+        }else{
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se agregó ningún conjunto multimedia"));
+        }
+        
     }
 
     /**
@@ -500,13 +487,13 @@ public class BDJB implements Serializable {
 
             this.setBToken(true);
         } else if (this.obj.isVerticalCBIR()) {
-                this.obj.setProgress1(0);
-                this.obj.fragmentarVertical(this.esquemaVerticalCBIR);
-        } else if (this.obj.getTabla().getTipoFragment().compareTo("b")==0 && !this.obj.getTabla().isCBIR()) {
-                this.obj.setProgress1(0);
-                this.visible = false;
-                this.obj.fragmentarVertical(this.AsignacionSitio);
-                this.visible = true;
+            this.obj.setProgress1(0);
+            this.obj.fragmentarVertical(this.esquemaVerticalCBIR);
+        } else if (this.obj.getTabla().getTipoFragment().compareTo("b") == 0 && !this.obj.getTabla().isCBIR()) {
+            this.obj.setProgress1(0);
+            this.visible = false;
+            this.obj.fragmentarVertical(this.AsignacionSitio);
+            this.visible = true;
         }
     }
 
@@ -1069,7 +1056,12 @@ public class BDJB implements Serializable {
     }
 
     public void agregarAtts() {
-        this.attsMultimediaDescriptor.add(seleccion1 + "," + seleccion2);
+        if(!seleccion1.isEmpty() && !seleccion2.isEmpty()){
+            this.attsMultimediaDescriptor.add(seleccion1 + "," + seleccion2);
+        }else{
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se seleccionaron ambos"));
+        }
+        
     }
 
     public void eliminarAtts() {
@@ -1128,8 +1120,42 @@ public class BDJB implements Serializable {
     public void setEsquemaVerticalCBIR(ArrayList<TablaCosto> esquemaVerticalCBIR) {
         this.esquemaVerticalCBIR = esquemaVerticalCBIR;
     }
-    
+
     public ArrayList<TablaCosto> getEsquemaVerticalCBIR() {
         return esquemaVerticalCBIR;
+    }
+
+    /**
+     * @return the dtamanios
+     */
+    public boolean isDtamanios() {
+        return dtamanios;
+    }
+
+    /**
+     * @param dtamanios the dtamanios to set
+     */
+    public void setDtamanios(boolean dtamanios) {
+        this.dtamanios = dtamanios;
+    }
+
+    public void cancelarDTamanios() {
+        this.dtamanios = false;
+        this.obj.getTabla().setCBIR(false);
+    }
+    
+    public void seleccionAtributos(){
+        //No deben superar los 16 MB
+        int suma=0;
+        for(Atributo a:this.obj.getTabla().getAtributos()){
+            suma+=Integer.parseInt(a.getTamanio());
+        }
+        if(suma>16){
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Tamaños", "Superan los 16 MB"));
+        }else{
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Tamaños", "Agregados adecuadamente"));
+            this.dtamanios = false;
+            this.dcolumnas = true;
+        }
     }
 }

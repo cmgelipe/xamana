@@ -18,6 +18,7 @@ import org.xamana.datos.AccesoDatosPG;
 import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import com.mongodb.client.model.Projections;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -190,6 +191,7 @@ public class bd implements Serializable {
         //accexternomysql = new AccesoDatos(dirbd, nombd, usubd, passbd);
         if (accexternomysql.conectar()) {
             arr = accexternomysql.atributos(nombd, this.getTabla().getNombre());
+            this.getTabla().setAtributoLlave(this.llaveMySQL(accexternomysql, nombd, this.getTabla().getNombre()));
             accexternomysql.desconectar();
             if (arr != null) {
                 arr.forEach((g) -> {
@@ -223,8 +225,12 @@ public class bd implements Serializable {
                 att.setNombre(t[0]);
                 att.setTipo(t[1]);
                 this.tabla.getAtributos().add(att);
+                if(att.getNombre().compareTo("_id")==0){
+                    this.tabla.setAtributoLlave(att);
+                }
             });
         }
+        System.out.println("PASA");
         return res;
     }
 
@@ -235,6 +241,7 @@ public class bd implements Serializable {
         //this.accexternopost=new AccesoDatosPG(dirbd, nombd, usubd, passbd);
         if (this.accexternopost.conectar()) {
             arr = this.accexternopost.atributos(nombd, this.getTabla().getNombre());
+            this.getTabla().setAtributoLlave(this.llavePostgres(accexternopost, nombd, this.getTabla().getNombre()));
             this.accexternopost.desconectar();
             arr.forEach((h) -> {
                 res.add(new SelectItem(h, h));
@@ -324,18 +331,17 @@ public class bd implements Serializable {
         try {
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
-
                 if (this.usubd.isEmpty()) {
-                    query = "insert into bd (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "',null,null)";
+                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "',null,null)";
                 } else if (!this.usubd.isEmpty() && this.passbd.isEmpty()) {
-                    query = "insert into bd (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
+                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "',null)";
                 } else {
-                    query = "insert into bd (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
+                    query = "insert into BD (nombre, direccion, puerto, gestor, usr, psw) values('" + this.getNombd() + "','" + this.dirbd + "','" + this.portbd + "','" + this.TipoBD + "','" + this.usubd + "','" + this.passbd + "')";
                 }
                 acc.ejecutarComando(query);
                 ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                 id_bd = "" + ((ArrayList) res.get(0)).get(0);
-                acc.ejecutarComando("insert into tabla (nombre,umbral_op,umbral_des,tipo_frag,id_BD) values ('" + this.getTabla().getNombre() + "'," + this.getTabla().getUmbralOP() + "," + this.getTabla().getUmbralCO() + ",'" + this.tabla.getTipoFragment() + "'," + id_bd + ")");
+                acc.ejecutarComando("insert into Tabla (nombre,umbral_op,umbral_des,tipo_frag,id_BD) values ('" + this.getTabla().getNombre() + "'," + this.getTabla().getUmbralOP() + "," + this.getTabla().getUmbralCO() + ",'" + this.tabla.getTipoFragment() + "'," + id_bd + ")");
                 res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                 id_tabla = "" + ((ArrayList) res.get(0)).get(0);
                 acc.desconectar();
@@ -362,7 +368,7 @@ public class bd implements Serializable {
             attMultimedia.setTamanio(u[2]);
             AccesoDatos acc = new AccesoDatos();
             if (acc.conectar()) {
-                qSitio = "insert into sitio (direccion) values('" + this.getDirbd() + "')";
+                qSitio = "insert into Sitio (direccion) values('" + this.getDirbd() + "')";
                 acc.ejecutarComando(qSitio);
                 ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                 idSitio = "" + ((ArrayList) res.get(0)).get(0);
@@ -422,7 +428,7 @@ public class bd implements Serializable {
                     String dos = "0";
                     un = (tupla.getNOperacionesAprox().compareTo("0") == 0) ? "1" : tupla.getNOperacionesAprox();
                     dos = (tupla.getNdesempenio().compareTo("0") == 0) ? "1" : tupla.getNdesempenio();
-                    String q = "insert into fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + "," + dos + ")";
+                    String q = "insert into Fragmento (nombre, id_tabla, id_sitio, noperaciones, ndesempenio) values('" + tupla.getNombre() + "'," + this.tabla.getIdTabla() + "," + idSitio + "," + un + "," + dos + ")";
                     acc.ejecutarComando(q);
                     ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                     String idFragmento = "" + ((ArrayList) res.get(0)).get(0);
@@ -1377,12 +1383,7 @@ public class bd implements Serializable {
     }
 
     //PIPE  
-    public ArrayList<TablaCosto> esquemaVerticalCBIRPostgres(ArrayList<String> attM, UploadedFiles files) throws Exception {
-        AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
-        if (acc2.conectar()) {
-            this.getTabla().setAtributoLlave(this.llavePostgres(acc2, this.getNombd(), this.getTabla().getNombre()));
-            acc2.desconectar();
-        }
+    public ArrayList<TablaCosto> esquemaVerticalCBIR(ArrayList<String> attM, UploadedFiles files) {
         archivos a = new archivos(this, files, attM);
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
@@ -1426,13 +1427,10 @@ public class bd implements Serializable {
         return this.tabla.getTipoFragment().compareTo("b") == 0 && this.tabla.isCBIR();
     }
 
-    public void crearTablaVerticalMySQL(TablaCosto frag) {
-
-    }
-
     public void fragmentarVertical(ArrayList<TablaCosto> es) {
         this.progress1 = 1;
         int percent = 100 / es.size();
+        this.guardarDatos();
         if (this.getTipoBD().compareTo("a") == 0) {
             for (TablaCosto ta : es) {
                 crearTablaVerticalMySQL(ta);
@@ -1449,43 +1447,140 @@ public class bd implements Serializable {
                 this.progress1 += percent;
             }
         }
-
         this.progress1 = 100;
     }
 
-    private void crearTablaVerticalPostgres(TablaCosto frag) {
-        try {
-            String sql;
-            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
-            String att_tipo = "";
-            for (Atributo r : frag.getArrAtri()) {
-                if (this.transTipoDato(r.getTipo()) != 0) {
-                    if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
-                        att_tipo += r.getNombre() + " " + r.getTipo() + " PRIMARY KEY, ";
-                    } else {
-                        att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
-                    }
-
+    //PIPE
+    public void crearTablaVerticalMySQL(TablaCosto frag) {
+        String sql;
+        String att_tipo = "";
+        for (Atributo r : frag.getArrAtri()) {
+            if (this.transTipoDato(r.getTipo()) != 0) {
+                att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+            } else {
+                if (r.getTipo().compareTo("BIT") != 0) {
+                    att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
                 } else {
-                    if (r.getTipo().compareTo("BIT") != 0) {
-                        if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
-                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + ") PRIMARY KEY, ";
-                        } else {
-                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                    att_tipo += r.getNombre() + " TINYINT, ";
+                }
+            }
+        }
+        att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+        try{
+            AccesoDatos acc = new AccesoDatos(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            if (acc.conectar()) {
+                sql = "drop table if exists " + frag.getNombre() + "; "
+                        + "CREATE TABLE " + frag.getNombre() + " ( " + att_tipo + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
+                acc.ejecutarComando(sql);
+                acc.desconectar();
+            }
+            ArrayList atributos = null;
+            ArrayList n = null;
+            AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            if (acc2.conectar()) {
+                String numero = "Select count (*) from " + this.getTabla().getNombre() + ";";
+                n = acc2.ejecutarConsulta(numero);
+                acc2.desconectar();
+            }
+            int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
+            for (int i = 0; i < num; i++) {
+                acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                if (acc2.conectar()) {
+                    sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit 1 offset " + i;
+                    atributos = acc2.ejecutarConsulta(sql);
+                    acc2.desconectar();
+                }
+                if (atributos != null) {
+                    acc = new AccesoDatos(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                    if (acc.conectar()) {
+                        for (int k = 0; k < atributos.size(); k++) {
+                            String valor = "";
+                            ArrayList tupla = (ArrayList) atributos.get(k);
+                            for (int j = 0; j < tupla.size(); j++) {
+                                if (this.transTipoDato(frag.getArrAtri().get(j).getTipo()) == 0 || this.transTipoDato(frag.getArrAtri().get(j).getTipo()) == 2) {
+                                    valor += "\"" + tupla.get(j) + "\",";
+                                } else {
+                                    valor += tupla.get(j) + ",";
+                                }
+                            }
+                            valor = valor.substring(0, valor.length() - 1);
+                            sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosxComa() + ") values (" + valor + ");";
+                            acc.ejecutarComando(sql);
                         }
-                    } else {
-                        if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
-                            att_tipo += r.getNombre() + " TINYINT PRIMARY KEY, ";
-                        } else {
-                            att_tipo += r.getNombre() + " TINYINT, ";
-                        }
+                        acc.desconectar();
                     }
                 }
             }
-            att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+             //Insertar a XAMANA
+            //SITIO
+            String id_sitio = "";
+            String idFragmento = "";
+
+            AccesoDatos accXamana = new AccesoDatos();
+            if (accXamana.conectar()) {
+                sql = "insert into Sitio (direccion) "
+                        + "select * from (select '" + frag.getSitio() + "' as direccion ) as tmp "
+                        + "where not exists (select direccion from Sitio where direccion='" + frag.getSitio() + "') limit 1;";
+                accXamana.ejecutarComando(sql);
+                sql = "select id_sitio from Sitio where id_sitio='" + frag.getSitio() + "'";
+                id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
+                //FRAGMENTO
+                if (frag.isMultimedia()) {
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + frag.getNombre() + "', " + this.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0,0,1)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                } else {
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + frag.getNombre() + "', " + this.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0,0,0)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                }
+                if (!this.isNullorEmpty(idFragmento)) {
+                    for (Atributo a : frag.getArrAtri()) {
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,id_fragmento,descriptor,multimedia,id_tabla) "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", " + idFragmento + ", "
+                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
+                    }
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    //PIPE
+    private void crearTablaVerticalPostgres(TablaCosto frag) {
+        String sql;
+        String att_tipo = "";
+        for (Atributo r : frag.getArrAtri()) {
+            if (this.transTipoDato(r.getTipo()) != 0) {
+                if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
+                    att_tipo += r.getNombre() + " " + r.getTipo() + " PRIMARY KEY, ";
+                } else {
+                    att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                }
+
+            } else {
+                if (r.getTipo().compareTo("BIT") != 0) {
+                    if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
+                        att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + ") PRIMARY KEY, ";
+                    } else {
+                        att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                    }
+                } else {
+                    if (r.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0) {
+                        att_tipo += r.getNombre() + " TINYINT PRIMARY KEY, ";
+                    } else {
+                        att_tipo += r.getNombre() + " TINYINT, ";
+                    }
+                }
+            }
+        }
+        att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+        try {
+            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
             if (acc.conectar()) {
-                sql = "insert into Sitio (direccion) values('" + frag.getSitio() + "')";
-                acc.ejecutarComando(sql);
                 sql = "drop table if exists " + frag.getNombre() + "; "
                         + "CREATE TABLE " + frag.getNombre() + " ( " + att_tipo + ");";
                 acc.ejecutarComando(sql);
@@ -1500,45 +1595,10 @@ public class bd implements Serializable {
                 acc2.desconectar();
             }
             int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
-            int nLote = num / 50;
-            if (nLote > 0) {
-                for (int i = 0; i < 50; i++) {
-                    acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
-                    if (acc2.conectar()) {
-                        if (i == 0) {
-                            sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + (i + 1);
-                        } else {
-                            sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit " + nLote + " offset " + nLote * (i + 1);
-                        }
-                        atributos = acc2.ejecutarConsulta(sql);
-                        acc2.desconectar();
-                    }
-                    if (atributos != null) {
-                        acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
-                        if (acc.conectar()) {
-                            for (int k = 0; k < atributos.size(); k++) {
-                                String valor = "";
-                                ArrayList tupla = (ArrayList) atributos.get(k);
-                                for (int j = 0; j < tupla.size(); j++) {
-                                    if(this.transTipoDato(frag.getArrAtri().get(j).getTipo())==0 || this.transTipoDato(frag.getArrAtri().get(j).getTipo())==2){
-                                        valor += "'" + tupla.get(j) + "',";
-                                    }else{
-                                        valor += tupla.get(j) + ",";
-                                    }
-                                    
-                                }
-                                valor = valor.substring(0, valor.length() - 1);
-                                sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosxComa() + ") values (" + valor + ");";
-                                acc.ejecutarComando(sql);
-                            }
-                            acc.desconectar();
-                        }
-                    }
-                }
-            } else {
+            for (int i = 0; i < num; i++) {
                 acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
                 if (acc2.conectar()) {
-                    sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre();
+                    sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit 1 offset " + i;
                     atributos = acc2.ejecutarConsulta(sql);
                     acc2.desconectar();
                 }
@@ -1564,6 +1624,38 @@ public class bd implements Serializable {
                 }
             }
             //Insertar a XAMANA
+            //SITIO
+            String id_sitio = "";
+            String idFragmento = "";
+
+            AccesoDatos accXamana = new AccesoDatos();
+            if (accXamana.conectar()) {
+                sql = "insert into Sitio (direccion) "
+                        + "select * from (select '" + frag.getSitio() + "' as direccion ) as tmp "
+                        + "where not exists (select direccion from Sitio where direccion='" + frag.getSitio() + "') limit 1;";
+                accXamana.ejecutarComando(sql);
+                sql = "select id_sitio from Sitio where id_sitio='" + frag.getSitio() + "'";
+                id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
+                //FRAGMENTO
+                if (frag.isMultimedia()) {
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + frag.getNombre() + "', " + this.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0,0,1)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                } else {
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + frag.getNombre() + "', " + this.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0,0,0)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                }
+                if (!this.isNullorEmpty(idFragmento)) {
+                    for (Atributo a : frag.getArrAtri()) {
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,id_fragmento,descriptor,multimedia,id_tabla) "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", " + idFragmento + ", "
+                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
+                    }
+                }
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1578,12 +1670,69 @@ public class bd implements Serializable {
         return cad.stream().map(String::toLowerCase).collect(Collectors.joining(separador));
     }
 
-    public void crearTablaVerticalMongo(TablaCosto esquemaVerticalCBIR) {
+    public void crearTablaVerticalMongo(TablaCosto frag) {
+        try {
+            String sql="";
+            AccesoDatosMG accDestino = new AccesoDatosMG(frag.getSitio() + ":" + this.portbd, this.nombd,this.getTabla().getNombre() ,this.usubd, this.passbd);
+            AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd,this.getTabla().getNombre() ,this.usubd, this.passbd);
+            if(accDestino.conectar()){
+                //Destino
+                MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(nombd);
+                MongoCollection<Document> docDestino = dbDestino.getCollection(frag.getNombre());
+                dbDestino.createCollection(frag.getNombre());
+                
+                //Origen
+                MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(nombd);
+                MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.getTabla().getNombre());
+                                
+                List<String> nombresAtt=new ArrayList<>();
+                frag.getArrAtri().forEach(x->nombresAtt.add(x.getNombre()));
+                Bson proyeccion = Projections.fields(Projections.include(nombresAtt));
+                MongoCursor<Document> resultado = docOrigen.find().projection(proyeccion).iterator();
+                while (resultado.hasNext()) {
+                    docDestino.insertOne(resultado.next());
+                }
+                
+            }
+            //Insertar a XAMANA
+            //SITIO
+            String id_sitio = "";
+            String idFragmento = "";
 
+            AccesoDatos accXamana = new AccesoDatos();
+            if (accXamana.conectar()) {
+                sql = "insert into Sitio (direccion) "
+                        + "select * from (select '" + frag.getSitio() + "' as direccion ) as tmp "
+                        + "where not exists (select direccion from Sitio where direccion='" + frag.getSitio() + "') limit 1;";
+                accXamana.ejecutarComando(sql);
+                sql = "select id_sitio from Sitio where id_sitio='" + frag.getSitio() + "'";
+                id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
+                //FRAGMENTO
+                if (frag.isMultimedia()) {
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + frag.getNombre() + "', " + this.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0,0,1)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                } else {
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + frag.getNombre() + "', " + this.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0,0,0)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                }
+                if (!this.isNullorEmpty(idFragmento)) {
+                    for (Atributo a : frag.getArrAtri()) {
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,id_fragmento,descriptor,multimedia,id_tabla) "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", " + idFragmento + ", "
+                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
+                    }
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     public double nTuplasOperacionRelacional(String operacion) {
-
         return 0.0;
     }
 

@@ -22,6 +22,7 @@ and open the template in the editor.
     </h:head>
     <h:body style="background-color: #3f3f3f">
         <h:form id="f3" enctype="multipart/form-data" style="text-align: center">
+            <p:growl id="mensajes"  showDetail="true" />
             <header>
                 <text>Configuration</text>
                 <!--<p:commandButton action="#{bd.confNuevoFrag()}" style="width: 20%; position: absolute; left: 15px; top: 22px; font-size: 17px;" value="Agregar nuevos fragmentos" />
@@ -39,7 +40,7 @@ and open the template in the editor.
                     </p:selectOneMenu>
                     <p:outputLabel value="CBIR" />
                     <p:selectBooleanButton id="sino" value="#{bd.obj.tabla.CBIR}" onLabel="Yes" offLabel="No" >
-                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4 f3:atb f3:dl5" />
+                        <p:ajax listener="#{bd.onCBIRchange}" update="f3:file f3:o1 f3:dl4 f3:atb f3:dl5 f3:dtamanios" />
                     </p:selectBooleanButton>
                     <p:outputLabel id="o1" value="Log files" />
                     <p:fileUpload id="file" value="#{bd.files}" mode="simple" skinSimple="true" multiple="true" />
@@ -77,12 +78,12 @@ and open the template in the editor.
                     <p:row>
                         <p:column>
                             <p:selectOneListbox value="#{bd.seleccion1}"  >
-                                <f:selectItems value="#{bd.atributos}" /> 
+                                <f:selectItems value="#{bd.obj.tabla.atributos}" var="l" itemLabel="#{l.nombre}" itemValue="#{l.nombre}"/> 
                             </p:selectOneListbox>
                         </p:column>
                         <p:column>
                             <p:selectOneListbox value="#{bd.seleccion2}">
-                                <f:selectItems value="#{bd.atributos}" /> 
+                                <f:selectItems value="#{bd.obj.tabla.atributos}" var="l" itemLabel="#{l.nombre}" itemValue="#{l.nombre}"/> 
                             </p:selectOneListbox>
                         </p:column>
                         <p:column>
@@ -94,14 +95,32 @@ and open the template in the editor.
                     <p:row>
                         <p:column></p:column>
                         <p:column>
-                            <p:commandButton value="Add" actionListener="#{bd.agregarAtts()}" update="f3:listaAtts" />
+                            <p:commandButton value="Add" actionListener="#{bd.agregarAtts()}" update="f3:listaAtts f3:mensajes" />
                         </p:column>
                         <p:column>
                             <p:commandButton value="Delete" actionListener="#{bd.eliminarAtts()}" update="f3:listaAtts" />
                         </p:column>
                     </p:row>
                 </p:panelGrid>
-                <p:commandButton value="Set" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl5"/>
+                <p:commandButton value="Set" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl5 f3:mensajes"/>
+            </p:dialog>
+            <p:dialog width="50%" id="dtamanios" header="Size of attributes" modal="true" visible="#{bd.dtamanios}">
+                <h:outputText value="In MongoDB, no size limits are defined on data types, as long as each document does not exceed 16 MB.  Define the limits of each attribute."/>
+                <p:dataTable value="#{bd.obj.tabla.atributos}" var="y">
+                    <p:column>
+                        <h:outputText value="#{y.nombre}"/>
+                    </p:column>
+                    <p:column>
+                        <h:outputText value="#{y.tipo}"/>
+                    </p:column>
+                    <p:column>
+                        <h:outputText id="output" value="#{y.tamanio}"/>
+                        <h:inputHidden id="txt2" value="#{y.tamanio}"/>
+                        <p:slider minValue="1" maxValue="16" for="txt2" display="output" style="width: 200px"/>
+                    </p:column>
+                </p:dataTable>
+                <p:commandButton value="Continue settings" action="#{bd.seleccionAtributos()}" update="f3:dtamanios f3:mensajes f3:dl5" />
+                <p:commandButton value="Cancel" action="#{bd.cancelarDTamanios()}" update="f3:dtamanios f3:sino" />
             </p:dialog>
             <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>
 
