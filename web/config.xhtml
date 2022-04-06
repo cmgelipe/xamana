@@ -102,7 +102,7 @@ and open the template in the editor.
                         </p:column>
                     </p:row>
                 </p:panelGrid>
-                <p:commandButton value="Set" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl5 f3:mensajes"/>
+                <p:commandButton value="Set" action="#{bd.esquemaCBIRVertical()}" update="f3:dl5 f3:mensajes"/>
             </p:dialog>
             <p:dialog width="50%" id="dtamanios" header="Size of attributes" modal="true" visible="#{bd.dtamanios}">
                 <h:outputText value="In MongoDB, no size limits are defined on data types, as long as each document does not exceed 16 MB.  Define the limits of each attribute."/>

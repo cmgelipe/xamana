@@ -397,7 +397,7 @@ public class archivos {
         ArrayList<Atributo> normales = new ArrayList<>();
         normales.add(this.oBD.getTabla().getAtributoLlave());
         for (Atributo a : this.oBD.getTabla().getAtributos()) {
-            if (!a.isDescriptor() && !a.isMultimedia()) {
+            if (!a.isDescriptor() && !a.isMultimedia() && a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())!=0) {
                 normales.add(a);
             }
         }

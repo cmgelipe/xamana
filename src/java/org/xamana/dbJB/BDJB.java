@@ -74,7 +74,7 @@ public class BDJB implements Serializable {
     private ArrayList<TablaCosto> esquemaVertical;
     ArrayList<Query> consultasV;
     ArrayList<TablaCosto> AsignacionSitio;
-    private boolean dtamanios=false;
+    private boolean dtamanios = false;
 
     /**
      * Creates a new instance of BD
@@ -129,9 +129,9 @@ public class BDJB implements Serializable {
                 } else if (this.obj.getTipoBD().compareTo("d") == 0) {
                     //llenar atributos combinando dialogo de tamaños y listaatributosMongoDB()
                     this.obj.listaAtributosMongoDB();
-                    this.dtamanios=true;
+                    this.dtamanios = true;
                     //atributos = 
-                    
+
                 }
 
             } else {
@@ -428,13 +428,17 @@ public class BDJB implements Serializable {
     }
 
     public void esquemaCBIRHorizontal() {
-        if(!this.attsMultimediaDescriptor.isEmpty()){
+        this.dcolumna = false;
+        this.dcolumnas = false;
+    }
+
+    public void esquemaCBIRVertical() {
+        if (!this.attsMultimediaDescriptor.isEmpty()) {
             this.dcolumna = false;
             this.dcolumnas = false;
-        }else{
+        } else {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se agregó ningún conjunto multimedia"));
         }
-        
     }
 
     /**
@@ -1056,12 +1060,12 @@ public class BDJB implements Serializable {
     }
 
     public void agregarAtts() {
-        if(!seleccion1.isEmpty() && !seleccion2.isEmpty()){
+        if (!seleccion1.isEmpty() && !seleccion2.isEmpty()) {
             this.attsMultimediaDescriptor.add(seleccion1 + "," + seleccion2);
-        }else{
+        } else {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se seleccionaron ambos"));
         }
-        
+
     }
 
     public void eliminarAtts() {
@@ -1143,16 +1147,16 @@ public class BDJB implements Serializable {
         this.dtamanios = false;
         this.obj.getTabla().setCBIR(false);
     }
-    
-    public void seleccionAtributos(){
+
+    public void seleccionAtributos() {
         //No deben superar los 16 MB
-        int suma=0;
-        for(Atributo a:this.obj.getTabla().getAtributos()){
-            suma+=Integer.parseInt(a.getTamanio());
+        int suma = 0;
+        for (Atributo a : this.obj.getTabla().getAtributos()) {
+            suma += Integer.parseInt(a.getTamanio());
         }
-        if(suma>16){
+        if (suma > 16) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Tamaños", "Superan los 16 MB"));
-        }else{
+        } else {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Tamaños", "Agregados adecuadamente"));
             this.dtamanios = false;
             this.dcolumnas = true;

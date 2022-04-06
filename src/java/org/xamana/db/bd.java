@@ -225,7 +225,7 @@ public class bd implements Serializable {
                 att.setNombre(t[0]);
                 att.setTipo(t[1]);
                 this.tabla.getAtributos().add(att);
-                if(att.getNombre().compareTo("_id")==0){
+                if (att.getNombre().compareTo("_id") == 0) {
                     this.tabla.setAtributoLlave(att);
                 }
             });
@@ -1197,22 +1197,24 @@ public class bd implements Serializable {
     }
 
     protected Atributo llaveMySQL(AccesoDatos acc, String nombreBase, String nombreTabla) {
-
         Atributo att = null;
         ArrayList res = null;
         try {
             if (acc.conectar()) {
                 res = acc.ejecutarConsulta("SELECT COLUMN_NAME, DATA_TYPE, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + nombreBase + "' AND TABLE_NAME = '" + nombreTabla + "' and COLUMN_KEY IN('PRI', 'UNI')");
+                if (res != null) {
+                    String a = acc.atributo(nombreBase, nombreTabla, "" + ((ArrayList) res.get(0)).get(0));
+                    att = new Atributo();
+                    att.setNombre(a.split(":")[0]);
+                    att.setTipo(a.split(":")[1]);
+                    att.setTamanio(a.split(":")[2]);
+                }
                 acc.desconectar();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        if (res != null) {
-            att = new Atributo();
-            att.setNombre("" + ((ArrayList) res.get(0)).get(0));
-            att.setTipo("" + ((ArrayList) res.get(0)).get(1));
-        }
+
         return att;
     }
 
@@ -1466,11 +1468,12 @@ public class bd implements Serializable {
             }
         }
         att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
-        try{
+        try {
             AccesoDatos acc = new AccesoDatos(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
             if (acc.conectar()) {
-                sql = "drop table if exists " + frag.getNombre() + "; "
-                        + "CREATE TABLE " + frag.getNombre() + " ( " + att_tipo + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
+                sql = "drop table if exists " + frag.getNombre() + ";";
+                acc.ejecutarComando(sql);
+                sql="CREATE TABLE " + frag.getNombre() + " (" + att_tipo + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
                 acc.ejecutarComando(sql);
                 acc.desconectar();
             }
@@ -1478,7 +1481,7 @@ public class bd implements Serializable {
             ArrayList n = null;
             AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
             if (acc2.conectar()) {
-                String numero = "Select count (*) from " + this.getTabla().getNombre() + ";";
+                String numero = "Select count(*) from " + this.getTabla().getNombre() + ";";
                 n = acc2.ejecutarConsulta(numero);
                 acc2.desconectar();
             }
@@ -1511,7 +1514,7 @@ public class bd implements Serializable {
                     }
                 }
             }
-             //Insertar a XAMANA
+            //Insertar a XAMANA
             //SITIO
             String id_sitio = "";
             String idFragmento = "";
@@ -1522,7 +1525,7 @@ public class bd implements Serializable {
                         + "select * from (select '" + frag.getSitio() + "' as direccion ) as tmp "
                         + "where not exists (select direccion from Sitio where direccion='" + frag.getSitio() + "') limit 1;";
                 accXamana.ejecutarComando(sql);
-                sql = "select id_sitio from Sitio where id_sitio='" + frag.getSitio() + "'";
+                sql = "select id_sitio from Sitio where direccion='" + frag.getSitio() + "'";
                 id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
                 //FRAGMENTO
                 if (frag.isMultimedia()) {
@@ -1538,13 +1541,13 @@ public class bd implements Serializable {
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
-                        accXamana.ejecutarComando("insert into Atributo (tipo,size,id_fragmento,descriptor,multimedia,id_tabla) "
-                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", " + idFragmento + ", "
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '"+a.getNombre()+"', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
                     }
                 }
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -1672,27 +1675,27 @@ public class bd implements Serializable {
 
     public void crearTablaVerticalMongo(TablaCosto frag) {
         try {
-            String sql="";
-            AccesoDatosMG accDestino = new AccesoDatosMG(frag.getSitio() + ":" + this.portbd, this.nombd,this.getTabla().getNombre() ,this.usubd, this.passbd);
-            AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd,this.getTabla().getNombre() ,this.usubd, this.passbd);
-            if(accDestino.conectar()){
+            String sql = "";
+            AccesoDatosMG accDestino = new AccesoDatosMG(frag.getSitio() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
+            AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
+            if (accDestino.conectar()) {
                 //Destino
                 MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(nombd);
                 MongoCollection<Document> docDestino = dbDestino.getCollection(frag.getNombre());
                 dbDestino.createCollection(frag.getNombre());
-                
+
                 //Origen
                 MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(nombd);
                 MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.getTabla().getNombre());
-                                
-                List<String> nombresAtt=new ArrayList<>();
-                frag.getArrAtri().forEach(x->nombresAtt.add(x.getNombre()));
+
+                List<String> nombresAtt = new ArrayList<>();
+                frag.getArrAtri().forEach(x -> nombresAtt.add(x.getNombre()));
                 Bson proyeccion = Projections.fields(Projections.include(nombresAtt));
                 MongoCursor<Document> resultado = docOrigen.find().projection(proyeccion).iterator();
                 while (resultado.hasNext()) {
                     docDestino.insertOne(resultado.next());
                 }
-                
+
             }
             //Insertar a XAMANA
             //SITIO
@@ -1727,7 +1730,7 @@ public class bd implements Serializable {
                     }
                 }
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

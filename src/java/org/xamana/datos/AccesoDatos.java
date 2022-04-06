@@ -234,4 +234,19 @@ public class AccesoDatos implements Serializable {
         }
         return ret;
     }
+    
+    public synchronized String atributo(String nombreBase, String nombre, String nAtributo) {
+        String ret = "";
+        try {
+            DatabaseMetaData metadata = oConexion.getMetaData();
+            ResultSet atributos = metadata.getColumns(nombreBase, null, nombre, nAtributo);
+            while (atributos.next()) {
+                String tam=Double.parseDouble(atributos.getString("COLUMN_SIZE"))>10000000?"10000000":atributos.getString("COLUMN_SIZE");
+                ret=atributos.getString("COLUMN_NAME") + ":" + atributos.getString("TYPE_NAME") + ":" + tam;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AccesoDatos.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
 }
