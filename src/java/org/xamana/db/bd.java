@@ -1584,8 +1584,9 @@ public class bd implements Serializable {
         try {
             AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
             if (acc.conectar()) {
-                sql = "drop table if exists " + frag.getNombre() + "; "
-                        + "CREATE TABLE " + frag.getNombre() + " ( " + att_tipo + ");";
+                sql = "drop table if exists " + frag.getNombre() + ";";
+                acc.ejecutarComando(sql);
+                sql = "CREATE TABLE " + frag.getNombre() + " ( " + att_tipo + ");";
                 acc.ejecutarComando(sql);
                 acc.desconectar();
             }
@@ -1593,7 +1594,7 @@ public class bd implements Serializable {
             ArrayList n = null;
             AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
             if (acc2.conectar()) {
-                String numero = "Select count (*) from " + this.getTabla().getNombre() + ";";
+                String numero = "Select count(*) from " + this.getTabla().getNombre() + ";";
                 n = acc2.ejecutarConsulta(numero);
                 acc2.desconectar();
             }
@@ -1637,7 +1638,7 @@ public class bd implements Serializable {
                         + "select * from (select '" + frag.getSitio() + "' as direccion ) as tmp "
                         + "where not exists (select direccion from Sitio where direccion='" + frag.getSitio() + "') limit 1;";
                 accXamana.ejecutarComando(sql);
-                sql = "select id_sitio from Sitio where id_sitio='" + frag.getSitio() + "'";
+                sql = "select id_sitio from Sitio where direccion='" + frag.getSitio() + "'";
                 id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
                 //FRAGMENTO
                 if (frag.isMultimedia()) {
@@ -1653,8 +1654,8 @@ public class bd implements Serializable {
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
-                        accXamana.ejecutarComando("insert into Atributo (tipo,size,id_fragmento,descriptor,multimedia,id_tabla) "
-                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", " + idFragmento + ", "
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom, id_fragmento,descriptor,multimedia,id_tabla) "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '"+a.getNombre()+"', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
                     }
                 }

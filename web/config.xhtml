@@ -77,28 +77,28 @@ and open the template in the editor.
                     </f:facet>
                     <p:row>
                         <p:column>
-                            <p:selectOneListbox value="#{bd.seleccion1}"  >
-                                <f:selectItems value="#{bd.obj.tabla.atributos}" var="l" itemLabel="#{l.nombre}" itemValue="#{l.nombre}"/> 
+                            <p:selectOneListbox id="s5" value="#{bd.seleccion1}"  >
+                                <f:selectItems id="s7" value="#{bd.obj.tabla.atributos}" var="l" itemLabel="#{l.nombre}" itemValue="#{l.nombre}"/> 
                             </p:selectOneListbox>
                         </p:column>
                         <p:column>
-                            <p:selectOneListbox value="#{bd.seleccion2}">
-                                <f:selectItems value="#{bd.obj.tabla.atributos}" var="l" itemLabel="#{l.nombre}" itemValue="#{l.nombre}"/> 
+                            <p:selectOneListbox id="s4" value="#{bd.seleccion2}">
+                                <f:selectItems id="s6" value="#{bd.obj.tabla.atributos}" var="m" itemLabel="#{m.nombre}" itemValue="#{m.nombre}"/> 
                             </p:selectOneListbox>
                         </p:column>
                         <p:column>
                             <p:selectOneListbox id="listaAtts" value="#{bd.seleccion3}">
-                                <f:selectItems value="#{bd.attsMultimediaDescriptor}" /> 
+                                <f:selectItems id="s3" value="#{bd.attsMultimediaDescriptor}" var="n" itemLabel="#{n}" itemValue="#{n}" /> 
                             </p:selectOneListbox>
                         </p:column>
                     </p:row>
                     <p:row>
                         <p:column></p:column>
                         <p:column>
-                            <p:commandButton value="Add" actionListener="#{bd.agregarAtts()}" update="f3:listaAtts f3:mensajes" />
+                            <p:commandButton id="s8" value="Add" action="#{bd.agregarAtts()}" update="f3:listaAtts f3:mensajes" />
                         </p:column>
                         <p:column>
-                            <p:commandButton value="Delete" actionListener="#{bd.eliminarAtts()}" update="f3:listaAtts" />
+                            <p:commandButton id="s9" value="Delete" action="#{bd.eliminarAtts()}" update="f3:listaAtts" />
                         </p:column>
                     </p:row>
                 </p:panelGrid>
@@ -114,9 +114,7 @@ and open the template in the editor.
                         <h:outputText value="#{y.tipo}"/>
                     </p:column>
                     <p:column>
-                        <h:outputText id="output" value="#{y.tamanio}"/>
-                        <h:inputHidden id="txt2" value="#{y.tamanio}"/>
-                        <p:slider minValue="1" maxValue="16" for="txt2" display="output" style="width: 200px"/>
+                        <p:inputNumber value="#{y.tamanio}" />
                     </p:column>
                 </p:dataTable>
                 <p:commandButton value="Continue settings" action="#{bd.seleccionAtributos()}" update="f3:dtamanios f3:mensajes f3:dl5" />

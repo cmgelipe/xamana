@@ -1007,6 +1007,7 @@ public class BDJB implements Serializable {
      * @return the seleccion
      */
     public String getSeleccion1() {
+        
         return seleccion1;
     }
 
@@ -1060,12 +1061,15 @@ public class BDJB implements Serializable {
     }
 
     public void agregarAtts() {
-        if (!seleccion1.isEmpty() && !seleccion2.isEmpty()) {
-            this.attsMultimediaDescriptor.add(seleccion1 + "," + seleccion2);
-        } else {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se seleccionaron ambos"));
+        try {
+            if (!seleccion1.isEmpty() && !seleccion2.isEmpty()) {
+                this.attsMultimediaDescriptor.add(seleccion1 + "," + seleccion2);
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se seleccionaron ambos"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
     }
 
     public void eliminarAtts() {
@@ -1083,6 +1087,7 @@ public class BDJB implements Serializable {
      * @param seleccion3 the seleccion3 to set
      */
     public void setSeleccion3(String seleccion3) {
+        
         this.seleccion3 = seleccion3;
     }
 
