@@ -1162,6 +1162,8 @@ public class bd implements Serializable {
             case "VARCHAR":
             case "BIT":
             case "TINYINT":
+            case "JSON":
+            case "LONGBLOB":
                 return 0;
             case "INTEGER":
             case "SMALLINT":
@@ -1461,7 +1463,11 @@ public class bd implements Serializable {
                 att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
             } else {
                 if (r.getTipo().compareTo("BIT") != 0) {
-                    att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                    if(r.getTipo().compareTo("JSON")==0 || r.getTipo().compareTo("LONGBLOB")==0){
+                        att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                    }else{
+                        att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                    }
                 } else {
                     att_tipo += r.getNombre() + " TINYINT, ";
                 }

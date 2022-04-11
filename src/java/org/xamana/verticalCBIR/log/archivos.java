@@ -33,8 +33,8 @@ public class archivos {
     public archivos(bd oBD, UploadedFiles files, ArrayList<String> attM) {
         this.oBD = oBD;
         this.files = files;
-        this.arrCad = leerTxt(files);
-        this.arrAtri = listaAtributos();
+        //this.arrCad = leerTxt(files);
+        //this.arrAtri = listaAtributos();
         if (attM.isEmpty()) {
             this.arrAM = null;
         } else {
@@ -397,7 +397,7 @@ public class archivos {
         ArrayList<Atributo> normales = new ArrayList<>();
         normales.add(this.oBD.getTabla().getAtributoLlave());
         for (Atributo a : this.oBD.getTabla().getAtributos()) {
-            if (!a.isDescriptor() && !a.isMultimedia() && a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre())!=0) {
+            if (!a.isDescriptor() && !a.isMultimedia() && a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) != 0) {
                 normales.add(a);
             }
         }
@@ -410,7 +410,7 @@ public class archivos {
             } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
                 sitioCosto = costoxSitioPostgres(normales);
             } else {
-
+                sitioCosto = costoxSitioMongo(normales);
             }
             ret.setSitio(sitioCosto.get(0));
             ret.setCosto(Double.parseDouble(sitioCosto.get(1)));
@@ -910,10 +910,35 @@ public class archivos {
                 }
             }
         }
+        //DETERMINAR SITIO MÁS COSTOSO PARA FRAGMENTO
+        Double max = -1.0;
+        try {
+            max = Collections.max(SitioCosto.values());
+        } catch (Exception e) {
+            max = 0.0;
+        }
+        for (Entry<String, Double> entry : SitioCosto.entrySet()) {
+            if (entry.getValue() >= max) {
+                if (ret.size() > 0) {
+                    ret.set(0, entry.getKey());
+                } else {
+                    ret.add(entry.getKey());
+                }
+
+            }
+        }
+        if (ret.size() > 1) {
+            ret.set(1, "" + costoTotal);
+        } else if (ret.size() == 1) {
+            ret.add("" + costoTotal);
+        } else if (ret.isEmpty()) {
+            ret.add(this.oBD.getDirbd());
+            ret.add("" + costoTotal);
+        }
         return ret;
     }
+    
     //PIPE
-
     private int incidencias(String origen, String palabra) {
         //costo de reuniones=n+1 
         int i = 1;
