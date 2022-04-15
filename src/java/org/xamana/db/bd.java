@@ -59,6 +59,9 @@ public class bd implements Serializable {
     private Integer progress1;
     private List<SelectItem> tablas;
     private HashMap<String, String> NombreIp;
+    private ArrayList<HashMap<String, Double>> costoAtributoxSitio;
+    private ArrayList<String> sitios;
+    private ArrayList<TablaCosto> esquemaVertical;
 
     public boolean conexionexterna() {
         boolean res = false;
@@ -1376,14 +1379,25 @@ public class bd implements Serializable {
         this.NombreIp = NombreIp;
     }
 
-    public ArrayList<TablaCosto> esquemaVertical(UploadedFiles files) throws IOException {
-        ArrayList<TablaCosto> ta = new ArrayList();
+    public void esquemaVertical(UploadedFiles files) {
         archivos a = new archivos(this, files);
-        //ta.add(a.noLog(a.obtenerTablaCosto()));
-        ta.addAll(a.obtenerTablaCosto());
-        ta = a.nombrar(a.obtenerTablaCosto());
-        return ta;
-
+        try {
+            if (this.getTipoBD().compareTo("a") == 0) {
+                this.listaAtributosMySQL();
+                a.esquemaVerticalMySQL();
+            } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
+                listaAtributosPostgreSQL();
+                a.esquemaVerticalPostgres();
+            } else if (this.getTipoBD().compareTo("d") == 0) {
+                this.listaAtributosMongoDB();
+                a.esquemaVerticalMongo();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        this.setCostoAtributoxSitio(a.getCostoAtributoxSitio());
+        this.setSitios(a.getSitios());
+        this.setEsquemaVertical(a.getEsquemaVertical());
     }
 
     //PIPE  
@@ -1395,42 +1409,12 @@ public class bd implements Serializable {
         return a.nombrar(juntos);
     }
 
-    public ArrayList<Query> ConsultasVerLog(UploadedFiles files) throws IOException {
-        archivos a = new archivos(this, files);
-
-        return a.arrQuerys(a.getArrCad());
-    }
-
-    public ArrayList<TablaCosto> AsignacionSitio(UploadedFiles files) throws IOException {
-        archivos a = new archivos(this, files);
-        ArrayList<TablaCosto> ta = new ArrayList<>();
-        ArrayList<TablaCosto> to = new ArrayList<>();
-        ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
-        if (a.noLog(a.obtenerTablaCosto()) != null) {
-            ta.add(a.noLog(a.obtenerTablaCosto()));
-        }
-
-        return a.nombrar(ta);
-    }
-
-    public ArrayList<TablaCosto> AsignacionSitio1(ArrayList<String> attsM, UploadedFiles files) throws IOException {
-        archivos a = new archivos(this, files, attsM);
-        ArrayList<TablaCosto> ta = new ArrayList<>();
-        ArrayList<TablaCosto> to = new ArrayList<>();
-        ta.addAll(a.obtenerFragmentosMultimedia());
-        ta.addAll(a.mismoSitio(a.obtenerTablaCosto()));
-        to.addAll(ta);
-        if (a.noLog(ta) != null) {
-            to.add(a.noLog(ta));
-        }
-
-        return a.nombrar(to);
-    }
-
+    //PIPE
     public boolean isVerticalCBIR() {
         return this.tabla.getTipoFragment().compareTo("b") == 0 && this.tabla.isCBIR();
     }
 
+    //PIPE
     public void fragmentarVertical(ArrayList<TablaCosto> es) {
         this.progress1 = 1;
         int percent = 100 / es.size();
@@ -1463,9 +1447,9 @@ public class bd implements Serializable {
                 att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
             } else {
                 if (r.getTipo().compareTo("BIT") != 0) {
-                    if(r.getTipo().compareTo("JSON")==0 || r.getTipo().compareTo("LONGBLOB")==0){
+                    if (r.getTipo().compareTo("JSON") == 0 || r.getTipo().compareTo("LONGBLOB") == 0) {
                         att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
-                    }else{
+                    } else {
                         att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
                     }
                 } else {
@@ -1479,7 +1463,7 @@ public class bd implements Serializable {
             if (acc.conectar()) {
                 sql = "drop table if exists " + frag.getNombre() + ";";
                 acc.ejecutarComando(sql);
-                sql="CREATE TABLE " + frag.getNombre() + " (" + att_tipo + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
+                sql = "CREATE TABLE " + frag.getNombre() + " (" + att_tipo + ", PRIMARY KEY (" + this.getTabla().getAtributoLlave().getNombre() + "));";
                 acc.ejecutarComando(sql);
                 acc.desconectar();
             }
@@ -1548,7 +1532,7 @@ public class bd implements Serializable {
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
                         accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
-                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '"+a.getNombre()+"', " + idFragmento + ", "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
                     }
                 }
@@ -1661,7 +1645,7 @@ public class bd implements Serializable {
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
                         accXamana.ejecutarComando("insert into Atributo (tipo,size,nom, id_fragmento,descriptor,multimedia,id_tabla) "
-                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '"+a.getNombre()+"', " + idFragmento + ", "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
                     }
                 }
@@ -1757,5 +1741,47 @@ public class bd implements Serializable {
 
     public AccesoDatosPG getAccexternopost() {
         return accexternopost;
+    }
+
+    /**
+     * @return the costoAtributoxSitio
+     */
+    public ArrayList<HashMap<String, Double>> getCostoAtributoxSitio() {
+        return costoAtributoxSitio;
+    }
+
+    /**
+     * @param costoAtributoxSitio the costoAtributoxSitio to set
+     */
+    public void setCostoAtributoxSitio(ArrayList<HashMap<String, Double>> costoAtributoxSitio) {
+        this.costoAtributoxSitio = costoAtributoxSitio;
+    }
+
+    /**
+     * @return the sitios
+     */
+    public ArrayList<String> getSitios() {
+        return sitios;
+    }
+
+    /**
+     * @param sitios the sitios to set
+     */
+    public void setSitios(ArrayList<String> sitios) {
+        this.sitios = sitios;
+    }
+
+    /**
+     * @return the esquemaVertical
+     */
+    public ArrayList<TablaCosto> getEsquemaVertical() {
+        return esquemaVertical;
+    }
+
+    /**
+     * @param esquemaVertical the esquemaVertical to set
+     */
+    public void setEsquemaVertical(ArrayList<TablaCosto> esquemaVertical) {
+        this.esquemaVertical = esquemaVertical;
     }
 }

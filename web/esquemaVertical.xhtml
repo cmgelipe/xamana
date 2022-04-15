@@ -58,83 +58,110 @@ and open the template in the editor.
         <header>
             <text>Scheme</text>
         </header>
-        <p:tabView id="tabView" dynamic="true" cache="true">
-            <p:tab title="Consultas">
-                <h:panelGrid columns="2" cellpadding="10">
-                    <h:form id="f6">
-                        <p:growl id="growl" showDetail="true" sticky="true"  />
-                        <p:dataTable value="#{bd.consultasV}" var="t" >
-                            <p:column headerText="Atributos involucrados">
-                                <h:outputText value="#{t.atributos}" />
-                            </p:column>
-                            <p:column headerText="Sitio">
-                                <h:outputText value="#{t.sitio.nombre}" />
-                            </p:column>
-                            <p:column headerText="Tipo de Operacion">
-                                <h:outputText value="#{t.tipoOpera}" />
-                            </p:column>
-                            <p:column headerText="Frecuencia ">
-                                <h:outputText value="#{t.frecuencia}" />
-                            </p:column>
-                        </p:dataTable>
-
-                    </h:form>
-                </h:panelGrid>
-            </p:tab>
-            <p:tab title="Tabla de costo">
-                <h:panelGrid columns="2" cellpadding="10">
-                    <h:form id="f7">
-                        <p:growl id="growl" showDetail="true" sticky="true"  />
-                        <p:dataTable value="#{bd.esquemaVertical}" var="t" >
-                            <p:column headerText="Nombre de Frag.">
-                                <h:outputText value="#{t.nombre}" />
-                            </p:column>
-                            <p:column headerText="Sitio">
-                                <h:outputText value="#{t.sitio.nombre}" />
-                            </p:column>
-                            <p:column headerText="Atributos">
-                                <h:outputText value="#{t.atributo.nombre}" />
-                            </p:column>
-                            <p:column headerText="Costo">
-                                <h:outputText value="#{t.costo}" />
-                            </p:column>
-                        </p:dataTable>
-
-                    </h:form>
-                </h:panelGrid>
-            </p:tab>
-            <p:tab title="Asignacion de atributos a Sitios">
-                <h:panelGrid columns="2" cellpadding="10">
-                    <h:form id="f8">
-                        <p:growl id="growl" showDetail="true" sticky="true"  />
-                        <p:dataTable value="#{bd.asignacionSitio}" var="t" >
-                            <p:column headerText="Nombre de Frag.">
-                                <h:outputText value="#{t.nombre}" />
-                            </p:column>
-                            <p:column headerText="Sitio">
-                                <h:outputText value="#{t.sitio.ip}" />
-                            </p:column>
-                            <p:column headerText="Atributos">
-                                <h:outputText value="#{t.atributos}" />
-                            </p:column>
-
-                        </p:dataTable>
-                        <br/>
-                        <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
-                            <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
-                        </p:progressBar>
-                        <br/>
-                        <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:d6" />
-                        <p:dialog id="d6" visible="false" header="Token">
-                            <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />
-                        </p:dialog>
-                        <p:dialog id="d15"  header="successful" modal="true" visible="#{bd.visible}">
-                            <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />
-                        </p:dialog>
-                    </h:form>
-                </h:panelGrid>
-            </p:tab>
-        </p:tabView>
-
+        <h:form>
+            <p:growl id="growl" showDetail="true" sticky="true"  />
+            <p:tabView id="tabView" dynamic="true" cache="true">
+                <p:tab title="Costos"><!-- Costo de cada atributo por cada sitio -->
+                    <p:dataTable value="#{bd.obj.costoAtributoxSitio}" var="x">
+                        <f:facet name="header">
+                            <h:outputText value="Costo de atributos por sitios"/>
+                        </f:facet>
+                        <p:columns value="#{bd.obj.sitios}" var="col">
+                            <f:facet name="header">
+                                <h:outputText value="#{col}"/>
+                            </f:facet>
+                            <h:outputText value="#{x.get(col)}" />
+                        </p:columns>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab title="Esquema">
+                    <p:dataTable value="#{bd.esquemaVertical}" var="t">
+                        <p:column headerText="Nombre de Frag.">
+                            <h:outputText value="#{t.nombre}" />
+                        </p:column>
+                        <p:column headerText="Sitio">
+                            <h:outputText value="#{t.sitio}" />
+                        </p:column>
+                        <p:column headerText="Atributos">
+                            <h:outputText value="#{t.atributosxComa}" />
+                        </p:column>
+                        <p:column headerText="Costo">
+                            <h:outputText value="#{t.costo}" />
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+            </p:tabView>
+            <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
+                <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
+            </p:progressBar>
+            <br/>
+            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:d6" />
+            <p:dialog id="d6" visible="false" header="Token">
+                <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />
+            </p:dialog>
+            <p:dialog id="d15"  header="successful" modal="true" visible="#{bd.visible}">
+                <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />
+            </p:dialog>
+        </h:form>
     </h:body>
 </html>
+
+<!--<h:panelGrid columns="2" cellpadding="10">
+    <h:form id="f6">
+        
+        <p:dataTable value="#{bd.consultasV}" var="t" >
+            <p:column headerText="Atributos involucrados">
+                <h:outputText value="#{t.atributos}" />
+            </p:column>
+            <p:column headerText="Sitio">
+                <h:outputText value="#{t.sitio}" />
+            </p:column>
+            <p:column headerText="Tipo de Operacion">
+                <h:outputText value="#{t.tipoOpera}" />
+            </p:column>
+            <p:column headerText="Frecuencia ">
+                <h:outputText value="#{t.frecuencia}" />
+            </p:column>
+        </p:dataTable>
+    </h:form>
+</h:panelGrid>
+</p:tab>
+<p:tab title="Tabla de costo">
+<h:panelGrid columns="2" cellpadding="10">
+    <h:form id="f7">
+        <p:growl id="growl" showDetail="true" sticky="true"  />
+        <p:dataTable value="#{bd.esquemaVertical}" var="t" >
+            <p:column headerText="Nombre de Frag.">
+                <h:outputText value="#{t.nombre}" />
+            </p:column>
+            <p:column headerText="Sitio">
+                <h:outputText value="#{t.sitio}" />
+            </p:column>
+            <p:column headerText="Atributos">
+                <h:outputText value="#{t.atributo.nombre}" />
+            </p:column>
+            <p:column headerText="Costo">
+                <h:outputText value="#{t.costo}" />
+            </p:column>
+        </p:dataTable>
+    </h:form>
+</h:panelGrid>
+</p:tab>
+<p:tab title="Asignacion de atributos a Sitios">
+<h:panelGrid columns="2" cellpadding="10">
+    <h:form id="f8">
+        <p:growl id="growl" showDetail="true" sticky="true"  />
+        <p:dataTable value="#{bd.asignacionSitio}" var="t" >
+            <p:column headerText="Nombre de Frag.">
+                <h:outputText value="#{t.nombre}" />
+            </p:column>
+            <p:column headerText="Sitio">
+                <h:outputText value="#{t.sitio}" />
+            </p:column>
+            <p:column headerText="Atributos">
+                <h:outputText value="#{t.atributosxComa}" />
+            </p:column>
+        </p:dataTable>
+        
+    </h:form>
+</h:panelGrid>-->

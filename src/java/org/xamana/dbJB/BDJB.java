@@ -16,6 +16,7 @@ import java.io.RandomAccessFile;
 import javax.faces.bean.SessionScoped;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,7 +72,6 @@ public class BDJB implements Serializable {
     private ArrayList<TablaCosto> esquemaVerticalCBIR;
     private boolean visible;
     ArrayList<TablaCosto> TablasCostos;
-    private ArrayList<TablaCosto> esquemaVertical;
     ArrayList<Query> consultasV;
     ArrayList<TablaCosto> AsignacionSitio;
     private boolean dtamanios = false;
@@ -288,9 +288,10 @@ public class BDJB implements Serializable {
         } else if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
             this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIR(getAttsMultimediaDescriptor(), this.files));
             tipoEsquema = "esquemaVerticalCBIR.xhtml";
-        } else if (!this.obj.getTabla().isCBIR()
-                && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
-            if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+        } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
+            this.obj.esquemaVertical(this.files);
+            tipoEsquema = "esquemaVertical.xhtml";
+            /*if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                 try {
                     this.setEsquemaVertical(this.obj.esquemaVertical(this.files));
                     this.setConsultasV(this.obj.ConsultasVerLog(this.files));
@@ -298,8 +299,7 @@ public class BDJB implements Serializable {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
-            tipoEsquema = "esquemaVertical.xhtml";
+            }*/
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
             // Fragmentacion Horizontal Dinamica                
             try {
@@ -309,9 +309,7 @@ public class BDJB implements Serializable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
             tipoEsquema = "esquemaFHD.xhtml";
-
         }
         return tipoEsquema;
     }
@@ -1007,7 +1005,7 @@ public class BDJB implements Serializable {
      * @return the seleccion
      */
     public String getSeleccion1() {
-        
+
         return seleccion1;
     }
 
@@ -1087,7 +1085,7 @@ public class BDJB implements Serializable {
      * @param seleccion3 the seleccion3 to set
      */
     public void setSeleccion3(String seleccion3) {
-        
+
         this.seleccion3 = seleccion3;
     }
 
@@ -1114,15 +1112,7 @@ public class BDJB implements Serializable {
     public void setConsultasV(ArrayList<Query> consultasV) {
         this.consultasV = consultasV;
     }
-
-    public ArrayList<TablaCosto> getEsquemaVertical() {
-        return esquemaVertical;
-    }
-
-    public void setEsquemaVertical(ArrayList<TablaCosto> esquemaVertical) {
-        this.esquemaVertical = esquemaVertical;
-    }
-
+    
     /**
      * @param esquemaVerticalCBIR the esquemaVerticalCBIR to set
      */
