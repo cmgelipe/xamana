@@ -1,4 +1,4 @@
-package org.xamana.verticalCBIR.log;
+package org.xamana.vertical;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.verticalCBIR.model.TablaCosto;
 
-public class archivos {
+public class VerticalBD {
 
     bd oBD;
     String archivo;
@@ -27,7 +27,7 @@ public class archivos {
     private ArrayList<String> sitios;
     private ArrayList<TablaCosto> esquemaVertical;
 
-    public archivos(bd oBD, UploadedFiles files, ArrayList<String> attM) {
+    public VerticalBD(bd oBD, UploadedFiles files, ArrayList<String> attM) {
         this.oBD = oBD;
         this.files = files;
         if (attM.isEmpty()) {
@@ -37,7 +37,7 @@ public class archivos {
         }
     }
 
-    public archivos(bd oBD, UploadedFiles files) {
+    public VerticalBD(bd oBD, UploadedFiles files) {
         this.oBD = oBD;
         this.files = files;
     }
@@ -452,9 +452,13 @@ public class archivos {
 
     }
 
+    //PIPE
     public void esquemaVerticalPostgres() {
         this.oBD.setNombreIp(new HashMap<>());
         costoAtributoxSitio = new ArrayList<>();
+        for (Atributo l : this.oBD.getTabla().getAtributos()) {
+            costoAtributoxSitio.add(new HashMap<String, Double>());
+        }
         HashMap<String, Double> costoxSitio = new HashMap<>();
         System.out.println("-----------COSTOS ATRIBUTOS PIPE-------------");
         for (UploadedFile f : this.files.getFiles()) {
@@ -494,6 +498,7 @@ public class archivos {
                             System.out.println("CR: " + nJoins);
                             for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                 Atributo a = this.oBD.getTabla().getAtributos().get(o);
+                                System.out.println("Atributo: " + a.getNombre() + " indice: " + o);
                                 if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
                                     HashMap<String, Double> atributoSitios = new HashMap<>();
                                     if (costoAtributoxSitio.get(o) != null) {
@@ -507,7 +512,7 @@ public class archivos {
                                     System.out.println("Valor actual: " + valor);
                                     System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
                                     atributoSitios.put(ipTraduccion, valor);
-                                    costoAtributoxSitio.set(o, atributoSitios);
+                                        costoAtributoxSitio.set(o, atributoSitios);
                                     //Costo por sitio
                                     Double costoSitio = 0.0;
                                     if (costoxSitio.containsKey(ipTraduccion)) {
@@ -526,7 +531,15 @@ public class archivos {
         }
         this.sitios = deHashaArraySitios();
         this.esquemaVertical = new ArrayList<>();
+        for(int p=0;p<costoAtributoxSitio.size();p++){
+            for(String s:sitios){
+                if(costoAtributoxSitio.get(p).get(s)==null || costoAtributoxSitio.get(p).get(s)==Double.NaN){
+                   costoAtributoxSitio.get(p).put(s, 0.0);
+                }
+            }
+        }
         //DETERMINAR FRAGMENTOS
+        ArrayList<Atributo> attsSinCosto = new ArrayList<>();
         for (String clave : costoxSitio.keySet()) {
             if (costoxSitio.get(clave) > 0) {
                 ArrayList<Atributo> atts = new ArrayList<>();
@@ -536,26 +549,40 @@ public class archivos {
                 double costoFragmento = 0.0;
                 for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                     Atributo a = this.oBD.getTabla().getAtributos().get(o);
-                    HashMap<String,Double> lineaAtt=costoAtributoxSitio.get(o);
-                    if(this.getMaxEntry(lineaAtt).getKey().compareTo(clave)==0){
-                        costoFragmento+=lineaAtt.get(clave);
-                        atts.add(a);
+                    HashMap<String, Double> lineaAtt = costoAtributoxSitio.get(o);
+                    try {
+                        if (this.getMaxEntry(lineaAtt).getKey().compareTo(clave) == 0) {
+                            costoFragmento += lineaAtt.get(clave);
+                            atts.add(a);
+                        }
+                    } catch (Exception e) {
+                        //OBTUBIERON CERO EN COSTO, NO ESTAN EN LOG
+                        if (!attsSinCosto.contains(a)) {
+                            attsSinCosto.add(a);
+                        }
                     }
                 }
                 tc.setCosto(costoFragmento);
                 tc.setArrAtri(atts);
+                this.esquemaVertical.add(tc);
             }
         }
+        if (attsSinCosto.size() > 0) {
+            esquemaVertical.get(0).getArrAtri().addAll(attsSinCosto);
+        }
+        esquemaVertical = this.nombrar(esquemaVertical);
     }
 
     public void esquemaVerticalMongo() {
 
     }
 
+    //PIPE
     public ArrayList<String> deHashaArraySitios() {
         ArrayList<String> ret = new ArrayList<>();
         for (String clave : this.oBD.getNombreIp().keySet()) {
             String valor = this.oBD.getNombreIp().get(clave);
+            System.out.println(valor);
             ret.add(valor);
         }
         return ret;
@@ -575,13 +602,20 @@ public class archivos {
         this.esquemaVertical = esquemaVertical;
     }
 
+    //PIPE
     public Entry<String, Double> getMaxEntry(Map<String, Double> map) {
         Entry<String, Double> maxEntry = null;
-        Double max = Collections.max(map.values());
+        Double max = -1.0;
+        try {
+            max = Collections.max(map.values());
+        } catch (Exception e) {
+            max = 0.0;
+        }
         for (Entry<String, Double> entry : map.entrySet()) {
             Double value = entry.getValue();
-            if (null != value && max == value) {
+            if (null != value && value > max) {
                 maxEntry = entry;
+                max = maxEntry.getValue();
             }
         }
         return maxEntry;

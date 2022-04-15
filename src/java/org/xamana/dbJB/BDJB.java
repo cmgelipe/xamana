@@ -38,7 +38,7 @@ import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.db.esquemaHorMultimedia;
 import org.xamana.dhf.DHFragmentation;
-import org.xamana.verticalCBIR.log.archivos;
+import org.xamana.vertical.VerticalBD;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
 
@@ -289,17 +289,8 @@ public class BDJB implements Serializable {
             this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIR(getAttsMultimediaDescriptor(), this.files));
             tipoEsquema = "esquemaVerticalCBIR.xhtml";
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
-            this.obj.esquemaVertical(this.files);
+            this.obj.crearEquemaVertical(this.files);
             tipoEsquema = "esquemaVertical.xhtml";
-            /*if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
-                try {
-                    this.setEsquemaVertical(this.obj.esquemaVertical(this.files));
-                    this.setConsultasV(this.obj.ConsultasVerLog(this.files));
-                    this.setAsignacionSitio(this.obj.AsignacionSitio(this.files));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }*/
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
             // Fragmentacion Horizontal Dinamica                
             try {

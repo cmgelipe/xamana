@@ -36,7 +36,7 @@ import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.crearfrag.BuildTypes;
-import org.xamana.verticalCBIR.log.archivos;
+import org.xamana.vertical.VerticalBD;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
 
@@ -1379,8 +1379,8 @@ public class bd implements Serializable {
         this.NombreIp = NombreIp;
     }
 
-    public void esquemaVertical(UploadedFiles files) {
-        archivos a = new archivos(this, files);
+    public void crearEquemaVertical(UploadedFiles files) {
+        VerticalBD a = new VerticalBD(this, files);
         try {
             if (this.getTipoBD().compareTo("a") == 0) {
                 this.listaAtributosMySQL();
@@ -1402,7 +1402,7 @@ public class bd implements Serializable {
 
     //PIPE  
     public ArrayList<TablaCosto> esquemaVerticalCBIR(ArrayList<String> attM, UploadedFiles files) {
-        archivos a = new archivos(this, files, attM);
+        VerticalBD a = new VerticalBD(this, files, attM);
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
         juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO

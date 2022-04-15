@@ -67,7 +67,12 @@ public class TablaCosto {
         for (Atributo at : this.getArrAtri()) {
             cad+=at.getNombre()+",";
         }
-        return cad.substring(0, cad.length()-1);
+        if(cad.length()>1){
+            return cad.substring(0, cad.length()-1);
+        }else{
+            return "";
+        }
+        
     }
 
     /**
