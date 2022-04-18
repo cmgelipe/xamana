@@ -33,6 +33,7 @@ and open the template in the editor.
                     <p:outputLabel value="Fragmentation type" />
                     <p:selectOneMenu value="#{bd.obj.tabla.tipoFragment}">
                         <p:ajax update="f3:sino" />
+                        <p:ajax listener="#{bd.onTipoFragmentchange}" update="f3:dtamanios" />
                         <f:selectItem itemLabel="Select an option" noSelectionOption="true" />
                         <f:selectItem itemLabel="Horizontal" itemValue="a" />
                         <f:selectItem itemLabel="Vertical" itemValue="b" />

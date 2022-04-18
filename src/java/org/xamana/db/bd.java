@@ -1389,7 +1389,6 @@ public class bd implements Serializable {
                 listaAtributosPostgreSQL();
                 a.esquemaVerticalPostgres();
             } else if (this.getTipoBD().compareTo("d") == 0) {
-                this.listaAtributosMongoDB();
                 a.esquemaVerticalMongo();
             }
         } catch (Exception e) {

@@ -470,10 +470,11 @@ public class VerticalBD {
                         if (actual.contains("Connect\t") && !actual.contains("denied")) {
                             String y[] = actual.split("\t");
                             ipLinea = y[2].substring(y[2].indexOf("@") + 1, y[2].indexOf(" ", y[2].indexOf("@") + 1));
-                            nombre = y[1].substring(0, y[1].indexOf(" "));
+                            nombre = y[1].substring(0, y[1].indexOf("C")).trim();
                             if (ipLinea.toLowerCase().compareTo("localhost") == 0 || ipLinea.toLowerCase().compareTo("::1") == 0) {
                                 ipLinea = "127.0.0.1";
                             }
+                            System.out.println("Agregado: "+nombre+" "+ipLinea);
                             this.oBD.getNombreIp().put(nombre, ipLinea);
                         }
                         int ValorAsignadoOperacion = 0;
@@ -487,7 +488,7 @@ public class VerticalBD {
                         }
                         if (ValorAsignadoOperacion != 0) {
                             String y[] = actual.split("\t");
-                            String sujeto = y[1].substring(0, y[1].indexOf(" "));
+                            String sujeto = y[1].trim().split(" ")[0];
                             String ipTraduccion = this.oBD.getNombreIp().get(sujeto);
                             System.out.println(actual);
                             System.out.println("SITIO: " + ipTraduccion);
@@ -749,6 +750,7 @@ public class VerticalBD {
                                 ipLinea = remote.substring(0, remote.indexOf(":"));
                                 System.out.println(actual);
                                 System.out.println("SITIO: " + ipLinea);
+                                this.oBD.getNombreIp().put(ipLinea, ipLinea);
                                 if (this.oBD.getDirbd().compareTo(ipLinea) != 0) {
                                     ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                                 }
@@ -758,7 +760,7 @@ public class VerticalBD {
                                 double costoOperacion = 0.0;
                                 for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                     Atributo a = this.oBD.getTabla().getAtributos().get(o);
-                                    System.out.println("Atributo: " + a.getNombre() + " indice: " + o);
+                                    System.out.println("Atributo: " + a.getNombre()+a.getTamanio() + " indice: " + o);
                                     if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
                                         HashMap<String, Double> atributoSitios = new HashMap<>();
                                         if (costoAtributoxSitio.get(o) != null) {
@@ -878,6 +880,7 @@ public class VerticalBD {
                 }
             }
         }
+
         return maxEntry;
     }
 }

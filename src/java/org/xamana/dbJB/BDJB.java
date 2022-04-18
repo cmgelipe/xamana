@@ -126,14 +126,9 @@ public class BDJB implements Serializable {
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                     atributos = this.obj.listaAtributosPostgreSQL();
                     this.dcolumnas = true;
-                } else if (this.obj.getTipoBD().compareTo("d") == 0) {
-                    //llenar atributos combinando dialogo de tamaños y listaatributosMongoDB()
-                    this.obj.listaAtributosMongoDB();
-                    this.dtamanios = true;
-                    //atributos = 
-
+                } else if(this.obj.getTipoBD().compareTo("d") == 0 ){
+                    this.dcolumnas = true;
                 }
-
             } else {
                 this.dcolumna = false;
                 this.dcolumnas = false;
@@ -1145,7 +1140,16 @@ public class BDJB implements Serializable {
         } else {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Tamaños", "Agregados adecuadamente"));
             this.dtamanios = false;
-            this.dcolumnas = true;
+        }
+    }
+    public void onTipoFragmentchange(){
+        try{
+            if(this.obj.getTipoBD().compareTo("d")==0 && this.obj.getTabla().getTipoFragment().compareTo("b")==0){
+                this.obj.listaAtributosMongoDB();
+                this.dtamanios=true;
+            }
+        }catch(Exception e){
+            e.printStackTrace();
         }
     }
 }
