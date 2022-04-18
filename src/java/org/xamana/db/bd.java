@@ -1201,7 +1201,7 @@ public class bd implements Serializable {
         this.progress1 = progress1;
     }
 
-    protected Atributo llaveMySQL(AccesoDatos acc, String nombreBase, String nombreTabla) {
+    public Atributo llaveMySQL(AccesoDatos acc, String nombreBase, String nombreTabla) {
         Atributo att = null;
         ArrayList res = null;
         try {
