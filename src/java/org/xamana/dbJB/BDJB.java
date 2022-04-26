@@ -472,15 +472,15 @@ public class BDJB implements Serializable {
             } else {
                 this.obj.fragmentarHorCBIRMongoDB(valoresColumna);
             }
-
             this.setBToken(true);
         } else if (this.obj.isVerticalCBIR()) {
             this.obj.setProgress1(0);
             this.obj.fragmentarVertical(this.esquemaVerticalCBIR);
+            this.setBToken(true);
         } else if (this.obj.getTabla().getTipoFragment().compareTo("b") == 0 && !this.obj.getTabla().isCBIR()) {
             this.obj.setProgress1(0);
             this.visible = false;
-            this.obj.fragmentarVertical(this.AsignacionSitio);
+            this.obj.fragmentarVertical(this.obj.getEsquemaVertical());
             this.visible = true;
         }
     }
