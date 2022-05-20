@@ -25,10 +25,10 @@ import org.json.JSONObject;
  */
 public class AccesoDatosMG implements Serializable {
 
-    private static String sUrl = null;  // sUrl de conexión
-    private static String sUsr = null; // Usuario
-    private static String sPwd = null;  // Contraseña
-    private static String tabla = null;
+    private String sUrl = null;  // sUrl de conexión
+    private String sUsr = null; // Usuario
+    private String sPwd = null;  // Contraseña
+    private String tabla = null;
     private MongoClient mongoClient;  // La conexión
 
     public AccesoDatosMG(String url, String nombd, String tabla, String usr, String pwd) throws Exception {

@@ -19,6 +19,8 @@ import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.Updates;
+import static com.mongodb.client.model.Updates.unset;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -1423,16 +1425,71 @@ public class bd implements Serializable {
                 crearTablaVerticalMySQL(ta);
                 this.progress1 += percent;
             }
+            //SECCIÓN DE ELIMINAR
+            try {
+                String sql = "";
+                AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                if (acc2.conectar()) {
+                    sql = "create table " + this.getTabla().getNombre() + "_temp" + ((Double) Double.parseDouble(this.getTabla().getIdTabla())).intValue()
+                            + " (primary key (" + this.getTabla().getAtributoLlave().getNombre() + "))"
+                            + " select " + this.getTabla().getAtributoLlave().getNombre() + " from " + this.getTabla().getNombre();
+                    acc2.ejecutarComando(sql);
+                    sql = "DROP TABLE " + this.getTabla().getNombre();
+                    acc2.ejecutarComando(sql);
+                    sql = "rename table " + this.getTabla().getNombre() + "_temp" + ((Double) Double.parseDouble(this.getTabla().getIdTabla())).intValue() + " to " + this.getTabla().getNombre();
+                    acc2.ejecutarComando(sql);
+                    acc2.desconectar();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
             for (TablaCosto ta : es) {
                 crearTablaVerticalPostgres(ta);
                 this.progress1 += percent;
+            }
+            try {
+                //SECCIÓN DE ELIMINAR
+                String sql = "";
+                AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                if (acc2.conectar()) {
+                    sql = "create table " + this.getTabla().getNombre() + "_temp" + ((Double) Double.parseDouble(this.getTabla().getIdTabla())).intValue() + " as"
+                            + " select " + this.getTabla().getAtributoLlave().getNombre() + " from " + this.getTabla().getNombre();
+                    acc2.ejecutarComando(sql);
+                    sql = "alter table " + this.getTabla().getNombre() + "_temp" + ((Double) Double.parseDouble(this.getTabla().getIdTabla())).intValue() + " add primary key (" + this.getTabla().getAtributoLlave().getNombre() + ")";
+                    acc2.ejecutarComando(sql);
+                    sql = "DROP TABLE " + this.getTabla().getNombre();
+                    acc2.ejecutarComando(sql);
+                    sql = "alter table " + this.getTabla().getNombre() + "_temp" + ((Double) Double.parseDouble(this.getTabla().getIdTabla())).intValue() + " rename to " + this.getTabla().getNombre();
+                    acc2.ejecutarComando(sql);
+                    acc2.desconectar();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         } else if (this.getTipoBD().compareTo("d") == 0) {
             for (TablaCosto ta : es) {
                 crearTablaVerticalMongo(ta);
                 this.progress1 += percent;
             }
+            //seccion de eliminar
+            try {
+                //Origen
+                AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
+                if (accOrigen.conectar()) {
+                    MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(nombd);
+                    MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.getTabla().getNombre());
+                    for (Atributo a : this.getTabla().getAtributos()) {
+                        if (a.getNombre().compareTo("_id") != 0) {
+                            docOrigen.updateMany(new Document(), unset(a.getNombre()));
+                        }
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
         this.progress1 = 100;
     }
@@ -1498,11 +1555,13 @@ public class bd implements Serializable {
                             valor = valor.substring(0, valor.length() - 1);
                             sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosxComa() + ") values (" + valor + ");";
                             acc.ejecutarComando(sql);
+
                         }
                         acc.desconectar();
                     }
                 }
             }
+
             //Insertar a XAMANA
             //SITIO
             String id_sitio = "";
@@ -1534,6 +1593,10 @@ public class bd implements Serializable {
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
                     }
+                    //atributo llave primaria en tabla original
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
+                            + "0, 0, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception e) {
@@ -1616,6 +1679,7 @@ public class bd implements Serializable {
                     }
                 }
             }
+
             //Insertar a XAMANA
             //SITIO
             String id_sitio = "";
@@ -1647,6 +1711,10 @@ public class bd implements Serializable {
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
                     }
+                    //atributo llave primaria en tabla original
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
+                            + "0, 0, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception ex) {
@@ -1668,7 +1736,7 @@ public class bd implements Serializable {
             String sql = "";
             AccesoDatosMG accDestino = new AccesoDatosMG(frag.getSitio() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
             AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
-            if (accDestino.conectar()) {
+            if (accDestino.conectar() && accOrigen.conectar()) {
                 //Destino
                 MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(nombd);
                 MongoCollection<Document> docDestino = dbDestino.getCollection(frag.getNombre());
@@ -1687,6 +1755,7 @@ public class bd implements Serializable {
                 }
 
             }
+
             //Insertar a XAMANA
             //SITIO
             String id_sitio = "";
@@ -1698,7 +1767,8 @@ public class bd implements Serializable {
                         + "select * from (select '" + frag.getSitio() + "' as direccion ) as tmp "
                         + "where not exists (select direccion from Sitio where direccion='" + frag.getSitio() + "') limit 1;";
                 accXamana.ejecutarComando(sql);
-                sql = "select id_sitio from Sitio where id_sitio='" + frag.getSitio() + "'";
+                sql = "select id_sitio from Sitio where direccion='" + frag.getSitio() + "'";
+                
                 id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
                 //FRAGMENTO
                 if (frag.isMultimedia()) {
@@ -1714,10 +1784,13 @@ public class bd implements Serializable {
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
-                        accXamana.ejecutarComando("insert into Atributo (tipo,size,id_fragmento,descriptor,multimedia,id_tabla) "
-                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", " + idFragmento + ", "
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                                + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
                     }
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
+                            + "0, 0, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception e) {

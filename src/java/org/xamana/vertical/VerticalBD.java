@@ -501,7 +501,7 @@ public class VerticalBD {
                             for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                 Atributo a = this.oBD.getTabla().getAtributos().get(o);
                                 System.out.println("Atributo: " + a.getNombre() + " indice: " + o);
-                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase()) || actual.contains(" * ")) {
                                     HashMap<String, Double> atributoSitios = new HashMap<>();
                                     if (costoAtributoxSitio.get(o) != null) {
                                         atributoSitios = costoAtributoxSitio.get(o);
@@ -629,7 +629,7 @@ public class VerticalBD {
                             for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                 Atributo a = this.oBD.getTabla().getAtributos().get(o);
                                 System.out.println("Atributo: " + a.getNombre() + " indice: " + o);
-                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase()) || actual.contains(" * ")) {
                                     HashMap<String, Double> atributoSitios = new HashMap<>();
                                     if (costoAtributoxSitio.get(o) != null) {
                                         atributoSitios = costoAtributoxSitio.get(o);
@@ -761,7 +761,7 @@ public class VerticalBD {
                                 for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                     Atributo a = this.oBD.getTabla().getAtributos().get(o);
                                     System.out.println("Atributo: " + a.getNombre()+a.getTamanio() + " indice: " + o);
-                                    if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                    if (actual.toLowerCase().contains(a.getNombre().toLowerCase()) || !actual.contains("projection")) {
                                         HashMap<String, Double> atributoSitios = new HashMap<>();
                                         if (costoAtributoxSitio.get(o) != null) {
                                             atributoSitios = costoAtributoxSitio.get(o);
