@@ -1589,14 +1589,15 @@ public class bd implements Serializable {
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
-                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
-                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
+                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0?1:0)+", null)");
                     }
                     //atributo llave primaria en tabla original
-                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
-                            + "0, 0, " + this.getTabla().getIdTabla() + ")");
+                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception e) {
@@ -1707,14 +1708,15 @@ public class bd implements Serializable {
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
-                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom, id_fragmento,descriptor,multimedia,id_tabla) "
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
-                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
+                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0?1:0)+", null)");
                     }
                     //atributo llave primaria en tabla original
-                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
-                            + "0, 0, " + this.getTabla().getIdTabla() + ")");
+                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception ex) {
@@ -1784,13 +1786,15 @@ public class bd implements Serializable {
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
                     for (Atributo a : frag.getArrAtri()) {
-                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                        accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
-                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", null)");
+                                + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0?1:0)+", null)");
                     }
-                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,id_tabla) "
+                    //atributo llave primaria en tabla original
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
-                            + "0, 0, " + this.getTabla().getIdTabla() + ")");
+                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception e) {

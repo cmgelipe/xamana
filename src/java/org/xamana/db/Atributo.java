@@ -16,6 +16,7 @@ public class Atributo {
     private String tamanio;
     private boolean multimedia;
     private boolean descriptor;
+    private boolean pk;
     /**
      * @return the nombre
      */
@@ -98,6 +99,20 @@ public class Atributo {
      */
     public void setDescriptor(boolean descriptor) {
         this.descriptor = descriptor;
+    }
+
+    /**
+     * @return the pk
+     */
+    public boolean isPk() {
+        return pk;
+    }
+
+    /**
+     * @param pk the pk to set
+     */
+    public void setPk(boolean pk) {
+        this.pk = pk;
     }
     
 }
