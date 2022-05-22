@@ -1425,8 +1425,17 @@ public class bd implements Serializable {
                 crearTablaVerticalMySQL(ta);
                 this.progress1 += percent;
             }
-            //SECCIÓN DE ELIMINAR
             try {
+                AccesoDatos accXamana = new AccesoDatos();
+                //atributo llave primaria en tabla original
+                if (accXamana.conectar()) {
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
+                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
+                    accXamana.desconectar();
+                }
+
+                //SECCIÓN DE ELIMINAR
                 String sql = "";
                 AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
                 if (acc2.conectar()) {
@@ -1449,6 +1458,15 @@ public class bd implements Serializable {
                 this.progress1 += percent;
             }
             try {
+                AccesoDatos accXamana = new AccesoDatos();
+                //atributo llave primaria en tabla original
+                if (accXamana.conectar()) {
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
+                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
+                    accXamana.desconectar();
+                }
+                
                 //SECCIÓN DE ELIMINAR
                 String sql = "";
                 AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
@@ -1472,8 +1490,18 @@ public class bd implements Serializable {
                 crearTablaVerticalMongo(ta);
                 this.progress1 += percent;
             }
+            
             //seccion de eliminar
             try {
+                AccesoDatos accXamana = new AccesoDatos();
+                //atributo llave primaria en tabla original
+                if (accXamana.conectar()) {
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
+                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
+                    accXamana.desconectar();
+                }
+                
                 //Origen
                 AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
                 if (accOrigen.conectar()) {
@@ -1592,12 +1620,9 @@ public class bd implements Serializable {
                         accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
-                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0?1:0)+", null)");
+                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
                     }
-                    //atributo llave primaria en tabla original
-                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
-                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
-                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
+
                 }
             }
         } catch (Exception e) {
@@ -1711,12 +1736,8 @@ public class bd implements Serializable {
                         accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
-                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0?1:0)+", null)");
+                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
                     }
-                    //atributo llave primaria en tabla original
-                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
-                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
-                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception ex) {
@@ -1770,7 +1791,7 @@ public class bd implements Serializable {
                         + "where not exists (select direccion from Sitio where direccion='" + frag.getSitio() + "') limit 1;";
                 accXamana.ejecutarComando(sql);
                 sql = "select id_sitio from Sitio where direccion='" + frag.getSitio() + "'";
-                
+
                 id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
                 //FRAGMENTO
                 if (frag.isMultimedia()) {
@@ -1789,12 +1810,8 @@ public class bd implements Serializable {
                         accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                                 + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                 + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
-                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre())==0?1:0)+", null)");
+                                + (a.getNombre().compareTo(this.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
                     }
-                    //atributo llave primaria en tabla original
-                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
-                            + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
-                            + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                 }
             }
         } catch (Exception e) {
