@@ -1607,12 +1607,12 @@ public class bd implements Serializable {
                 if (frag.isMultimedia()) {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,0,1)");
+                            + ", " + id_sitio + ",0,"+frag.getCosto()+",1)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 } else {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,0,0)");
+                            + ", " + id_sitio + ",0,"+frag.getCosto()+",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
@@ -1723,12 +1723,12 @@ public class bd implements Serializable {
                 if (frag.isMultimedia()) {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,0,1)");
+                            + ", " + id_sitio + ",0,"+frag.getCosto()+",1)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 } else {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,0,0)");
+                            + ", " + id_sitio + ",0,"+frag.getCosto()+",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
@@ -1797,12 +1797,12 @@ public class bd implements Serializable {
                 if (frag.isMultimedia()) {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,0,1)");
+                            + ", " + id_sitio + ",0,"+frag.getCosto()+",1)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 } else {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,0,0)");
+                            + ", " + id_sitio + ",0,"+frag.getCosto()+",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
