@@ -346,7 +346,9 @@ public class bd implements Serializable {
                 acc.ejecutarComando(query);
                 ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                 id_bd = "" + ((ArrayList) res.get(0)).get(0);
-                acc.ejecutarComando("insert into Tabla (nombre,umbral_op,umbral_des,tipo_frag,id_BD) values ('" + this.getTabla().getNombre() + "'," + this.getTabla().getUmbralOP() + "," + this.getTabla().getUmbralCO() + ",'" + this.tabla.getTipoFragment() + "'," + id_bd + ")");
+                String q="insert into Tabla (nombre,umbral_op,umbral_des,tipo_frag,id_BD) values ('" + this.getTabla().getNombre() + "'," + this.getTabla().getUmbralOP() + "," + this.getTabla().getUmbralCO() + ",'" + this.tabla.getTipoFragment() + "'," + id_bd + ")";
+                System.out.println(q);
+                acc.ejecutarComando(q);
                 res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                 id_tabla = "" + ((ArrayList) res.get(0)).get(0);
                 acc.desconectar();
@@ -1421,8 +1423,10 @@ public class bd implements Serializable {
         int percent = 100 / es.size();
         this.guardarDatos();
         if (this.getTipoBD().compareTo("a") == 0) {
+            double cDesempenioTablaOriginal=0.0;
             for (TablaCosto ta : es) {
                 crearTablaVerticalMySQL(ta);
+                cDesempenioTablaOriginal+=ta.getCosto();
                 this.progress1 += percent;
             }
             try {
@@ -1432,6 +1436,8 @@ public class bd implements Serializable {
                     accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
                             + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
+                    //Desempenio de tabla original
+                    accXamana.ejecutarComando("update Tabla set ndesempenio="+cDesempenioTablaOriginal+" where id_tabla="+this.getTabla().getIdTabla());
                     accXamana.desconectar();
                 }
 
@@ -1453,8 +1459,10 @@ public class bd implements Serializable {
                 e.printStackTrace();
             }
         } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
+            double cDesempenioTablaOriginal=0.0;
             for (TablaCosto ta : es) {
                 crearTablaVerticalPostgres(ta);
+                cDesempenioTablaOriginal+=ta.getCosto();
                 this.progress1 += percent;
             }
             try {
@@ -1464,6 +1472,8 @@ public class bd implements Serializable {
                     accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
                             + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
+                    //Desempenio de tabla original
+                    accXamana.ejecutarComando("update Tabla set ndesempenio="+cDesempenioTablaOriginal+" where id_tabla="+this.getTabla().getIdTabla());
                     accXamana.desconectar();
                 }
                 
@@ -1486,8 +1496,10 @@ public class bd implements Serializable {
                 e.printStackTrace();
             }
         } else if (this.getTipoBD().compareTo("d") == 0) {
+            double cDesempenioTablaOriginal=0.0;
             for (TablaCosto ta : es) {
                 crearTablaVerticalMongo(ta);
+                cDesempenioTablaOriginal+=ta.getCosto();
                 this.progress1 += percent;
             }
             
@@ -1499,6 +1511,8 @@ public class bd implements Serializable {
                     accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
                             + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
+                    //Desempenio de tabla original
+                    accXamana.ejecutarComando("update Tabla set ndesempenio="+cDesempenioTablaOriginal+" where id_tabla="+this.getTabla().getIdTabla());
                     accXamana.desconectar();
                 }
                 
