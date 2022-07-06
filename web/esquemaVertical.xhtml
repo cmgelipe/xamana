@@ -117,8 +117,9 @@ and open the template in the editor.
             </p:progressBar>
             <br/>
             <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:d6" />
-            <p:dialog id="d6" visible="false" header="Token">
+            <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
                 <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />
+                <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
             </p:dialog>
             <p:dialog id="d15"  header="successful" modal="true" visible="false">
                 <h:outputText value="La fragmentación dinámica de este tipo requiere ejecutar el jar en cada nodo de la red" /><br />

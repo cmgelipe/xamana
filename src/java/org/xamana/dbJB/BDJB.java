@@ -482,6 +482,7 @@ public class BDJB implements Serializable {
             this.visible = false;
             this.obj.fragmentarVertical(this.obj.getEsquemaVertical());
             this.visible = true;
+            this.setBToken(true);
         }
     }
 
