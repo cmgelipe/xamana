@@ -839,7 +839,9 @@ public class VerticalBD {
         if (attsSinCosto.size() > 0) {
             esquemaVertical.get(0).getArrAtri().addAll(attsSinCosto);
         }
+        esquemaVertical.removeIf(a->a.getArrAtri().size()==1 && a.getArrAtri().get(0).getNombre().compareTo("_id")==0 && a.getCosto()==0.0);
         esquemaVertical = this.nombrar(esquemaVertical);
+        System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: "+costoEsquemaVerticalMongoDB()+">>>>>");
     }
     //PIPE
 
@@ -882,5 +884,98 @@ public class VerticalBD {
         }
 
         return maxEntry;
+    }
+    
+    public double costoEsquemaVerticalMongoDB() {
+        this.oBD.setNombreIp(new HashMap<>());
+        double costoEsquema = 0.0;
+        System.out.println("PASAAAAAA");
+        for (UploadedFile f : this.files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    String ipLinea = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (actual.toLowerCase().contains("command") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            JSONObject j = new JSONObject(actual);
+                            String c = j.get("c").toString().toLowerCase().trim();
+                            JSONObject j2 = new JSONObject(j.get("attr").toString());
+                            JSONObject j3 = new JSONObject(j2.get("command").toString());
+                            String ns = "";
+                            int ValorAsignadoOperacion = 0;
+                            if (j3.has("find")) {
+                                ValorAsignadoOperacion = 1;
+                                ns = j3.get("find").toString().toLowerCase();
+                            } else if (j3.has("delete")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("delete").toString().toLowerCase();
+                            } else if (j3.has("insert")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("insert").toString().toLowerCase();
+                            } else if (j3.has("update")) {
+                                ValorAsignadoOperacion = 3;
+                                ns = j3.get("update").toString().toLowerCase();
+                            }
+                            if (ValorAsignadoOperacion != 0
+                                    && c.compareTo("command") == 0
+                                    && ns.compareTo(this.oBD.getTabla().getNombre().toLowerCase()) == 0) {
+
+                                j2 = new JSONObject(j.get("attr").toString());
+                                String remote = j2.get("remote").toString().toLowerCase().trim();
+                                ipLinea = remote.substring(0, remote.indexOf(":"));
+                                this.oBD.getNombreIp().put(ipLinea, ipLinea);
+
+                                //buscar en esquema si hay algun atributo (por lo menos uno) local 
+                                //(la operación se realiza en el mismo lugar a donde esta el atributo), 
+                                //si lo hay entonces considerar operación local
+                                //de otro modo es remota
+                                boolean siHay = false;
+                                for (TablaCosto tc : this.esquemaVertical) {
+                                    if (tc.getSitio().compareTo(ipLinea) == 0) {
+                                        for (Atributo l : tc.getArrAtri()) {
+                                            if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (!actual.contains("projection") && j3.has("find"))) {
+                                                siHay = true;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!siHay) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                System.out.println("VAO: " + ValorAsignadoOperacion);
+                                //calcular el número de sitios que necesita visitar para llevar
+                                //a cabo la operación (será el número de reuniones necesarias)
+                                int nJoins = 0;
+                                for (TablaCosto tc : this.esquemaVertical) {
+                                    boolean seUsa = false;
+                                    for (Atributo l : tc.getArrAtri()) {
+                                        if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (!actual.contains("projection") && j3.has("find"))) {
+                                            seUsa = true;
+                                        }
+                                    }
+                                    if(seUsa){
+                                        nJoins++;
+                                    }
+                                }
+                                if(nJoins<1){
+                                    nJoins=1;
+                                }
+                                for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
+                                    Atributo a = this.oBD.getTabla().getAtributos().get(o);
+                                    if (actual.toLowerCase().contains(a.getNombre().toLowerCase()) || (!actual.contains("projection") && j3.has("find"))) {
+                                        costoEsquema += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    }
+                                }
+                            } else {
+                                System.out.println("OPERACIÓN NO ANALIZADA (TAMAÑO DE MUESTRA)");
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return costoEsquema;
     }
 }

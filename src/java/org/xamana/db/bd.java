@@ -1409,7 +1409,10 @@ public class bd implements Serializable {
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
         juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
-        return a.nombrar(juntos);
+        juntos=a.nombrar(juntos);
+        a.setEsquemaVertical(juntos);
+        System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: "+a.costoEsquemaVerticalMongoDB()+">>>>>");
+        return juntos;
     }
 
     //PIPE

@@ -1132,9 +1132,9 @@ public class BDJB implements Serializable {
 
     public void seleccionAtributos() {
         //No deben superar los 16 MB
-        int suma = 0;
+        double suma = 0;
         for (Atributo a : this.obj.getTabla().getAtributos()) {
-            suma += Integer.parseInt(a.getTamanio());
+            suma += Double.parseDouble(a.getTamanio());
         }
         if (suma > 16) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Tamaños", "Superan los 16 MB"));
