@@ -296,6 +296,13 @@ public class BDJB implements Serializable {
                 e.printStackTrace();
             }
             tipoEsquema = "esquemaFHD.xhtml";
+        } else if(!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")){
+            //híbrida no cbir
+            this.obj.crearEsquemaHybrid(this.files);
+            tipoEsquema = "esquemaHybrid.xhtml";
+        }else if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")){
+            this.obj.crearEsquemaHybridCBIR(getAttsMultimediaDescriptor(), this.files);
+            tipoEsquema = "esquemaHybrid.xhtml";
         }
         return tipoEsquema;
     }

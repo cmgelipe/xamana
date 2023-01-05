@@ -38,6 +38,7 @@ import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.crearfrag.BuildTypes;
+import org.xamana.dhf.DHFragmentation;
 import org.xamana.vertical.VerticalBD;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
@@ -346,7 +347,7 @@ public class bd implements Serializable {
                 acc.ejecutarComando(query);
                 ArrayList res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
                 id_bd = "" + ((ArrayList) res.get(0)).get(0);
-                String q="insert into Tabla (nombre,umbral_op,umbral_des,tipo_frag,id_BD) values ('" + this.getTabla().getNombre() + "'," + this.getTabla().getUmbralOP() + "," + this.getTabla().getUmbralCO() + ",'" + this.tabla.getTipoFragment() + "'," + id_bd + ")";
+                String q = "insert into Tabla (nombre,umbral_op,umbral_des,tipo_frag,id_BD) values ('" + this.getTabla().getNombre() + "'," + this.getTabla().getUmbralOP() + "," + this.getTabla().getUmbralCO() + ",'" + this.tabla.getTipoFragment() + "'," + id_bd + ")";
                 System.out.println(q);
                 acc.ejecutarComando(q);
                 res = acc.ejecutarConsulta("select LAST_INSERT_ID()");
@@ -1409,9 +1410,9 @@ public class bd implements Serializable {
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
         juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
-        juntos=a.nombrar(juntos);
+        juntos = a.nombrar(juntos);
         a.setEsquemaVertical(juntos);
-        System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: "+a.costoEsquemaVerticalMongoDB()+">>>>>");
+        System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + a.costoEsquemaVerticalMongoDB() + ">>>>>");
         return juntos;
     }
 
@@ -1426,10 +1427,10 @@ public class bd implements Serializable {
         int percent = 100 / es.size();
         this.guardarDatos();
         if (this.getTipoBD().compareTo("a") == 0) {
-            double cDesempenioTablaOriginal=0.0;
+            double cDesempenioTablaOriginal = 0.0;
             for (TablaCosto ta : es) {
                 crearTablaVerticalMySQL(ta);
-                cDesempenioTablaOriginal+=ta.getCosto();
+                cDesempenioTablaOriginal += ta.getCosto();
                 this.progress1 += percent;
             }
             try {
@@ -1440,7 +1441,7 @@ public class bd implements Serializable {
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
                             + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                     //Desempenio de tabla original
-                    accXamana.ejecutarComando("update Tabla set ndesempenio="+cDesempenioTablaOriginal+" where id_tabla="+this.getTabla().getIdTabla());
+                    accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.getTabla().getIdTabla());
                     accXamana.desconectar();
                 }
 
@@ -1462,10 +1463,10 @@ public class bd implements Serializable {
                 e.printStackTrace();
             }
         } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
-            double cDesempenioTablaOriginal=0.0;
+            double cDesempenioTablaOriginal = 0.0;
             for (TablaCosto ta : es) {
                 crearTablaVerticalPostgres(ta);
-                cDesempenioTablaOriginal+=ta.getCosto();
+                cDesempenioTablaOriginal += ta.getCosto();
                 this.progress1 += percent;
             }
             try {
@@ -1476,10 +1477,10 @@ public class bd implements Serializable {
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
                             + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                     //Desempenio de tabla original
-                    accXamana.ejecutarComando("update Tabla set ndesempenio="+cDesempenioTablaOriginal+" where id_tabla="+this.getTabla().getIdTabla());
+                    accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.getTabla().getIdTabla());
                     accXamana.desconectar();
                 }
-                
+
                 //SECCIÓN DE ELIMINAR
                 String sql = "";
                 AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
@@ -1499,13 +1500,13 @@ public class bd implements Serializable {
                 e.printStackTrace();
             }
         } else if (this.getTipoBD().compareTo("d") == 0) {
-            double cDesempenioTablaOriginal=0.0;
+            double cDesempenioTablaOriginal = 0.0;
             for (TablaCosto ta : es) {
                 crearTablaVerticalMongo(ta);
-                cDesempenioTablaOriginal+=ta.getCosto();
+                cDesempenioTablaOriginal += ta.getCosto();
                 this.progress1 += percent;
             }
-            
+
             //seccion de eliminar
             try {
                 AccesoDatos accXamana = new AccesoDatos();
@@ -1515,10 +1516,10 @@ public class bd implements Serializable {
                             + "values ('" + this.getTabla().getAtributoLlave().getTipo() + "', " + this.getTabla().getAtributoLlave().getTamanio() + ", '" + this.getTabla().getAtributoLlave().getNombre() + "', null, "
                             + "0, 0, 1, " + this.getTabla().getIdTabla() + ")");
                     //Desempenio de tabla original
-                    accXamana.ejecutarComando("update Tabla set ndesempenio="+cDesempenioTablaOriginal+" where id_tabla="+this.getTabla().getIdTabla());
+                    accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.getTabla().getIdTabla());
                     accXamana.desconectar();
                 }
-                
+
                 //Origen
                 AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
                 if (accOrigen.conectar()) {
@@ -1624,12 +1625,12 @@ public class bd implements Serializable {
                 if (frag.isMultimedia()) {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,"+frag.getCosto()+",1)");
+                            + ", " + id_sitio + ",0," + frag.getCosto() + ",1)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 } else {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,"+frag.getCosto()+",0)");
+                            + ", " + id_sitio + ",0," + frag.getCosto() + ",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
@@ -1740,12 +1741,12 @@ public class bd implements Serializable {
                 if (frag.isMultimedia()) {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,"+frag.getCosto()+",1)");
+                            + ", " + id_sitio + ",0," + frag.getCosto() + ",1)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 } else {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,"+frag.getCosto()+",0)");
+                            + ", " + id_sitio + ",0," + frag.getCosto() + ",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
@@ -1814,12 +1815,12 @@ public class bd implements Serializable {
                 if (frag.isMultimedia()) {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,"+frag.getCosto()+",1)");
+                            + ", " + id_sitio + ",0," + frag.getCosto() + ",1)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 } else {
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0,"+frag.getCosto()+",0)");
+                            + ", " + id_sitio + ",0," + frag.getCosto() + ",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 }
                 if (!this.isNullorEmpty(idFragmento)) {
@@ -1893,5 +1894,43 @@ public class bd implements Serializable {
      */
     public void setEsquemaVertical(ArrayList<TablaCosto> esquemaVertical) {
         this.esquemaVertical = esquemaVertical;
+    }
+
+    public void crearEsquemaHybrid(UploadedFiles files) {
+        // usar la fragmentación verttical para obtener su esquema
+        //usar la fragmentación horizontal para obtener su esquema
+        //mezclar esquemas
+        //comparar esquemas
+        //elegir el mejor
+        try {
+            //vertical
+            crearEquemaVertical(files);
+            //horizontal
+            DHFragmentation DHF = new DHFragmentation(this);
+            DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void crearEsquemaHybridCBIR(ArrayList<String> att, UploadedFiles files) {
+        // usar la fragmentación verttical para obtener su esquema
+        //usar la fragmentación horizontal para obtener su esquema
+        //mezclar esquemas
+        //comparar esquemas
+        //elegir el mejor
+        try {
+            //vertical
+            esquemaVerticalCBIR(att, files);
+            //horizontal
+            valoresDistintosColMultimedia(files);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    //PIPE
+    public boolean isHybridCBIR() {
+        return this.tabla.getTipoFragment().compareTo("c") == 0 && this.tabla.isCBIR();
     }
 }
