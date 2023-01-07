@@ -42,7 +42,7 @@ import org.xamana.dhf.DHFragmentation;
 import org.xamana.vertical.VerticalBD;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
-
+import org.xamana.hybrid.*;
 /**
  *
  * @author pipe
@@ -65,7 +65,7 @@ public class bd implements Serializable {
     private ArrayList<HashMap<String, Double>> costoAtributoxSitio;
     private ArrayList<String> sitios;
     private ArrayList<TablaCosto> esquemaVertical;
-
+    
     public boolean conexionexterna() {
         boolean res = false;
 
@@ -1908,6 +1908,10 @@ public class bd implements Serializable {
             //horizontal
             DHFragmentation DHF = new DHFragmentation(this);
             DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
+            
+            HybridDesign HD=new HybridDesign();
+            HD.mix(DHF.getSchema(),this.esquemaVertical);
+            HD.costs(files);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
