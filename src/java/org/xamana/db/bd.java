@@ -43,6 +43,7 @@ import org.xamana.vertical.VerticalBD;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
 import org.xamana.hybrid.*;
+
 /**
  *
  * @author pipe
@@ -65,7 +66,7 @@ public class bd implements Serializable {
     private ArrayList<HashMap<String, Double>> costoAtributoxSitio;
     private ArrayList<String> sitios;
     private ArrayList<TablaCosto> esquemaVertical;
-    
+
     public boolean conexionexterna() {
         boolean res = false;
 
@@ -1908,10 +1909,24 @@ public class bd implements Serializable {
             //horizontal
             DHFragmentation DHF = new DHFragmentation(this);
             DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
-            
-            HybridDesign HD=new HybridDesign();
-            HD.mix(DHF.getSchema(),this.esquemaVertical);
-            HD.costs(files);
+
+            HybridDesign HD = new HybridDesign(this);
+            HD.mix(DHF.getSchema(), this.esquemaVertical);
+            String sentencia = "";
+            if (this.getTipoBD().compareTo("a") == 0) {
+                HD.costsMySQL(files);
+            } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("b") == 0) {
+                HD.costsPostgreSQL(files);
+            } else if (this.getTipoBD().compareTo("d") == 0) {
+                HD.costsMongoDB(files);
+            }
+            if (HD.getHVCost() > HD.getVHCost()) {
+                sentencia = "El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.";
+            } else if (HD.getHVCost() < HD.getVHCost()) {
+                sentencia = "El esquema horizontal-vertical respetando asignaciones horizontales es menos costoso y este será aplicado.";
+            } else {
+                sentencia = "Ambos esquemas poseen el mismo costo, se aplicará el esquema vertical-horizontal";
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1928,6 +1943,7 @@ public class bd implements Serializable {
             esquemaVerticalCBIR(att, files);
             //horizontal
             valoresDistintosColMultimedia(files);
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
