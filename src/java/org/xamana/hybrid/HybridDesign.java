@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.StringTokenizer;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.db.Atributo;
@@ -164,11 +165,11 @@ public class HybridDesign {
                                 ValorAsignadoOperacion = 3;
                             }
 
-                            String predicado = this.predicado(actual);
-                            double nTuplas = this.nTuplas(predicado);
+                            ArrayList<String> predicados = this.predicado(actual);
+                            double nTuplas = this.nTuplas((predicados.size() > 0) ? predicados.get(0) : "");
                             //cuanto sitios se requieren para satisfacer la operación
-                            double vRemotoV = this.vRemoto(ipLinea, predicado, "v");
-                            double vRemotoH = this.vRemoto(ipLinea, predicado, "h");
+                            double vRemotoV = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "v");
+                            double vRemotoH = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "h");
                             this.setVHCost(this.getVHCost() + nTuplas * ValorAsignadoOperacion * vRemotoV);
                             this.setHVCost(this.getHVCost() + nTuplas * ValorAsignadoOperacion * vRemotoH);
                         }
@@ -189,15 +190,139 @@ public class HybridDesign {
     }
 
     private double nTuplas(String predicado) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        String q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
+        double count1 = 0.0;
+        ArrayList r1 = new ArrayList();
+
+        try {
+            if (this.oBD.getAccexternomysql().conectar()) {
+                r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
+
+                this.oBD.getAccexternomysql().desconectar();
+            }
+            if (r1.size() > 0) {
+                count1 = (double) ((ArrayList) r1.get(0)).get(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count1;
     }
 
-    private String predicado(String sentencia) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    private ArrayList<String> predicado(String q) {
+        ArrayList<String> ret = new ArrayList<>();
+        if (this.oBD.getTipoBD().compareTo("a") == 0) {
+            if (q.toUpperCase().contains("INSERT ") && !q.toUpperCase().contains(" SET ")) {
+                boolean existeOrden = false;
+                for (int i = 0; i < this.oBD.getTabla().getAtributos().size(); i++) {
+                    if (q.indexOf(this.oBD.getTabla().getAtributos().get(i).getNombre()) != -1 && q.indexOf(this.oBD.getTabla().getAtributos().get(i).getNombre()) < q.toUpperCase().indexOf(" VALUES")) {
+                        existeOrden = true;
+                    }
+                }
+                String valores1 = q.substring(q.indexOf("(", q.toUpperCase().indexOf(" VALUES") + 1) + 1, q.indexOf(")", q.toUpperCase().indexOf(" VALUES") + 1));
+                valores1.replace("(", "");
+                valores1.replace(")", "");
+                String[] valores2 = valores1.split(",");
+                if (existeOrden) {
+                    String col = q.substring(q.indexOf("(") + 1, q.indexOf(")"));
+                    col.replace("(", "");
+                    col.replace(")", "");
+                    String[] col1 = col.split(",");
+                    if (col1.length == valores2.length) {
+                        for (int t = 0; t < col1.length; t++) {
+                            ret.add(col1[t] + "=" + valores2[t].trim());
+                        }
+                    }
+                } else {
+                    if (valores2.length == this.oBD.getTabla().getAtributos().size()) {
+                        for (int t = 0; t < valores2.length; t++) {
+                            ret.add(this.oBD.getTabla().getAtributos().get(t).getNombre() + "=" + valores2[t].trim());
+                        }
+                    }
+                }
+            } else {
+                StringTokenizer tokens = new StringTokenizer(q, " ");
+                while (tokens.hasMoreTokens()) {
+                    String token = tokens.nextToken();
+                    if (token.contains("!=")) {
+                        StringTokenizer valores = new StringTokenizer(token, "!=");
+                        if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                            ret.add(token);
+                        }
+                    } else if (token.contains("<=")) {
+                        StringTokenizer valores = new StringTokenizer(token, "<=");
+                        if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                            ret.add(token);
+                        }
+                    } else if (token.contains(">=")) {
+                        StringTokenizer valores = new StringTokenizer(token, ">=");
+                        if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                            ret.add(token);
+                        }
+                    } else if (token.contains("<")) {
+                        StringTokenizer valores = new StringTokenizer(token, "<");
+                        if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                            ret.add(token);
+                        }
+                    } else if (token.contains(">")) {
+                        StringTokenizer valores = new StringTokenizer(token, ">");
+                        if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                            ret.add(token);
+                        }
+                    } else if (token.contains("=")) {
+                        StringTokenizer valores = new StringTokenizer(token, "=");
+                        if (unaColumna(valores.nextToken(), valores.nextToken())) {
+                            ret.add(token);
+                        }
+                    }
+                }
+            }
+        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+
+        } else if (this.oBD.getTipoBD().compareTo("d") == 0) {
+
+        }
+        return ret;
+    }
+
+    private boolean unaColumna(String izq, String der) {
+        boolean ret = true;
+
+        for (Atributo att : this.oBD.getTabla().getAtributos()) {
+            if ((izq.contains("`" + att.getNombre() + "`") || izq.contains("." + att.getNombre()) || izq.contains(" " + att.getNombre()))
+                    && (der.contains("`" + att.getNombre() + "`") || der.contains("." + att.getNombre()) || der.contains(att.getNombre() + " "))) {
+                ret = false;
+            }
+        }
+        return ret;
     }
 
     private double vRemoto(String ip, String predicado, String sitiovh) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        boolean local = false;
+        for (HybridFragment hf : this.fragments) {
+            String predicadoFragmento = hf.getPredicado();
+            String q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
+            String q2 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado;
+            ArrayList r1 = new ArrayList();
+            ArrayList r2 = new ArrayList();
+            try {
+                if (this.oBD.getAccexternomysql().conectar()) {
+                    r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
+                    r2 = this.oBD.getAccexternomysql().ejecutarConsulta(q2);
+                    this.oBD.getAccexternomysql().desconectar();
+                }
+                if (r1.size() > 0 && r2.size() > 0) {
+                    double count1 = (double) ((ArrayList) r1.get(0)).get(0);
+                    double count2 = (double) ((ArrayList) r2.get(0)).get(0);
+                    if (count2 >= count1) {
+                        local = true;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return (local) ? 1 : 2;
     }
 
     /**
