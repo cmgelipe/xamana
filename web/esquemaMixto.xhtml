@@ -42,10 +42,13 @@ and open the template in the editor.
                     <h:outputText value="#{item.sitiov}" />
                 </p:column>
             </p:dataTable>
-            <p:dialog id="dHybrid" header="Header" visible="#{bd.DHybrid}" minHeight="40" width="350" showEffect="fade">
-                <h:outputText value="#{bd.obj.sentencia}" />
-                <p:commandButton value="OK" icon="pi-thumbs-up" action="#{bd.okHybrid()}" update="dHybrid" />
+            <h:outputText value="Costo HV: #{bd.obj.HD.HVCost}" />
+            <h:outputText value="Costo VH: #{bd.obj.HD.VHCost}" />
+            <p:dialog id="dHybrid" header="Esquema menos costoso" visible="#{bd.DHybrid}" minHeight="40" width="350" showEffect="fade">
+                <h:outputText value="#{bd.obj.sentencia}" /><br />
+                <p:commandButton value="OK" icon="pi pi-thumbs-up-fill" action="#{bd.okHybrid()}" update="dHybrid" />
             </p:dialog>
+            
         </h:form>
     </h:body>
 </html>

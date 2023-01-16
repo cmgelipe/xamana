@@ -52,7 +52,7 @@ public class HybridDesign {
     }
 
     public void costsMySQL(UploadedFiles files) {
-        System.out.println("-----------COSTOS PIPE-------------");
+        System.out.println("-----------COSTOS PIPE HÍBRIDA-------------");
         HashMap<String, String> NombreIp = new HashMap<>();
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
@@ -107,6 +107,8 @@ public class HybridDesign {
                             //calcular el número de sitios que necesita visitar para llevar
                             //a cabo la operación (será el número de reuniones necesarias)
                             //primero sitiov y luego sitioh
+                            
+                            ///MEJORA: BUSCAR QUE FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
                             int nJoins = 0;
                             for (HybridFragment fragmento : this.getFragments()) {
                                 boolean seUsa = false;
@@ -132,6 +134,7 @@ public class HybridDesign {
                                     System.out.println("Costo de operación: " + costoOperacionv);
                                 }
                             }
+                            System.out.println("Costo de operación vertical V: "+costoOperacionv);
                             this.setVHCost(this.getVHCost() + costoOperacionv);
                             //se recalcula pero ahora con sitioh para el HVcosto
                             siHay = false;
@@ -150,9 +153,12 @@ public class HybridDesign {
                             double costoOperacionh = 0.0;
                             for (Atributo a : this.oBD.getTabla().getAtributos()) {
                                 if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                    System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
                                     costoOperacionh += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    System.out.println("Costo de operación: " + costoOperacionh);
                                 }
                             }
+                            System.out.println("Costo de operación vertical h: "+costoOperacionh);
                             this.setHVCost(this.getHVCost() + costoOperacionh);
 
                             //////////horizontal
@@ -168,11 +174,16 @@ public class HybridDesign {
 
                             ArrayList<String> predicados = this.predicado(actual);
                             double nTuplas = this.nTuplas((predicados.size() > 0) ? predicados.get(0) : "");
-                            //cuanto sitios se requieren para satisfacer la operación
+                            System.out.println("Tuplas: "+nTuplas);
+                            //cuanto sitios se requieren para satisfacer el predicado de la operación
                             double vRemotoV = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "v");
+                            System.out.println("Costo remoto horizontal v: "+vRemotoV);
                             double vRemotoH = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "h");
+                            System.out.println("Costo remoto horizontal h: "+vRemotoH);
+                            
                             this.setVHCost(this.getVHCost() + nTuplas * ValorAsignadoOperacion * vRemotoV);
                             this.setHVCost(this.getHVCost() + nTuplas * ValorAsignadoOperacion * vRemotoH);
+                            
                         }
                     }
                 } catch (Exception e) {
@@ -300,19 +311,20 @@ public class HybridDesign {
 
     private double vRemoto(String ip, String predicado, String sitiovh) {
         boolean local = false;
-        ArrayList<HybridFragment> hf = null;
+        ArrayList<HybridFragment> hf = new ArrayList<>();
         for (HybridFragment hf3 : this.getFragments()) {
             if (sitiovh.compareTo("h") == 0) {
-                if (hf3.getSitioh().compareTo(sitiovh) == 0) {
+                if (hf3.getSitioh().compareTo(ip) == 0) {
                     hf.add(hf3);
                 }
             } else if (sitiovh.compareTo("v") == 0) {
-                if (hf3.getSitiov().compareTo(sitiovh) == 0) {
+                
+                if (hf3.getSitiov().compareTo(ip) == 0) {
                     hf.add(hf3);
                 }
             }
         }
-        if (hf != null) {
+        if (!hf.isEmpty()) {
             double count2 = 0.0;
             double count1 = 0.0;
             String q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
@@ -322,12 +334,13 @@ public class HybridDesign {
                     r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
                     this.oBD.getAccexternomysql().desconectar();
                 }
-                if (r1.size() > 0) {
+                if (!r1.isEmpty()) {
                     count1 = (double) ((ArrayList) r1.get(0)).get(0);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            
             if (count1 > 0) {
                 for (HybridFragment hf4 : hf) {
                     String predicadoFragmento = hf4.getPredicado();
@@ -341,6 +354,7 @@ public class HybridDesign {
                         predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
                     }
                     String q2 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado;
+                    
                     ArrayList r2 = new ArrayList();
                     try {
                         if (this.oBD.getAccexternomysql().conectar()) {
