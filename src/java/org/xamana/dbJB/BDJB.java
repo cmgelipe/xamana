@@ -75,7 +75,7 @@ public class BDJB implements Serializable {
     ArrayList<Query> consultasV;
     ArrayList<TablaCosto> AsignacionSitio;
     private boolean dtamanios = false;
-
+    private boolean dHybrid=true;
     /**
      * Creates a new instance of BD
      */
@@ -299,7 +299,7 @@ public class BDJB implements Serializable {
         } else if(!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")){
             //híbrida no cbir
             this.obj.crearEsquemaHybrid(this.files);
-            tipoEsquema = "esquemaHybrid.xhtml";
+            tipoEsquema = "esquemaMixto.xhtml";
         }else if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")){
             this.obj.crearEsquemaHybridCBIR(getAttsMultimediaDescriptor(), this.files);
             tipoEsquema = "esquemaHybrid.xhtml";
@@ -1159,5 +1159,23 @@ public class BDJB implements Serializable {
         }catch(Exception e){
             e.printStackTrace();
         }
+    }
+
+    /**
+     * @return the dHybrid
+     */
+    public boolean isDHybrid() {
+        return dHybrid;
+    }
+
+    /**
+     * @param dHybrid the dHybrid to set
+     */
+    public void setDHybrid(boolean dHybrid) {
+        this.dHybrid = dHybrid;
+    }
+    
+    public void okHybrid(){
+        this.dHybrid=false;
     }
 }

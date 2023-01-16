@@ -26,7 +26,8 @@ public class HybridDesign {
 
     private double HVCost;
     private double VHCost;
-    ArrayList<HybridFragment> fragments;
+    private ArrayList<HybridFragment> fragments;
+
     bd oBD;
 
     public HybridDesign(bd oBD) {
@@ -45,7 +46,7 @@ public class HybridDesign {
                 newFragment.setAtts(vf.getArrAtri());
                 newFragment.setSitioh(hf.getSite());
                 newFragment.setSitiov(vf.getSitio());
-                fragments.add(newFragment);
+                getFragments().add(newFragment);
             }
         }
     }
@@ -90,7 +91,7 @@ public class HybridDesign {
                             //de otro modo es remota
                             //primero sitiov y luego sitioh
                             boolean siHay = false;
-                            for (HybridFragment fragmento : this.fragments) {
+                            for (HybridFragment fragmento : this.getFragments()) {
                                 if (fragmento.getSitiov().compareTo(ipLinea) == 0) {
                                     for (Atributo l : fragmento.getAtts()) {
                                         if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
@@ -107,7 +108,7 @@ public class HybridDesign {
                             //a cabo la operación (será el número de reuniones necesarias)
                             //primero sitiov y luego sitioh
                             int nJoins = 0;
-                            for (HybridFragment fragmento : this.fragments) {
+                            for (HybridFragment fragmento : this.getFragments()) {
                                 boolean seUsa = false;
                                 for (Atributo l : fragmento.getAtts()) {
                                     if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
@@ -134,7 +135,7 @@ public class HybridDesign {
                             this.setVHCost(this.getVHCost() + costoOperacionv);
                             //se recalcula pero ahora con sitioh para el HVcosto
                             siHay = false;
-                            for (HybridFragment fragmento : this.fragments) {
+                            for (HybridFragment fragmento : this.getFragments()) {
                                 if (fragmento.getSitioh().compareTo(ipLinea) == 0) {
                                     for (Atributo l : fragmento.getAtts()) {
                                         if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
@@ -299,28 +300,68 @@ public class HybridDesign {
 
     private double vRemoto(String ip, String predicado, String sitiovh) {
         boolean local = false;
-        for (HybridFragment hf : this.fragments) {
-            String predicadoFragmento = hf.getPredicado();
+        ArrayList<HybridFragment> hf = null;
+        for (HybridFragment hf3 : this.getFragments()) {
+            if (sitiovh.compareTo("h") == 0) {
+                if (hf3.getSitioh().compareTo(sitiovh) == 0) {
+                    hf.add(hf3);
+                }
+            } else if (sitiovh.compareTo("v") == 0) {
+                if (hf3.getSitiov().compareTo(sitiovh) == 0) {
+                    hf.add(hf3);
+                }
+            }
+        }
+        if (hf != null) {
+            double count2 = 0.0;
+            double count1 = 0.0;
             String q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
-            String q2 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado;
             ArrayList r1 = new ArrayList();
-            ArrayList r2 = new ArrayList();
             try {
                 if (this.oBD.getAccexternomysql().conectar()) {
                     r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
-                    r2 = this.oBD.getAccexternomysql().ejecutarConsulta(q2);
                     this.oBD.getAccexternomysql().desconectar();
                 }
-                if (r1.size() > 0 && r2.size() > 0) {
-                    double count1 = (double) ((ArrayList) r1.get(0)).get(0);
-                    double count2 = (double) ((ArrayList) r2.get(0)).get(0);
-                    if (count2 >= count1) {
-                        local = true;
-                    }
+                if (r1.size() > 0) {
+                    count1 = (double) ((ArrayList) r1.get(0)).get(0);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            if (count1 > 0) {
+                for (HybridFragment hf4 : hf) {
+                    String predicadoFragmento = hf4.getPredicado();
+                    if (hf4.getPredicado().contains("predicate") || hf4.getPredicado().contains("predicado")) {
+                        predicadoFragmento = "";
+                        for (HybridFragment hf2 : this.getFragments()) {
+                            if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                                predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
+                            }
+                        }
+                        predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
+                    }
+                    String q2 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado;
+                    ArrayList r2 = new ArrayList();
+                    try {
+                        if (this.oBD.getAccexternomysql().conectar()) {
+                            r2 = this.oBD.getAccexternomysql().ejecutarConsulta(q2);
+                            this.oBD.getAccexternomysql().desconectar();
+                        }
+                        if (!r2.isEmpty()) {
+                            count2 += (double) ((ArrayList) r2.get(0)).get(0);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (count2 >= count1) {
+                    local = true;
+                }
+            } else {
+                local = true;
+            }
+        } else {
+            local = false;
         }
         return (local) ? 1 : 2;
     }
@@ -351,6 +392,20 @@ public class HybridDesign {
      */
     public void setVHCost(double VHCost) {
         this.VHCost = VHCost;
+    }
+
+    /**
+     * @return the fragments
+     */
+    public ArrayList<HybridFragment> getFragments() {
+        return fragments;
+    }
+
+    /**
+     * @param fragments the fragments to set
+     */
+    public void setFragments(ArrayList<HybridFragment> fragments) {
+        this.fragments = fragments;
     }
 
 }

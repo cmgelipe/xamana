@@ -103,4 +103,11 @@ public class HybridFragment {
         this.costo = costo;
     }
     
+    public String getAtributosMostrar(){
+        String ret="";
+        for(Atributo a:this.atts){
+            ret+=a.getNombre()+",";
+        }
+        return (ret.length()>0)?ret.substring(0, ret.length()-1):ret;
+    }
 }

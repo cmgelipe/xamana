@@ -66,6 +66,8 @@ public class bd implements Serializable {
     private ArrayList<HashMap<String, Double>> costoAtributoxSitio;
     private ArrayList<String> sitios;
     private ArrayList<TablaCosto> esquemaVertical;
+    private HybridDesign HD;
+    private String sentencia = "";
 
     public boolean conexionexterna() {
         boolean res = false;
@@ -1910,22 +1912,22 @@ public class bd implements Serializable {
             DHFragmentation DHF = new DHFragmentation(this);
             DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
 
-            HybridDesign HD = new HybridDesign(this);
-            HD.mix(DHF.getSchema(), this.esquemaVertical);
-            String sentencia = "";
+            setHD(new HybridDesign(this));
+            getHD().mix(DHF.getSchema(), this.esquemaVertical);
+            
             if (this.getTipoBD().compareTo("a") == 0) {
-                HD.costsMySQL(files);
+                getHD().costsMySQL(files);
             } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("b") == 0) {
-                HD.costsPostgreSQL(files);
+                getHD().costsPostgreSQL(files);
             } else if (this.getTipoBD().compareTo("d") == 0) {
-                HD.costsMongoDB(files);
+                getHD().costsMongoDB(files);
             }
-            if (HD.getHVCost() > HD.getVHCost()) {
-                sentencia = "El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.";
-            } else if (HD.getHVCost() < HD.getVHCost()) {
-                sentencia = "El esquema horizontal-vertical respetando asignaciones horizontales es menos costoso y este será aplicado.";
+            if (getHD().getHVCost() > getHD().getVHCost()) {
+                setSentencia("El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.");
+            } else if (getHD().getHVCost() < getHD().getVHCost()) {
+                setSentencia("El esquema horizontal-vertical respetando asignaciones horizontales es menos costoso y este será aplicado.");
             } else {
-                sentencia = "Ambos esquemas poseen el mismo costo, se aplicará el esquema vertical-horizontal";
+                setSentencia("Ambos esquemas poseen el mismo costo, se aplicará el esquema vertical-horizontal");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -1952,5 +1954,33 @@ public class bd implements Serializable {
     //PIPE
     public boolean isHybridCBIR() {
         return this.tabla.getTipoFragment().compareTo("c") == 0 && this.tabla.isCBIR();
+    }
+
+    /**
+     * @return the HD
+     */
+    public HybridDesign getHD() {
+        return HD;
+    }
+
+    /**
+     * @param HD the HD to set
+     */
+    public void setHD(HybridDesign HD) {
+        this.HD = HD;
+    }
+
+    /**
+     * @return the sentencia
+     */
+    public String getSentencia() {
+        return sentencia;
+    }
+
+    /**
+     * @param sentencia the sentencia to set
+     */
+    public void setSentencia(String sentencia) {
+        this.sentencia = sentencia;
     }
 }
