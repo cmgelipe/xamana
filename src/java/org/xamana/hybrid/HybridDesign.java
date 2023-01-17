@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.db.Atributo;
@@ -107,23 +109,33 @@ public class HybridDesign {
                             //calcular el número de sitios que necesita visitar para llevar
                             //a cabo la operación (será el número de reuniones necesarias)
                             //primero sitiov y luego sitioh
-                            
-                            ///MEJORA: BUSCAR QUE FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
+
+                            ///MEJORA: BUSCAR QUÉ FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
                             int nJoins = 0;
+                            ArrayList<String> atributosOpe = buscarAtributos(actual);
+                            ArrayList<HybridFragment> fResuelvenAtributos = new ArrayList<>();
                             for (HybridFragment fragmento : this.getFragments()) {
                                 boolean seUsa = false;
                                 for (Atributo l : fragmento.getAtts()) {
-                                    if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
-                                        seUsa = true;
+                                    if (atributosOpe.contains(l.getNombre().toLowerCase())) {
+                                        fResuelvenAtributos.add(fragmento);
                                     }
                                 }
-                                if (seUsa) {
-                                    nJoins++;
+
+                            }
+                            String where_statement = where_statement(actual);
+                            double tuplasDelWhere = this.nTuplas(where_statement);
+                            ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
+                            //filtrado por predicado
+                            if (tuplasDelWhere > 0) {
+                                for (HybridFragment fragmento : fResuelvenAtributos) {
+                                    double tuplasDeAmbosPredicados = this.nTuplas(where_statement + " and " + fragmento.getPredicado());
+                                    if (tuplasDeAmbosPredicados > 0) {
+                                        fResuelvenPredicados.add(fragmento);
+                                    }
                                 }
                             }
-                            if (nJoins < 1) {
-                                nJoins = 1;
-                            }
+                            nJoins = (fResuelvenPredicados.size() < 1) ? 1 : fResuelvenPredicados.size();
 
                             System.out.println("CR: " + nJoins);
                             double costoOperacionv = 0.0;
@@ -134,7 +146,7 @@ public class HybridDesign {
                                     System.out.println("Costo de operación: " + costoOperacionv);
                                 }
                             }
-                            System.out.println("Costo de operación vertical V: "+costoOperacionv);
+                            System.out.println("Costo de operación vertical V: " + costoOperacionv);
                             this.setVHCost(this.getVHCost() + costoOperacionv);
                             //se recalcula pero ahora con sitioh para el HVcosto
                             siHay = false;
@@ -158,32 +170,33 @@ public class HybridDesign {
                                     System.out.println("Costo de operación: " + costoOperacionh);
                                 }
                             }
-                            System.out.println("Costo de operación vertical h: "+costoOperacionh);
+                            System.out.println("Costo de operación vertical h: " + costoOperacionh);
                             this.setHVCost(this.getHVCost() + costoOperacionh);
 
                             //////////horizontal
                             ValorAsignadoOperacion = 0;
-                            if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            if (actual.toLowerCase().contains("select")) {
                                 ValorAsignadoOperacion = 1;
                             } else if ((actual.toLowerCase().contains("delete")
-                                    || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                                    || actual.toLowerCase().contains("insert"))) {
                                 ValorAsignadoOperacion = 2;
-                            } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            } else if (actual.toLowerCase().contains("update")) {
                                 ValorAsignadoOperacion = 3;
                             }
 
                             ArrayList<String> predicados = this.predicado(actual);
                             double nTuplas = this.nTuplas((predicados.size() > 0) ? predicados.get(0) : "");
-                            System.out.println("Tuplas: "+nTuplas);
+                            System.out.println("Tuplas: " + nTuplas);
                             //cuanto sitios se requieren para satisfacer el predicado de la operación
                             double vRemotoV = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "v");
-                            System.out.println("Costo remoto horizontal v: "+vRemotoV);
                             double vRemotoH = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "h");
-                            System.out.println("Costo remoto horizontal h: "+vRemotoH);
-                            
-                            this.setVHCost(this.getVHCost() + nTuplas * ValorAsignadoOperacion * vRemotoV);
-                            this.setHVCost(this.getHVCost() + nTuplas * ValorAsignadoOperacion * vRemotoH);
-                            
+                            double costohorizontalv = nTuplas * ValorAsignadoOperacion * vRemotoV;
+                            double costohorizontalh = nTuplas * ValorAsignadoOperacion * vRemotoH;
+                            System.out.println("Costo remoto horizontal v: " + costohorizontalv);
+                            System.out.println("Costo remoto horizontal h: " + costohorizontalh);
+                            this.setVHCost(this.getVHCost() + costohorizontalv);
+                            this.setHVCost(this.getHVCost() + costohorizontalh);
+
                         }
                     }
                 } catch (Exception e) {
@@ -318,7 +331,7 @@ public class HybridDesign {
                     hf.add(hf3);
                 }
             } else if (sitiovh.compareTo("v") == 0) {
-                
+
                 if (hf3.getSitiov().compareTo(ip) == 0) {
                     hf.add(hf3);
                 }
@@ -340,7 +353,7 @@ public class HybridDesign {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            
+
             if (count1 > 0) {
                 for (HybridFragment hf4 : hf) {
                     String predicadoFragmento = hf4.getPredicado();
@@ -354,7 +367,7 @@ public class HybridDesign {
                         predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
                     }
                     String q2 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado;
-                    
+
                     ArrayList r2 = new ArrayList();
                     try {
                         if (this.oBD.getAccexternomysql().conectar()) {
@@ -420,6 +433,100 @@ public class HybridDesign {
      */
     public void setFragments(ArrayList<HybridFragment> fragments) {
         this.fragments = fragments;
+    }
+
+    private ArrayList<String> buscarAtributos(String actual) {
+        ArrayList<String> ret = new ArrayList<>();
+        if (this.oBD.getTipoBD().compareTo("a") == 0 || this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+            if (actual.toLowerCase().contains("select")) {
+                if (actual.toLowerCase().contains("from")) {
+                    if (actual.toLowerCase().contains("*")) {
+                        for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                            ret.add(a.getNombre().toLowerCase());
+                        }
+                    } else {
+                        for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                            if (actual.toLowerCase().indexOf(a.getNombre().toLowerCase()) < actual.toLowerCase().indexOf("from")
+                                    && actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                ret.add(a.getNombre().toLowerCase());
+                            }
+                        }
+                    }
+                }
+            } else if (actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("insert")) {
+                for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                    ret.add(a.getNombre().toLowerCase());
+                }
+            } else if (actual.toLowerCase().contains("update")) {
+                if (actual.toLowerCase().contains("set")) {
+                    if (actual.toLowerCase().contains("where")) {
+                        for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                            if (actual.toLowerCase().indexOf(a.getNombre().toLowerCase(), actual.toLowerCase().indexOf("set")) < actual.toLowerCase().indexOf("where")
+                                    && actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                ret.add(a.getNombre().toLowerCase());
+                            }
+                        }
+                    } else {
+                        for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                            if (actual.toLowerCase().indexOf(a.getNombre().toLowerCase(), actual.toLowerCase().indexOf("set")) > -1
+                                    && actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                ret.add(a.getNombre().toLowerCase());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    private String where_statement(String actual) {
+        String ret = "";
+        if (this.oBD.getTipoBD().compareTo("a") == 0) {
+            if (actual.toLowerCase().contains("select")) {
+                if (actual.toLowerCase().contains("where")) {
+                    Pattern pattern = Pattern.compile("GROUP BY|HAVING|WINDOW|ORDER BY|LIMIT|FOR|INTO OUTFILE|INTO DUMPFILE|INTO");
+                    Matcher matcher = pattern.matcher(actual.toUpperCase());
+                    matcher.find();
+                    int indexMatch = actual.length();
+                    try {
+                        indexMatch = matcher.start();
+                    } catch (Exception e) {
+
+                    }
+                    ret = actual.substring(actual.toLowerCase().indexOf("where"), indexMatch);
+                }
+            } else if (actual.toLowerCase().contains("delete")) {
+                if (actual.toLowerCase().contains("where")) {
+
+                }
+            } else if (actual.toLowerCase().contains("insert")) {
+
+            } else if (actual.toLowerCase().contains("update")) {
+                if (actual.toLowerCase().contains("where")) {
+
+                }
+            }
+        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+            if (actual.toLowerCase().contains("select")) {
+                if (actual.toLowerCase().contains("where")) {
+
+                }
+            } else if (actual.toLowerCase().contains("delete")) {
+                if (actual.toLowerCase().contains("where")) {
+
+                }
+            } else if (actual.toLowerCase().contains("insert")) {
+
+            } else if (actual.toLowerCase().contains("update")) {
+                if (actual.toLowerCase().contains("where")) {
+
+                }
+            }
+        } else {
+
+        }
+        return ret;
     }
 
 }
