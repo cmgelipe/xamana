@@ -118,18 +118,25 @@ public class HybridDesign {
                                 boolean seUsa = false;
                                 for (Atributo l : fragmento.getAtts()) {
                                     if (atributosOpe.contains(l.getNombre().toLowerCase())) {
-                                        fResuelvenAtributos.add(fragmento);
+                                        seUsa=true;
                                     }
                                 }
-
+                                fResuelvenAtributos.add(fragmento);
                             }
+                            System.out.println("fResuelvenAtributos: "+fResuelvenAtributos.size());
                             String where_statement = where_statement(actual);
-                            double tuplasDelWhere = this.nTuplas(where_statement);
+                            double tuplasDelWhere = this.nTuplas(where_statement.toLowerCase().replace("where", ""));
                             ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
                             //filtrado por predicado
                             if (tuplasDelWhere > 0) {
                                 for (HybridFragment fragmento : fResuelvenAtributos) {
-                                    double tuplasDeAmbosPredicados = this.nTuplas(where_statement + " and " + fragmento.getPredicado());
+                                    double tuplasDeAmbosPredicados=0;
+                                    if(!where_statement.isEmpty()){
+                                        tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado());
+                                    }else{
+                                        tuplasDeAmbosPredicados = 1;
+                                    }
+                                    
                                     if (tuplasDeAmbosPredicados > 0) {
                                         fResuelvenPredicados.add(fragmento);
                                     }
@@ -215,7 +222,12 @@ public class HybridDesign {
     }
 
     private double nTuplas(String predicado) {
-        String q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
+        String q1="";
+        if(!predicado.isEmpty()){
+            q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
+        } else {
+            q1= "select count(*) from " + this.oBD.getTabla().getNombre();
+        }
         double count1 = 0.0;
         ArrayList r1 = new ArrayList();
 
@@ -482,10 +494,11 @@ public class HybridDesign {
 
     private String where_statement(String actual) {
         String ret = "";
-        if (this.oBD.getTipoBD().compareTo("a") == 0) {
+        if (this.oBD.getTipoBD().compareTo("a") == 0 || this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
             if (actual.toLowerCase().contains("select")) {
                 if (actual.toLowerCase().contains("where")) {
-                    Pattern pattern = Pattern.compile("GROUP BY|HAVING|WINDOW|ORDER BY|LIMIT|FOR|INTO OUTFILE|INTO DUMPFILE|INTO");
+                    String patron=(this.oBD.getTipoBD().compareTo("a") == 0)?"GROUP BY|HAVING|WINDOW|ORDER BY|LIMIT|FOR|INTO OUTFILE|INTO DUMPFILE|INTO":"GROUP BY|HAVING|WINDOW|UNION|INTERSECT|EXCEPT|ORDER BY|LIMIT|OFFSET|FETCH|FOR";
+                    Pattern pattern = Pattern.compile(patron);
                     Matcher matcher = pattern.matcher(actual.toUpperCase());
                     matcher.find();
                     int indexMatch = actual.length();
@@ -496,35 +509,28 @@ public class HybridDesign {
                     }
                     ret = actual.substring(actual.toLowerCase().indexOf("where"), indexMatch);
                 }
-            } else if (actual.toLowerCase().contains("delete")) {
+            } else if (actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update")) {
                 if (actual.toLowerCase().contains("where")) {
+                    String patron=(this.oBD.getTipoBD().compareTo("a") == 0)?"ORDER BY|LIMIT":"RETURNING";
+                    Pattern pattern = Pattern.compile(patron);
+                    Matcher matcher = pattern.matcher(actual.toUpperCase());
+                    matcher.find();
+                    int indexMatch = actual.length();
+                    try {
+                        indexMatch = matcher.start();
+                    } catch (Exception e) {
 
+                    }
+                    ret = actual.substring(actual.toLowerCase().indexOf("where"), indexMatch);
                 }
             } else if (actual.toLowerCase().contains("insert")) {
-
-            } else if (actual.toLowerCase().contains("update")) {
-                if (actual.toLowerCase().contains("where")) {
-
+                for(String p:this.predicado(actual)){
+                    ret += p+" and ";
                 }
-            }
-        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
-            if (actual.toLowerCase().contains("select")) {
-                if (actual.toLowerCase().contains("where")) {
-
-                }
-            } else if (actual.toLowerCase().contains("delete")) {
-                if (actual.toLowerCase().contains("where")) {
-
-                }
-            } else if (actual.toLowerCase().contains("insert")) {
-
-            } else if (actual.toLowerCase().contains("update")) {
-                if (actual.toLowerCase().contains("where")) {
-
-                }
-            }
+                ret=(ret.length()>4)?"where "+ret.substring(0, ret.length()-5):ret;
+            } 
         } else {
-
+            //mongo
         }
         return ret;
     }
