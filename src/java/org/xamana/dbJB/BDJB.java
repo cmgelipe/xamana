@@ -75,7 +75,8 @@ public class BDJB implements Serializable {
     ArrayList<Query> consultasV;
     ArrayList<TablaCosto> AsignacionSitio;
     private boolean dtamanios = false;
-    private boolean dHybrid=true;
+    private boolean dHybrid = true;
+
     /**
      * Creates a new instance of BD
      */
@@ -126,7 +127,7 @@ public class BDJB implements Serializable {
                 } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
                     atributos = this.obj.listaAtributosPostgreSQL();
                     this.dcolumnas = true;
-                } else if(this.obj.getTipoBD().compareTo("d") == 0 ){
+                } else if (this.obj.getTipoBD().compareTo("d") == 0) {
                     this.dcolumnas = true;
                 }
             } else {
@@ -296,11 +297,11 @@ public class BDJB implements Serializable {
                 e.printStackTrace();
             }
             tipoEsquema = "esquemaFHD.xhtml";
-        } else if(!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")){
+        } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")) {
             //híbrida no cbir
             this.obj.crearEsquemaHybrid(this.files);
             tipoEsquema = "esquemaMixto.xhtml";
-        }else if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")){
+        } else if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")) {
             this.obj.crearEsquemaHybridCBIR(getAttsMultimediaDescriptor(), this.files);
             tipoEsquema = "esquemaHybrid.xhtml";
         }
@@ -490,6 +491,8 @@ public class BDJB implements Serializable {
             this.obj.fragmentarVertical(this.obj.getEsquemaVertical());
             this.visible = true;
             this.setBToken(true);
+        } else if (this.obj.getTabla().getTipoFragment().compareTo("c") == 0 && !this.obj.getTabla().isCBIR()) {
+            this.obj.getHD().hybridFragmentation();
         }
     }
 
@@ -1106,7 +1109,7 @@ public class BDJB implements Serializable {
     public void setConsultasV(ArrayList<Query> consultasV) {
         this.consultasV = consultasV;
     }
-    
+
     /**
      * @param esquemaVerticalCBIR the esquemaVerticalCBIR to set
      */
@@ -1150,13 +1153,14 @@ public class BDJB implements Serializable {
             this.dtamanios = false;
         }
     }
-    public void onTipoFragmentchange(){
-        try{
-            if(this.obj.getTipoBD().compareTo("d")==0 && this.obj.getTabla().getTipoFragment().compareTo("b")==0){
+
+    public void onTipoFragmentchange() {
+        try {
+            if (this.obj.getTipoBD().compareTo("d") == 0 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
                 this.obj.listaAtributosMongoDB();
-                this.dtamanios=true;
+                this.dtamanios = true;
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -1174,8 +1178,8 @@ public class BDJB implements Serializable {
     public void setDHybrid(boolean dHybrid) {
         this.dHybrid = dHybrid;
     }
-    
-    public void okHybrid(){
-        this.dHybrid=false;
+
+    public void okHybrid() {
+        this.dHybrid = false;
     }
 }

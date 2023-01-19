@@ -7,6 +7,8 @@ package org.xamana.hybrid;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -14,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
+import org.xamana.datos.AccesoDatos;
 import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
@@ -29,7 +32,7 @@ public class HybridDesign {
     private double HVCost;
     private double VHCost;
     private ArrayList<HybridFragment> fragments;
-
+    private int progress1;
     bd oBD;
 
     public HybridDesign(bd oBD) {
@@ -208,7 +211,7 @@ public class HybridDesign {
                             System.out.println("Tuplas: " + nTuplas);
                             //¿qué sitios se requieren para satisfacer el predicado y atributos 
                             //de la operación? R: los mismos sitios de la vertical
-                            
+
                             //¿se requieren sitios remotos?
                             double vRemotoV = this.vRemoto(ipLinea, actual, "v");
                             double vRemotoH = this.vRemoto(ipLinea, actual, "h");
@@ -228,11 +231,11 @@ public class HybridDesign {
                                     }
                                 }
                                 if (b) {
-                                    fragments.get(i).setCostoDesV(fragments.get(i).getCostoDesV() + costoOperacionv+costohorizontalv);
-                                    fragments.get(i).setCostoDesH(fragments.get(i).getCostoDesH() + costoOperacionh+costohorizontalh);
+                                    fragments.get(i).setCostoDesV(fragments.get(i).getCostoDesV() + costoOperacionv + costohorizontalv);
+                                    fragments.get(i).setCostoDesH(fragments.get(i).getCostoDesH() + costoOperacionh + costohorizontalh);
                                 }
                             }
-                            
+
                         }
                     }
                 } catch (Exception e) {
@@ -580,6 +583,146 @@ public class HybridDesign {
             //mongo
         }
         return ret;
+    }
+
+    /**
+     * @return the progress1
+     */
+    public int getProgress1() {
+        return progress1;
+    }
+
+    /**
+     * @param progress1 the progress1 to set
+     */
+    public void setProgress1(int progress1) {
+        this.progress1 = progress1;
+    }
+
+    public void hybridFragmentation() {
+        //del mas costoso al menos costoso en su parte horizontal para respetar el traslape
+        Collections.sort(this.fragments, (HybridFragment a, HybridFragment b) -> new Double(b.getCostoDesH()).compareTo(new Double(a.getCostoDesH())));
+        this.oBD.guardarDatos();
+        int opc=(this.getHVCost()>this.getVHCost())?2:1;
+        if (this.oBD.getTipoBD().compareTo("a") == 0) {
+            hybridFragmentationMySQL(opc);
+        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+
+        } else {
+
+        }
+    }
+
+    private void hybridFragmentationMySQL(int opc) {
+        //creación de tablas
+        for (HybridFragment frag : this.fragments) {
+            String sitio=(opc==1)?frag.getSitiov():frag.getSitioh();
+            double costo=(opc==1)?frag.getCostoDesV():frag.getCostoDesH();
+            String sql;
+            String att_tipo = "";
+            for (Atributo r : frag.getAtts()) {
+                if (this.oBD.transTipoDato(r.getTipo()) != 0) {
+                    att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                } else {
+                    if (r.getTipo().compareTo("BIT") != 0) {
+                        if (r.getTipo().compareTo("JSON") == 0 || r.getTipo().compareTo("LONGBLOB") == 0) {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                        } else {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                        }
+                    } else {
+                        att_tipo += r.getNombre() + " TINYINT, ";
+                    }
+                }
+            }
+            att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+            try {
+                AccesoDatos acc = new AccesoDatos(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                if (acc.conectar()) {
+                    sql = "drop table if exists " + frag.getNombre() + ";";
+                    acc.ejecutarComando(sql);
+                    sql = "CREATE TABLE " + frag.getNombre() + " (" + att_tipo + ", PRIMARY KEY (" + this.oBD.getTabla().getAtributoLlave().getNombre() + "));";
+                    acc.ejecutarComando(sql);
+                    acc.desconectar();
+                }
+                ArrayList atributos = null;
+                ArrayList n = null;
+                AccesoDatos acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                if (acc2.conectar()) {
+                    String numero = "Select count(*) from " + this.oBD.getTabla().getNombre() + " where "+frag.getPredicado()+";";
+                    n = acc2.ejecutarConsulta(numero);
+                    acc2.desconectar();
+                }
+                int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
+                for (int i = 0; i < num; i++) {
+                    acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                    if (acc2.conectar()) {
+                        sql = "Select " + frag.getAtributosMostrar() + " from " + this.oBD.getTabla().getNombre() + " where "+frag.getPredicado()+" Limit 1 offset " + i;
+                        atributos = acc2.ejecutarConsulta(sql);
+                        acc2.desconectar();
+                    }
+                    if (atributos != null) {
+                        acc = new AccesoDatos(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                        if (acc.conectar()) {
+                            for (int k = 0; k < atributos.size(); k++) {
+                                String valor = "";
+                                ArrayList tupla = (ArrayList) atributos.get(k);
+                                for (int j = 0; j < tupla.size(); j++) {
+                                    if (this.oBD.transTipoDato(frag.getAtts().get(j).getTipo()) == 0 || this.oBD.transTipoDato(frag.getAtts().get(j).getTipo()) == 2) {
+                                        valor += "\"" + tupla.get(j) + "\",";
+                                    } else {
+                                        valor += tupla.get(j) + ",";
+                                    }
+                                }
+                                valor = valor.substring(0, valor.length() - 1);
+                                sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosMostrar() + ") values (" + valor + ");";
+                                acc.ejecutarComando(sql);
+
+                            }
+                            acc.desconectar();
+                        }
+                    }
+                }
+
+                //Insertar a XAMANA
+                //SITIO
+                String id_sitio = "";
+                String idFragmento = "";
+
+                AccesoDatos accXamana = new AccesoDatos();
+                if (accXamana.conectar()) {
+                    sql = "insert into Sitio (direccion) "
+                            + "select * from (select '" + sitio + "' as direccion ) as tmp "
+                            + "where not exists (select direccion from Sitio where direccion='" + sitio + "') limit 1;";
+                    accXamana.ejecutarComando(sql);
+                    sql = "select id_sitio from Sitio where direccion='" + sitio + "'";
+                    id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
+                    //FRAGMENTO
+                    if (frag.isMultimedia()) {
+                        accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                                + frag.getNombre() + "', " + this.oBD.getTabla().getIdTabla()
+                                + ", " + id_sitio + ",0," + costo + ",1)");
+                        idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                    } else {
+                        accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                                + frag.getNombre() + "', " + this.oBD.getTabla().getIdTabla()
+                                + ", " + id_sitio + ",0," + costo + ",0)");
+                        idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                    }
+                    if (!this.oBD.isNullorEmpty(idFragmento)) {
+                        for (Atributo a : frag.getAtts()) {
+                            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                                    + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
+                                    + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
+                        }
+
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

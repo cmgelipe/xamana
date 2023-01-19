@@ -19,7 +19,7 @@ public class HybridFragment {
     private String sitiov;
     private double costoDesH;
     private double costoDesV;
-
+    private boolean multimedia;
     /**
      * @return the nombre
      */
@@ -124,5 +124,19 @@ public class HybridFragment {
      */
     public void setCostoDesV(double costoDesV) {
         this.costoDesV = costoDesV;
+    }
+
+    /**
+     * @return the multimedia
+     */
+    public boolean isMultimedia() {
+        return multimedia;
+    }
+
+    /**
+     * @param multimedia the multimedia to set
+     */
+    public void setMultimedia(boolean multimedia) {
+        this.multimedia = multimedia;
     }
 }
