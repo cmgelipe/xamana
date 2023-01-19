@@ -17,7 +17,8 @@ public class HybridFragment {
     private String predicado;
     private String sitioh;
     private String sitiov;
-    private double costo;
+    private double costoDesH;
+    private double costoDesV;
 
     /**
      * @return the nombre
@@ -92,15 +93,15 @@ public class HybridFragment {
     /**
      * @return the costo
      */
-    public double getCosto() {
-        return costo;
+    public double getCostoDesH() {
+        return costoDesH;
     }
 
     /**
      * @param costo the costo to set
      */
-    public void setCosto(double costo) {
-        this.costo = costo;
+    public void setCostoDesH(double costo) {
+        this.costoDesH = costo;
     }
     
     public String getAtributosMostrar(){
@@ -109,5 +110,19 @@ public class HybridFragment {
             ret+=a.getNombre()+",";
         }
         return (ret.length()>0)?ret.substring(0, ret.length()-1):ret;
+    }
+
+    /**
+     * @return the costoDesV
+     */
+    public double getCostoDesV() {
+        return costoDesV;
+    }
+
+    /**
+     * @param costoDesV the costoDesV to set
+     */
+    public void setCostoDesV(double costoDesV) {
+        this.costoDesV = costoDesV;
     }
 }

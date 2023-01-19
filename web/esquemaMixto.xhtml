@@ -41,6 +41,12 @@ and open the template in the editor.
                 <p:column headerText="Sitio vertical">
                     <h:outputText value="#{item.sitiov}" />
                 </p:column>
+                <p:column headerText="Costo vertical">
+                    <h:outputText value="#{item.costoDesV}" />
+                </p:column>
+                <p:column headerText="Costo horizontal">
+                    <h:outputText value="#{item.costoDesH}" />
+                </p:column>
             </p:dataTable>
             <h:outputText value="Costo HV: #{bd.obj.HD.HVCost}" />
             <h:outputText value="Costo VH: #{bd.obj.HD.VHCost}" />

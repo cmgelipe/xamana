@@ -110,7 +110,7 @@ public class HybridDesign {
                             //a cabo la operación (será el número de reuniones necesarias)
                             //primero sitiov y luego sitioh
 
-                            ///MEJORA: BUSCAR QUÉ FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
+                            ///BUSCAR QUÉ FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
                             int nJoins = 0;
                             ArrayList<String> atributosOpe = buscarAtributos(actual);
                             ArrayList<HybridFragment> fResuelvenAtributos = new ArrayList<>();
@@ -118,25 +118,38 @@ public class HybridDesign {
                                 boolean seUsa = false;
                                 for (Atributo l : fragmento.getAtts()) {
                                     if (atributosOpe.contains(l.getNombre().toLowerCase())) {
-                                        seUsa=true;
+                                        seUsa = true;
                                     }
                                 }
-                                fResuelvenAtributos.add(fragmento);
+                                if (seUsa) {
+                                    fResuelvenAtributos.add(fragmento);
+                                }
                             }
-                            System.out.println("fResuelvenAtributos: "+fResuelvenAtributos.size());
                             String where_statement = where_statement(actual);
                             double tuplasDelWhere = this.nTuplas(where_statement.toLowerCase().replace("where", ""));
                             ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
                             //filtrado por predicado
                             if (tuplasDelWhere > 0) {
                                 for (HybridFragment fragmento : fResuelvenAtributos) {
-                                    double tuplasDeAmbosPredicados=0;
-                                    if(!where_statement.isEmpty()){
-                                        tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado());
-                                    }else{
+                                    double tuplasDeAmbosPredicados = 0;
+                                    if (!where_statement.isEmpty()) {
+                                        //fragmento sin predicado
+                                        if (fragmento.getPredicado().toLowerCase().contains("predicate") || fragmento.getPredicado().toLowerCase().contains("predicado")) {
+                                            String predicadoFragmento = "";
+                                            for (HybridFragment hf2 : this.getFragments()) {
+                                                if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                                                    predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
+                                                }
+                                            }
+                                            predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
+                                            tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + predicadoFragmento);
+                                        } else {
+                                            tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado());
+                                        }
+                                    } else {
                                         tuplasDeAmbosPredicados = 1;
                                     }
-                                    
+
                                     if (tuplasDeAmbosPredicados > 0) {
                                         fResuelvenPredicados.add(fragmento);
                                     }
@@ -190,13 +203,15 @@ public class HybridDesign {
                             } else if (actual.toLowerCase().contains("update")) {
                                 ValorAsignadoOperacion = 3;
                             }
-
-                            ArrayList<String> predicados = this.predicado(actual);
-                            double nTuplas = this.nTuplas((predicados.size() > 0) ? predicados.get(0) : "");
+                            String predicados = this.where_statement(actual).toLowerCase().replace("where", "");
+                            double nTuplas = this.nTuplas(predicados);
                             System.out.println("Tuplas: " + nTuplas);
-                            //cuanto sitios se requieren para satisfacer el predicado de la operación
-                            double vRemotoV = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "v");
-                            double vRemotoH = this.vRemoto(ipLinea, (predicados.size() > 0) ? predicados.get(0) : "", "h");
+                            //¿qué sitios se requieren para satisfacer el predicado y atributos 
+                            //de la operación? R: los mismos sitios de la vertical
+                            
+                            //¿se requieren sitios remotos?
+                            double vRemotoV = this.vRemoto(ipLinea, actual, "v");
+                            double vRemotoH = this.vRemoto(ipLinea, actual, "h");
                             double costohorizontalv = nTuplas * ValorAsignadoOperacion * vRemotoV;
                             double costohorizontalh = nTuplas * ValorAsignadoOperacion * vRemotoH;
                             System.out.println("Costo remoto horizontal v: " + costohorizontalv);
@@ -204,6 +219,20 @@ public class HybridDesign {
                             this.setVHCost(this.getVHCost() + costohorizontalv);
                             this.setHVCost(this.getHVCost() + costohorizontalh);
 
+                            //Agregar el costo a los fragmentos que resuelven la operación
+                            for (int i = 0; i < this.fragments.size(); i++) {
+                                boolean b = false;
+                                for (int j = 0; j < fResuelvenPredicados.size(); j++) {
+                                    if (fResuelvenPredicados.get(j).getNombre().compareTo(fragments.get(i).getNombre()) == 0) {
+                                        b = true;
+                                    }
+                                }
+                                if (b) {
+                                    fragments.get(i).setCostoDesV(fragments.get(i).getCostoDesV() + costoOperacionv+costohorizontalv);
+                                    fragments.get(i).setCostoDesH(fragments.get(i).getCostoDesH() + costoOperacionh+costohorizontalh);
+                                }
+                            }
+                            
                         }
                     }
                 } catch (Exception e) {
@@ -222,11 +251,11 @@ public class HybridDesign {
     }
 
     private double nTuplas(String predicado) {
-        String q1="";
-        if(!predicado.isEmpty()){
+        String q1 = "";
+        if (!predicado.isEmpty()) {
             q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
         } else {
-            q1= "select count(*) from " + this.oBD.getTabla().getNombre();
+            q1 = "select count(*) from " + this.oBD.getTabla().getNombre();
         }
         double count1 = 0.0;
         ArrayList r1 = new ArrayList();
@@ -334,7 +363,8 @@ public class HybridDesign {
         return ret;
     }
 
-    private double vRemoto(String ip, String predicado, String sitiovh) {
+    private double vRemoto(String ip, String actual, String sitiovh) {
+        String predicado = this.where_statement(actual).toLowerCase().replace("where", "");
         boolean local = false;
         ArrayList<HybridFragment> hf = new ArrayList<>();
         for (HybridFragment hf3 : this.getFragments()) {
@@ -350,9 +380,8 @@ public class HybridDesign {
             }
         }
         if (!hf.isEmpty()) {
-            double count2 = 0.0;
             double count1 = 0.0;
-            String q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
+            String q1 = (!predicado.isEmpty()) ? "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado : "select count(*) from " + this.oBD.getTabla().getNombre();
             ArrayList r1 = new ArrayList();
             try {
                 if (this.oBD.getAccexternomysql().conectar()) {
@@ -367,6 +396,7 @@ public class HybridDesign {
             }
 
             if (count1 > 0) {
+                ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
                 for (HybridFragment hf4 : hf) {
                     String predicadoFragmento = hf4.getPredicado();
                     if (hf4.getPredicado().contains("predicate") || hf4.getPredicado().contains("predicado")) {
@@ -378,7 +408,7 @@ public class HybridDesign {
                         }
                         predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
                     }
-                    String q2 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado;
+                    String q2 = (!predicado.isEmpty()) ? "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado : "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento;
 
                     ArrayList r2 = new ArrayList();
                     try {
@@ -387,13 +417,30 @@ public class HybridDesign {
                             this.oBD.getAccexternomysql().desconectar();
                         }
                         if (!r2.isEmpty()) {
-                            count2 += (double) ((ArrayList) r2.get(0)).get(0);
+                            double nTuplas = ((double) ((ArrayList) r2.get(0)).get(0));
+                            if (nTuplas > 0) {
+                                fResuelvenPredicados.add(hf4);
+                            }
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-                if (count2 >= count1) {
+                //filtrar fResuelvenPredicados por atributos
+                ArrayList<String> atributosOpe = buscarAtributos(actual);
+                ArrayList<HybridFragment> fResuelvenAtributos = new ArrayList<>();
+                for (HybridFragment fragmento : fResuelvenPredicados) {
+                    boolean seUsa = false;
+                    for (Atributo l : fragmento.getAtts()) {
+                        if (atributosOpe.contains(l.getNombre().toLowerCase())) {
+                            seUsa = true;
+                        }
+                    }
+                    if (seUsa) {
+                        fResuelvenAtributos.add(fragmento);
+                    }
+                }
+                if (!fResuelvenAtributos.isEmpty()) {
                     local = true;
                 }
             } else {
@@ -497,7 +544,7 @@ public class HybridDesign {
         if (this.oBD.getTipoBD().compareTo("a") == 0 || this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
             if (actual.toLowerCase().contains("select")) {
                 if (actual.toLowerCase().contains("where")) {
-                    String patron=(this.oBD.getTipoBD().compareTo("a") == 0)?"GROUP BY|HAVING|WINDOW|ORDER BY|LIMIT|FOR|INTO OUTFILE|INTO DUMPFILE|INTO":"GROUP BY|HAVING|WINDOW|UNION|INTERSECT|EXCEPT|ORDER BY|LIMIT|OFFSET|FETCH|FOR";
+                    String patron = (this.oBD.getTipoBD().compareTo("a") == 0) ? "GROUP BY|HAVING|WINDOW|ORDER BY|LIMIT|FOR|INTO OUTFILE|INTO DUMPFILE|INTO" : "GROUP BY|HAVING|WINDOW|UNION|INTERSECT|EXCEPT|ORDER BY|LIMIT|OFFSET|FETCH|FOR";
                     Pattern pattern = Pattern.compile(patron);
                     Matcher matcher = pattern.matcher(actual.toUpperCase());
                     matcher.find();
@@ -511,7 +558,7 @@ public class HybridDesign {
                 }
             } else if (actual.toLowerCase().contains("delete") || actual.toLowerCase().contains("update")) {
                 if (actual.toLowerCase().contains("where")) {
-                    String patron=(this.oBD.getTipoBD().compareTo("a") == 0)?"ORDER BY|LIMIT":"RETURNING";
+                    String patron = (this.oBD.getTipoBD().compareTo("a") == 0) ? "ORDER BY|LIMIT" : "RETURNING";
                     Pattern pattern = Pattern.compile(patron);
                     Matcher matcher = pattern.matcher(actual.toUpperCase());
                     matcher.find();
@@ -524,11 +571,11 @@ public class HybridDesign {
                     ret = actual.substring(actual.toLowerCase().indexOf("where"), indexMatch);
                 }
             } else if (actual.toLowerCase().contains("insert")) {
-                for(String p:this.predicado(actual)){
-                    ret += p+" and ";
+                for (String p : this.predicado(actual)) {
+                    ret += p + " and ";
                 }
-                ret=(ret.length()>4)?"where "+ret.substring(0, ret.length()-5):ret;
-            } 
+                ret = (ret.length() > 4) ? "where " + ret.substring(0, ret.length() - 5) : ret;
+            }
         } else {
             //mongo
         }
