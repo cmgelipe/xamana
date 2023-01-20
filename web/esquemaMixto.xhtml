@@ -25,6 +25,7 @@ and open the template in the editor.
             <text>Scheme</text>
         </header>
         <h:form id="f9">
+            <p:growl id="growl" showDetail="true" sticky="true"  />
             <p:dataTable value="#{bd.obj.HD.fragments}" var="item">
                 <p:column headerText="Nombre">
                     <h:outputText value="#{item.nombre}" />
@@ -62,10 +63,10 @@ and open the template in the editor.
             </p:panelGrid>
             
             <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.HD.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
-                <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
+                <p:ajax event="complete" listener="#{bd.onComplete}" update="f9:growl" oncomplete="PF('startButton2').enable()"/>
             </p:progressBar>
             <br/>
-            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:d6" />
+            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f9:growl" />
             
             
             <p:dialog id="dHybrid" header="Esquema menos costoso" visible="#{bd.DHybrid}" minHeight="40" width="350" showEffect="fade">

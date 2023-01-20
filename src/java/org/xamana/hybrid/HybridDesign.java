@@ -600,10 +600,10 @@ public class HybridDesign {
     }
 
     public void hybridFragmentation() {
-        //del mas costoso al menos costoso en su parte horizontal para respetar el traslape
-        Collections.sort(this.fragments, (HybridFragment a, HybridFragment b) -> new Double(b.getCostoDesH()).compareTo(new Double(a.getCostoDesH())));
+        //1 vertical 2para horizontal
+        int opc = (this.getHVCost() > this.getVHCost()) ? 1 : 2;
+        hybridOverlap(opc);
         this.oBD.guardarDatos();
-        int opc=(this.getHVCost()>this.getVHCost())?2:1;
         if (this.oBD.getTipoBD().compareTo("a") == 0) {
             hybridFragmentationMySQL(opc);
         } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
@@ -615,9 +615,10 @@ public class HybridDesign {
 
     private void hybridFragmentationMySQL(int opc) {
         //creación de tablas
+        int percent = 100 / this.fragments.size();
         for (HybridFragment frag : this.fragments) {
-            String sitio=(opc==1)?frag.getSitiov():frag.getSitioh();
-            double costo=(opc==1)?frag.getCostoDesV():frag.getCostoDesH();
+            String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
+            double costo = (opc == 1) ? frag.getCostoDesV() : frag.getCostoDesH();
             String sql;
             String att_tipo = "";
             for (Atributo r : frag.getAtts()) {
@@ -649,7 +650,7 @@ public class HybridDesign {
                 ArrayList n = null;
                 AccesoDatos acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
                 if (acc2.conectar()) {
-                    String numero = "Select count(*) from " + this.oBD.getTabla().getNombre() + " where "+frag.getPredicado()+";";
+                    String numero = "Select count(*) from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + ";";
                     n = acc2.ejecutarConsulta(numero);
                     acc2.desconectar();
                 }
@@ -657,7 +658,7 @@ public class HybridDesign {
                 for (int i = 0; i < num; i++) {
                     acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
                     if (acc2.conectar()) {
-                        sql = "Select " + frag.getAtributosMostrar() + " from " + this.oBD.getTabla().getNombre() + " where "+frag.getPredicado()+" Limit 1 offset " + i;
+                        sql = "Select " + frag.getAtributosMostrar() + " from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + " Limit 1 offset " + i;
                         atributos = acc2.ejecutarConsulta(sql);
                         acc2.desconectar();
                     }
@@ -722,7 +723,85 @@ public class HybridDesign {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            this.progress1 += percent;
+
         }
+        this.progress1 = 100;
+    }
+
+    private void hybridOverlap(int opc) {
+        ArrayList<String> predicados = new ArrayList<>();
+        for (HybridFragment f : this.fragments) {
+            if (!predicados.contains(f.getPredicado())) {
+                predicados.add(f.getPredicado());
+            }
+        }
+        ArrayList<PredicadoCosto> predicadoCosto = new ArrayList<>();
+        String predicadoFragmento = "";
+        for (String item : predicados) {
+            if (item.contains("predicate") || item.contains("predicado")) {
+                predicadoFragmento = "";
+                for (HybridFragment hf2 : this.getFragments()) {
+                    if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                        predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
+                    }
+                }
+                predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
+            }
+            int ocurrencias = 0;
+            double costo = 0;
+            for (HybridFragment f : this.fragments) {
+                if (f.getPredicado().compareTo(item) == 0) {
+                    ocurrencias++;
+                    costo = (opc == 1) ? costo + f.getCostoDesV() : costo + f.getCostoDesH();
+                }
+            }
+            PredicadoCosto p = new PredicadoCosto();
+            p.setPredicado(item);
+            p.setCosto(costo / ocurrencias);
+            predicadoCosto.add(p);
+        }
+        Collections.sort(predicadoCosto, (PredicadoCosto a, PredicadoCosto b) -> new Double(b.getCosto()).compareTo(new Double(a.getCosto())));
+        ArrayList<HybridFragment> ordenados = new ArrayList<>();
+        for (PredicadoCosto item : predicadoCosto) {
+            for (HybridFragment hf : this.getFragments()) {
+                if (hf.getPredicado().compareTo(item.getPredicado()) == 0) {
+                    ordenados.add(hf);
+                }
+            }
+        }
+        this.setFragments(ordenados);
+        String negado = "";
+        for (PredicadoCosto item : predicadoCosto) {
+            //item=(item.getPredicado().toLowerCase().contains("predicate") || item.getPredicado().toLowerCase().contains("predicado"))?
+            //      predicadoFragmento:item;    
+            if (!item.getPredicado().toLowerCase().contains("predicate") && !item.getPredicado().toLowerCase().contains("predicado")) {
+                if (negado.isEmpty()) {
+                    item.setNegado(item.getPredicado());
+                } else {
+                    item.setNegado(negado + item.getPredicado());
+                }
+                if (!negado.contains(item.getPredicado())) {
+                    negado += "!(" + item.getPredicado() + ") and ";
+                }
+            }else{
+                item.setNegado(predicadoFragmento);
+            }
+        }
+        for (PredicadoCosto item : predicadoCosto) {
+            for (HybridFragment hf : this.getFragments()) {
+                if (hf.getPredicado().compareTo(item.getPredicado()) == 0) {
+                    hf.setPredicado(item.getNegado());
+                }
+            }
+        }
+        //eliminar ands
+        for(HybridFragment hf : this.getFragments()){
+            if(hf.getPredicado().length()>=5 && hf.getPredicado().substring(hf.getPredicado().length()-5, hf.getPredicado().length()).toLowerCase().contains("and")){
+                hf.setPredicado(hf.getPredicado().substring(0,hf.getPredicado().length()-5).toLowerCase());
+            }
+        }
+        this.getFragments().forEach(x->System.out.println(x.getPredicado()));
     }
 
 }
