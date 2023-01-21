@@ -1911,11 +1911,16 @@ public class bd implements Serializable {
             //horizontal
             DHFragmentation DHF = new DHFragmentation(this);
             DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
-
+            
             setHD(new HybridDesign(this));
             getHD().mix(DHF.getSchema(), this.esquemaVertical);
             
             if (this.getTipoBD().compareTo("a") == 0) {
+                //COSTO SIN CONTEMPLAR TRASLAPE
+                getHD().costsMySQL(files);
+                int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
+                this.HD.hybridOverlap(opc);
+                //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsMySQL(files);
             } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("b") == 0) {
                 getHD().costsPostgreSQL(files);
@@ -1929,6 +1934,7 @@ public class bd implements Serializable {
             } else {
                 setSentencia("Ambos esquemas poseen el mismo costo, se aplicará el esquema vertical-horizontal");
             }
+            
         } catch (Exception ex) {
             ex.printStackTrace();
         }

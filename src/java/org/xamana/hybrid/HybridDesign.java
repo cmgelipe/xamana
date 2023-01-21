@@ -59,6 +59,13 @@ public class HybridDesign {
     public void costsMySQL(UploadedFiles files) {
         System.out.println("-----------COSTOS PIPE HÍBRIDA-------------");
         HashMap<String, String> NombreIp = new HashMap<>();
+        //limpiar
+        this.setVHCost(0.0);
+        this.setHVCost(0.0);
+        for(HybridFragment temp:this.getFragments()){
+            temp.setCostoDesH(0.0);
+            temp.setCostoDesV(0.0);
+        }
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
@@ -148,6 +155,7 @@ public class HybridDesign {
                                             tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + predicadoFragmento);
                                         } else {
                                             tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado());
+                                            System.out.println("Tuplas de "+where_statement.toLowerCase().replace("where", "")+" and "+fragmento.getPredicado()+": "+tuplasDeAmbosPredicados);
                                         }
                                     } else {
                                         tuplasDeAmbosPredicados = 1;
@@ -602,7 +610,7 @@ public class HybridDesign {
     public void hybridFragmentation() {
         //1 vertical 2para horizontal
         int opc = (this.getHVCost() > this.getVHCost()) ? 1 : 2;
-        hybridOverlap(opc);
+        
         this.oBD.guardarDatos();
         if (this.oBD.getTipoBD().compareTo("a") == 0) {
             hybridFragmentationMySQL(opc);
@@ -729,7 +737,7 @@ public class HybridDesign {
         this.progress1 = 100;
     }
 
-    private void hybridOverlap(int opc) {
+    public void hybridOverlap(int opc) {
         ArrayList<String> predicados = new ArrayList<>();
         for (HybridFragment f : this.fragments) {
             if (!predicados.contains(f.getPredicado())) {
