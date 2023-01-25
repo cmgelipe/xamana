@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.datos.AccesoDatos;
+import org.xamana.datos.AccesoDatosPG;
 import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
@@ -62,7 +63,7 @@ public class HybridDesign {
         //limpiar
         this.setVHCost(0.0);
         this.setHVCost(0.0);
-        for(HybridFragment temp:this.getFragments()){
+        for (HybridFragment temp : this.getFragments()) {
             temp.setCostoDesH(0.0);
             temp.setCostoDesV(0.0);
         }
@@ -155,7 +156,7 @@ public class HybridDesign {
                                             tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + predicadoFragmento);
                                         } else {
                                             tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado());
-                                            System.out.println("Tuplas de "+where_statement.toLowerCase().replace("where", "")+" and "+fragmento.getPredicado()+": "+tuplasDeAmbosPredicados);
+                                            System.out.println("Tuplas de " + where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado() + ": " + tuplasDeAmbosPredicados);
                                         }
                                     } else {
                                         tuplasDeAmbosPredicados = 1;
@@ -254,7 +255,198 @@ public class HybridDesign {
     }
 
     public void costsPostgreSQL(UploadedFiles files) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        System.out.println("-----------COSTOS PIPE HÍBRIDA-------------");
+        HashMap<String, String> NombreIp = new HashMap<>();
+        //limpiar
+        this.setVHCost(0.0);
+        this.setHVCost(0.0);
+        for (HybridFragment temp : this.getFragments()) {
+            temp.setCostoDesH(0.0);
+            temp.setCostoDesV(0.0);
+        }
+        for (UploadedFile f : files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    String ipLinea = "";
+                    String nombre = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (actual.toLowerCase().contains("conexion autorizada") || actual.toLowerCase().contains("connection authorized")) {
+                            ipLinea = actual.toLowerCase().substring(actual.toLowerCase().indexOf("-_-") + 3, actual.toLowerCase().indexOf("log"));
+                            nombre = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
+                            if (ipLinea.toLowerCase().compareTo("localhost") == 0 || ipLinea.toLowerCase().compareTo("::1") == 0) {
+                                ipLinea = "127.0.0.1";
+                            }
+                            NombreIp.put(nombre, ipLinea);
+                        }
+                        int ValorAsignadoOperacion = 0;
+                        if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 1;
+                        } else if ((actual.toLowerCase().contains("delete")
+                                || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 2;
+                        } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            ValorAsignadoOperacion = 3;
+                        }
+                        if (ValorAsignadoOperacion != 0) {
+                            String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
+                            String ipTraduccion = NombreIp.get(sujeto);
+                            System.out.println(actual);
+                            System.out.println("SITIO: " + ipTraduccion);
+                            //buscar en esquema si hay algun atributo (por lo menos uno) local 
+                            //(la operación se realiza en el mismo lugar a donde esta el atributo), 
+                            //si lo hay entonces considerar operación local
+                            //de otro modo es remota
+                            //primero sitiov y luego sitioh
+                            boolean siHay = false;
+                            for (HybridFragment fragmento : this.getFragments()) {
+                                if (fragmento.getSitiov().compareTo(ipLinea) == 0) {
+                                    for (Atributo l : fragmento.getAtts()) {
+                                        if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
+                                            siHay = true;
+                                        }
+                                    }
+                                }
+                            }
+                            if (!siHay) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            System.out.println("VAO: " + ValorAsignadoOperacion);
+                            //calcular el número de sitios que necesita visitar para llevar
+                            //a cabo la operación (será el número de reuniones necesarias)
+                            //primero sitiov y luego sitioh
+
+                            ///BUSCAR QUÉ FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
+                            int nJoins = 0;
+                            ArrayList<String> atributosOpe = buscarAtributos(actual);
+                            ArrayList<HybridFragment> fResuelvenAtributos = new ArrayList<>();
+                            for (HybridFragment fragmento : this.getFragments()) {
+                                boolean seUsa = false;
+                                for (Atributo l : fragmento.getAtts()) {
+                                    if (atributosOpe.contains(l.getNombre().toLowerCase())) {
+                                        seUsa = true;
+                                    }
+                                }
+                                if (seUsa) {
+                                    fResuelvenAtributos.add(fragmento);
+                                }
+                            }
+                            String where_statement = where_statement(actual);
+                            double tuplasDelWhere = this.nTuplas(where_statement.toLowerCase().replace("where", ""));
+                            ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
+                            //filtrado por predicado
+                            if (tuplasDelWhere > 0) {
+                                for (HybridFragment fragmento : fResuelvenAtributos) {
+                                    double tuplasDeAmbosPredicados = 0;
+                                    if (!where_statement.isEmpty()) {
+                                        //fragmento sin predicado
+                                        if (fragmento.getPredicado().toLowerCase().contains("predicate") || fragmento.getPredicado().toLowerCase().contains("predicado")) {
+                                            String predicadoFragmento = "";
+                                            for (HybridFragment hf2 : this.getFragments()) {
+                                                if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                                                    predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
+                                                }
+                                            }
+                                            predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
+                                            tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + predicadoFragmento);
+                                        } else {
+                                            tuplasDeAmbosPredicados = this.nTuplas(where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado());
+                                            System.out.println("Tuplas de " + where_statement.toLowerCase().replace("where", "") + " and " + fragmento.getPredicado() + ": " + tuplasDeAmbosPredicados);
+                                        }
+                                    } else {
+                                        tuplasDeAmbosPredicados = 1;
+                                    }
+
+                                    if (tuplasDeAmbosPredicados > 0) {
+                                        fResuelvenPredicados.add(fragmento);
+                                    }
+                                }
+                            }
+                            nJoins = (fResuelvenPredicados.size() < 1) ? 1 : fResuelvenPredicados.size();
+
+                            System.out.println("CR: " + nJoins);
+                            double costoOperacionv = 0.0;
+                            for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                    System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
+                                    costoOperacionv += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    System.out.println("Costo de operación: " + costoOperacionv);
+                                }
+                            }
+                            System.out.println("Costo de operación vertical V: " + costoOperacionv);
+                            this.setVHCost(this.getVHCost() + costoOperacionv);
+                            //se recalcula pero ahora con sitioh para el HVcosto
+                            siHay = false;
+                            for (HybridFragment fragmento : this.getFragments()) {
+                                if (fragmento.getSitioh().compareTo(ipLinea) == 0) {
+                                    for (Atributo l : fragmento.getAtts()) {
+                                        if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
+                                            siHay = true;
+                                        }
+                                    }
+                                }
+                            }
+                            if (!siHay) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            double costoOperacionh = 0.0;
+                            for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                                if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                    System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
+                                    costoOperacionh += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    System.out.println("Costo de operación: " + costoOperacionh);
+                                }
+                            }
+                            System.out.println("Costo de operación vertical h: " + costoOperacionh);
+                            this.setHVCost(this.getHVCost() + costoOperacionh);
+
+                            //////////horizontal
+                            ValorAsignadoOperacion = 0;
+                            if (actual.toLowerCase().contains("select")) {
+                                ValorAsignadoOperacion = 1;
+                            } else if ((actual.toLowerCase().contains("delete")
+                                    || actual.toLowerCase().contains("insert"))) {
+                                ValorAsignadoOperacion = 2;
+                            } else if (actual.toLowerCase().contains("update")) {
+                                ValorAsignadoOperacion = 3;
+                            }
+                            String predicados = this.where_statement(actual).toLowerCase().replace("where", "");
+                            double nTuplas = this.nTuplas(predicados);
+                            System.out.println("Tuplas: " + nTuplas);
+                            //¿qué sitios se requieren para satisfacer el predicado y atributos 
+                            //de la operación? R: los mismos sitios de la vertical
+
+                            //¿se requieren sitios remotos?
+                            double vRemotoV = this.vRemoto(ipLinea, actual, "v");
+                            double vRemotoH = this.vRemoto(ipLinea, actual, "h");
+                            double costohorizontalv = nTuplas * ValorAsignadoOperacion * vRemotoV;
+                            double costohorizontalh = nTuplas * ValorAsignadoOperacion * vRemotoH;
+                            System.out.println("Costo remoto horizontal v: " + costohorizontalv);
+                            System.out.println("Costo remoto horizontal h: " + costohorizontalh);
+                            this.setVHCost(this.getVHCost() + costohorizontalv);
+                            this.setHVCost(this.getHVCost() + costohorizontalh);
+
+                            //Agregar el costo a los fragmentos que resuelven la operación
+                            for (int i = 0; i < this.fragments.size(); i++) {
+                                boolean b = false;
+                                for (int j = 0; j < fResuelvenPredicados.size(); j++) {
+                                    if (fResuelvenPredicados.get(j).getNombre().compareTo(fragments.get(i).getNombre()) == 0) {
+                                        b = true;
+                                    }
+                                }
+                                if (b) {
+                                    fragments.get(i).setCostoDesV(fragments.get(i).getCostoDesV() + costoOperacionv + costohorizontalv);
+                                    fragments.get(i).setCostoDesH(fragments.get(i).getCostoDesH() + costoOperacionh + costohorizontalh);
+                                }
+                            }
+
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public void costsMongoDB(UploadedFiles files) {
@@ -272,13 +464,22 @@ public class HybridDesign {
         ArrayList r1 = new ArrayList();
 
         try {
-            if (this.oBD.getAccexternomysql().conectar()) {
-                r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
+            if (this.oBD.getTipoBD().compareTo("a") == 0) {
+                if (this.oBD.getAccexternomysql().conectar()) {
+                    r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
 
-                this.oBD.getAccexternomysql().desconectar();
+                    this.oBD.getAccexternomysql().desconectar();
+                }
+            } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+                if (this.oBD.getAccexternopost().conectar()) {
+                    r1 = this.oBD.getAccexternopost().ejecutarConsulta(q1);
+                    this.oBD.getAccexternopost().desconectar();
+                }
             }
-            if (r1.size() > 0) {
-                count1 = (double) ((ArrayList) r1.get(0)).get(0);
+            if (r1 != null) {
+                if (r1.size() > 0) {
+                    count1 = (double) ((ArrayList) r1.get(0)).get(0);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -395,12 +596,23 @@ public class HybridDesign {
             String q1 = (!predicado.isEmpty()) ? "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado : "select count(*) from " + this.oBD.getTabla().getNombre();
             ArrayList r1 = new ArrayList();
             try {
-                if (this.oBD.getAccexternomysql().conectar()) {
-                    r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
-                    this.oBD.getAccexternomysql().desconectar();
+                if (this.oBD.getTipoBD().compareTo("a") == 0) {
+                    if (this.oBD.getAccexternomysql().conectar()) {
+                        r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
+                        this.oBD.getAccexternomysql().desconectar();
+                    }
+                } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+                    if (this.oBD.getAccexternopost().conectar()) {
+                        r1 = this.oBD.getAccexternopost().ejecutarConsulta(q1);
+                        this.oBD.getAccexternopost().desconectar();
+                    }
                 }
-                if (!r1.isEmpty()) {
-                    count1 = (double) ((ArrayList) r1.get(0)).get(0);
+
+                if (r1 != null) {
+                    if (!r1.isEmpty()) {
+                        count1 = (double) ((ArrayList) r1.get(0)).get(0);
+                    }
+
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -423,16 +635,26 @@ public class HybridDesign {
 
                     ArrayList r2 = new ArrayList();
                     try {
-                        if (this.oBD.getAccexternomysql().conectar()) {
-                            r2 = this.oBD.getAccexternomysql().ejecutarConsulta(q2);
-                            this.oBD.getAccexternomysql().desconectar();
-                        }
-                        if (!r2.isEmpty()) {
-                            double nTuplas = ((double) ((ArrayList) r2.get(0)).get(0));
-                            if (nTuplas > 0) {
-                                fResuelvenPredicados.add(hf4);
+                        if (this.oBD.getTipoBD().compareTo("a") == 0) {
+                            if (this.oBD.getAccexternomysql().conectar()) {
+                                r2 = this.oBD.getAccexternomysql().ejecutarConsulta(q2);
+                                this.oBD.getAccexternomysql().desconectar();
+                            }
+                        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+                            if (this.oBD.getAccexternopost().conectar()) {
+                                r2 = this.oBD.getAccexternopost().ejecutarConsulta(q2);
+                                this.oBD.getAccexternopost().desconectar();
                             }
                         }
+                        if (r2 != null) {
+                            if (!r2.isEmpty()) {
+                                double nTuplas = ((double) ((ArrayList) r2.get(0)).get(0));
+                                if (nTuplas > 0) {
+                                    fResuelvenPredicados.add(hf4);
+                                }
+                            }
+                        }
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -610,12 +832,12 @@ public class HybridDesign {
     public void hybridFragmentation() {
         //1 vertical 2para horizontal
         int opc = (this.getHVCost() > this.getVHCost()) ? 1 : 2;
-        
+
         this.oBD.guardarDatos();
         if (this.oBD.getTipoBD().compareTo("a") == 0) {
             hybridFragmentationMySQL(opc);
         } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
-
+            hybridFragmentationPostgreSQL(opc);
         } else {
 
         }
@@ -751,7 +973,12 @@ public class HybridDesign {
                 predicadoFragmento = "";
                 for (HybridFragment hf2 : this.getFragments()) {
                     if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
-                        predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
+                        if(this.oBD.getTipoBD().compareTo("a")==0){
+                            predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
+                        }else if(this.oBD.getTipoBD().compareTo("b")==0 || this.oBD.getTipoBD().compareTo("c")==0){
+                            predicadoFragmento += "not (" + hf2.getPredicado() + ") AND ";
+                        }
+                        
                     }
                 }
                 predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
@@ -790,9 +1017,14 @@ public class HybridDesign {
                     item.setNegado(negado + item.getPredicado());
                 }
                 if (!negado.contains(item.getPredicado())) {
-                    negado += "!(" + item.getPredicado() + ") and ";
+                    if(this.oBD.getTipoBD().compareTo("a")==0){
+                        negado += "!(" + item.getPredicado() + ") and ";
+                    }else if(this.oBD.getTipoBD().compareTo("b")==0 || this.oBD.getTipoBD().compareTo("c")==0){
+                        negado += "not (" + item.getPredicado() + ") and ";
+                    }
+                    
                 }
-            }else{
+            } else {
                 item.setNegado(predicadoFragmento);
             }
         }
@@ -804,12 +1036,128 @@ public class HybridDesign {
             }
         }
         //eliminar ands
-        for(HybridFragment hf : this.getFragments()){
-            if(hf.getPredicado().length()>=5 && hf.getPredicado().substring(hf.getPredicado().length()-5, hf.getPredicado().length()).toLowerCase().contains("and")){
-                hf.setPredicado(hf.getPredicado().substring(0,hf.getPredicado().length()-5).toLowerCase());
+        for (HybridFragment hf : this.getFragments()) {
+            if (hf.getPredicado().length() >= 5 && hf.getPredicado().substring(hf.getPredicado().length() - 5, hf.getPredicado().length()).toLowerCase().contains("and")) {
+                hf.setPredicado(hf.getPredicado().substring(0, hf.getPredicado().length() - 5).toLowerCase());
             }
         }
-        this.getFragments().forEach(x->System.out.println(x.getPredicado()));
+        this.getFragments().forEach(x -> System.out.println(x.getPredicado()));
+    }
+
+    private void hybridFragmentationPostgreSQL(int opc) {
+        //creación de tablas
+        int percent = 100 / this.fragments.size();
+        for (HybridFragment frag : this.fragments) {
+            String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
+            double costo = (opc == 1) ? frag.getCostoDesV() : frag.getCostoDesH();
+            String sql;
+            String att_tipo = "";
+            for (Atributo r : frag.getAtts()) {
+                if (this.oBD.transTipoDato(r.getTipo()) != 0) {
+                    att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                } else {
+                    if (r.getTipo().compareTo("BIT") != 0) {
+                        if (r.getTipo().compareTo("JSON") == 0 || r.getTipo().compareTo("LONGBLOB") == 0) {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + ", ";
+                        } else {
+                            att_tipo += r.getNombre() + " " + r.getTipo() + "(" + r.getTamanio() + "), ";
+                        }
+                    } else {
+                        att_tipo += r.getNombre() + " TINYINT, ";
+                    }
+                }
+            }
+            att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
+            try {
+                AccesoDatosPG acc = new AccesoDatosPG(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                if (acc.conectar()) {
+                    sql = "drop table if exists " + frag.getNombre() + ";";
+                    acc.ejecutarComando(sql);
+                    sql = "CREATE TABLE " + frag.getNombre() + " (" + att_tipo + ", PRIMARY KEY (" + this.oBD.getTabla().getAtributoLlave().getNombre() + "));";
+                    acc.ejecutarComando(sql);
+                    acc.desconectar();
+                }
+                ArrayList atributos = null;
+                ArrayList n = null;
+                AccesoDatosPG acc2 = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                if (acc2.conectar()) {
+                    String numero = "Select count(*) from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + ";";
+                    n = acc2.ejecutarConsulta(numero);
+                    acc2.desconectar();
+                }
+                int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
+                for (int i = 0; i < num; i++) {
+                    acc2 = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                    if (acc2.conectar()) {
+                        sql = "Select " + frag.getAtributosMostrar() + " from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + " Limit 1 offset " + i;
+                        atributos = acc2.ejecutarConsulta(sql);
+                        acc2.desconectar();
+                    }
+                    if (atributos != null) {
+                        acc = new AccesoDatosPG(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                        if (acc.conectar()) {
+                            for (int k = 0; k < atributos.size(); k++) {
+                                String valor = "";
+                                ArrayList tupla = (ArrayList) atributos.get(k);
+                                for (int j = 0; j < tupla.size(); j++) {
+                                    if (this.oBD.transTipoDato(frag.getAtts().get(j).getTipo()) == 0 || this.oBD.transTipoDato(frag.getAtts().get(j).getTipo()) == 2) {
+                                        valor += "'" + tupla.get(j) + "',";
+                                    } else {
+                                        valor += tupla.get(j) + ",";
+                                    }
+                                }
+                                valor = valor.substring(0, valor.length() - 1);
+                                sql = "insert into " + frag.getNombre() + "(" + frag.getAtributosMostrar() + ") values (" + valor + ");";
+                                acc.ejecutarComando(sql);
+
+                            }
+                            acc.desconectar();
+                        }
+                    }
+                }
+
+                //Insertar a XAMANA
+                //SITIO
+                String id_sitio = "";
+                String idFragmento = "";
+
+                AccesoDatos accXamana = new AccesoDatos();
+                if (accXamana.conectar()) {
+                    sql = "insert into Sitio (direccion) "
+                            + "select * from (select '" + sitio + "' as direccion ) as tmp "
+                            + "where not exists (select direccion from Sitio where direccion='" + sitio + "') limit 1;";
+                    accXamana.ejecutarComando(sql);
+                    sql = "select id_sitio from Sitio where direccion='" + sitio + "'";
+                    id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
+                    //FRAGMENTO
+                    if (frag.isMultimedia()) {
+                        accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                                + frag.getNombre() + "', " + this.oBD.getTabla().getIdTabla()
+                                + ", " + id_sitio + ",0," + costo + ",1)");
+                        idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                    } else {
+                        accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                                + frag.getNombre() + "', " + this.oBD.getTabla().getIdTabla()
+                                + ", " + id_sitio + ",0," + costo + ",0)");
+                        idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                    }
+                    if (!this.oBD.isNullorEmpty(idFragmento)) {
+                        for (Atributo a : frag.getAtts()) {
+                            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                                    + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
+                                    + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
+                        }
+
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            this.progress1 += percent;
+
+        }
+        this.progress1 = 100;
     }
 
 }

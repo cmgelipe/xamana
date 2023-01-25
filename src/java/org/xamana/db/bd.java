@@ -1922,7 +1922,12 @@ public class bd implements Serializable {
                 this.HD.hybridOverlap(opc);
                 //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsMySQL(files);
-            } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("b") == 0) {
+            } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
+                //COSTO SIN CONTEMPLAR TRASLAPE
+                getHD().costsPostgreSQL(files);
+                int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
+                this.HD.hybridOverlap(opc);
+                //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsPostgreSQL(files);
             } else if (this.getTipoBD().compareTo("d") == 0) {
                 getHD().costsMongoDB(files);
