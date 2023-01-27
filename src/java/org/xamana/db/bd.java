@@ -1930,7 +1930,12 @@ public class bd implements Serializable {
                 //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsPostgreSQL(files);
             } else if (this.getTipoBD().compareTo("d") == 0) {
+                //COSTO SIN CONTEMPLAR TRASLAPE
                 getHD().costsMongoDB(files);
+                int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
+                this.HD.hybridOverlap(opc);
+                //COSTO CONTEMPLANDO TRASLAPE
+                getHD().costsPostgreSQL(files);
             }
             if (getHD().getHVCost() > getHD().getVHCost()) {
                 setSentencia("El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.");

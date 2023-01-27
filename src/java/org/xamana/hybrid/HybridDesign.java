@@ -12,8 +12,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.datos.AccesoDatos;
@@ -450,7 +455,100 @@ public class HybridDesign {
     }
 
     public void costsMongoDB(UploadedFiles files) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        System.out.println("-----------COSTOS PIPE HÍBRIDA-------------");
+        HashMap<String, String> NombreIp = new HashMap<>();
+        //limpiar
+        this.setVHCost(0.0);
+        this.setHVCost(0.0);
+        for (HybridFragment temp : this.getFragments()) {
+            temp.setCostoDesH(0.0);
+            temp.setCostoDesV(0.0);
+        }
+        for (UploadedFile f : files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    String ipLinea = "";
+                    String nombre = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (actual.toLowerCase().contains("command") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            JSONObject j = new JSONObject(actual);
+                            String c = j.get("c").toString().toLowerCase().trim();
+                            JSONObject j2 = new JSONObject(j.get("attr").toString());
+                            JSONObject j3 = new JSONObject(j2.get("command").toString());
+                            String ns = "";
+                            int ValorAsignadoOperacion = 0;
+                            if (j3.has("find")) {
+                                ValorAsignadoOperacion = 1;
+                                ns = j3.get("find").toString().toLowerCase();
+                            } else if (j3.has("delete")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("delete").toString().toLowerCase();
+                            } else if (j3.has("insert")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("insert").toString().toLowerCase();
+                            } else if (j3.has("update")) {
+                                ValorAsignadoOperacion = 3;
+                                ns = j3.get("update").toString().toLowerCase();
+                            }
+                            if (ValorAsignadoOperacion != 0 && c.compareTo("command") == 0 && ns.compareTo(this.oBD.getTabla().getNombre().toLowerCase()) == 0) {
+                                j2 = new JSONObject(j.get("attr").toString());
+                                String remote = j2.get("remote").toString().toLowerCase().trim();
+                                ipLinea = remote.substring(0, remote.indexOf(":"));
+                                System.out.println(actual);
+                                System.out.println("SITIO: " + ipLinea);
+                                NombreIp.put(ipLinea, ipLinea);
+                                //buscar en esquema si hay algun atributo (por lo menos uno) local 
+                                //(la operación se realiza en el mismo lugar a donde esta el atributo), 
+                                //si lo hay entonces considerar operación local
+                                //de otro modo es remota
+                                //primero sitiov y luego sitioh
+                                boolean siHay = false;
+                                for (HybridFragment fragmento : this.getFragments()) {
+                                    if (fragmento.getSitiov().compareTo(ipLinea) == 0) {
+                                        for (Atributo l : fragmento.getAtts()) {
+                                            if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (!actual.toLowerCase().contains("projection") && j3.has("find"))) {
+                                                siHay = true;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!siHay) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                System.out.println("VAO: " + ValorAsignadoOperacion);
+                                //calcular el número de sitios que necesita visitar para llevar
+                                //a cabo la operación (será el número de reuniones necesarias)
+                                //primero sitiov y luego sitioh
+
+                                ///BUSCAR QUÉ FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
+                                int nJoins = 0;
+                                ArrayList<String> atributosOpe = buscarAtributos(actual);
+                                atributosOpe.forEach(x -> System.out.println(x));
+                                ArrayList<HybridFragment> fResuelvenAtributos = new ArrayList<>();
+                                for (HybridFragment fragmento : this.getFragments()) {
+                                    boolean seUsa = false;
+                                    for (Atributo l : fragmento.getAtts()) {
+                                        if (atributosOpe.contains(l.getNombre().toLowerCase())) {
+                                            seUsa = true;
+                                        }
+                                    }
+                                    if (seUsa) {
+                                        fResuelvenAtributos.add(fragmento);
+                                    }
+                                }
+                                String where_statement = where_statement(actual);
+                                double tuplasDelWhere = this.nTuplas(where_statement.toLowerCase().replace("where", ""));
+                                ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
+
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private double nTuplas(String predicado) {
@@ -768,6 +866,62 @@ public class HybridDesign {
                     }
                 }
             }
+        } else {
+            //mongo
+            JSONObject j;
+            try {
+                j = new JSONObject(actual);
+                String c = j.get("c").toString().toLowerCase().trim();
+                JSONObject j2 = new JSONObject(j.get("attr").toString());
+                JSONObject j3 = new JSONObject(j2.get("command").toString());
+                if (j3.has("find")) {
+                    if (j3.has("projection")) {
+                        JSONObject j4 = new JSONObject(j3.get("projection").toString());
+                        for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                            if (j4.has(a.getNombre())) {
+                                ret.add(a.getNombre().toLowerCase());
+                            }
+                        }
+                    } else {
+                        for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                            ret.add(a.getNombre().toLowerCase());
+                        }
+                    }
+                } else if (j3.has("delete")) {
+                    for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                        ret.add(a.getNombre().toLowerCase());
+                    }
+                } else if (j3.has("insert")) {
+                    //insert many
+                    if (j3.has("documents")) {
+                        JSONArray arr = j3.getJSONArray("documents");
+                        for (int i = 0; i < arr.length(); i++) {
+                            for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                                JSONObject j4 = new JSONObject(arr.get(i).toString());
+                                if (j4.has(a.getNombre())) {
+                                    if (!ret.contains(a.getNombre())) {
+                                        ret.add(a.getNombre());
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                } else if (j3.has("update")) {
+                    JSONArray arr = j3.getJSONArray("updates");
+                    JSONObject j4 = new JSONObject(arr.get(0).toString());
+                    JSONObject j5 = new JSONObject(j4.get("u").toString());
+                    JSONObject j6 = new JSONObject(j5.get("$set").toString());
+                    for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                        if (j6.has(a.getNombre())) {
+                            ret.add(a.getNombre().toLowerCase());
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
         }
         return ret;
     }
@@ -811,6 +965,41 @@ public class HybridDesign {
             }
         } else {
             //mongo
+            JSONObject j;
+            try {
+                j = new JSONObject(actual);
+                String c = j.get("c").toString().toLowerCase().trim();
+                JSONObject j2 = new JSONObject(j.get("attr").toString());
+                JSONObject j3 = new JSONObject(j2.get("command").toString());
+                if (j3.has("find")) {
+                    if(j3.has("filter")){
+                        JSONObject j4 = new JSONObject(j3.get("filter").toString());
+                        ret = j4.toString();
+                    }
+                } else if (j3.has("delete")) {
+                    if(j3.has("deletes")){
+                        JSONArray j4 = j3.getJSONArray("deletes");
+                        if(j4.length()>=0){
+                            JSONObject j5=new JSONObject(j4.get(0));
+                            if(j5.has("q")){
+                                ret = j5.get("q").toString();
+                            }
+                        }
+                    }
+                } else if (j3.has("insert")) {
+                    //insert one
+                    if (j3.has("documents")) {
+                        JSONArray arr = j3.getJSONArray("documents");
+                        if(arr.length()>=0){
+                            ret = arr.get(0).toString();
+                        }
+                    }
+                } else if (j3.has("update")) {
+                    
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return ret;
     }
@@ -973,12 +1162,12 @@ public class HybridDesign {
                 predicadoFragmento = "";
                 for (HybridFragment hf2 : this.getFragments()) {
                     if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
-                        if(this.oBD.getTipoBD().compareTo("a")==0){
+                        if (this.oBD.getTipoBD().compareTo("a") == 0) {
                             predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
-                        }else if(this.oBD.getTipoBD().compareTo("b")==0 || this.oBD.getTipoBD().compareTo("c")==0){
+                        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
                             predicadoFragmento += "not (" + hf2.getPredicado() + ") AND ";
                         }
-                        
+
                     }
                 }
                 predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
@@ -1017,12 +1206,12 @@ public class HybridDesign {
                     item.setNegado(negado + item.getPredicado());
                 }
                 if (!negado.contains(item.getPredicado())) {
-                    if(this.oBD.getTipoBD().compareTo("a")==0){
+                    if (this.oBD.getTipoBD().compareTo("a") == 0) {
                         negado += "!(" + item.getPredicado() + ") and ";
-                    }else if(this.oBD.getTipoBD().compareTo("b")==0 || this.oBD.getTipoBD().compareTo("c")==0){
+                    } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
                         negado += "not (" + item.getPredicado() + ") and ";
                     }
-                    
+
                 }
             } else {
                 item.setNegado(predicadoFragmento);
