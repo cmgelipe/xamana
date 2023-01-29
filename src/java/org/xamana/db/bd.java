@@ -1919,23 +1919,23 @@ public class bd implements Serializable {
                 //COSTO SIN CONTEMPLAR TRASLAPE
                 getHD().costsMySQL(files);
                 int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
-                this.HD.hybridOverlap(opc);
+                this.HD.hybridOverlapRelational(opc);
                 //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsMySQL(files);
             } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
                 //COSTO SIN CONTEMPLAR TRASLAPE
                 getHD().costsPostgreSQL(files);
                 int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
-                this.HD.hybridOverlap(opc);
+                this.HD.hybridOverlapRelational(opc);
                 //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsPostgreSQL(files);
             } else if (this.getTipoBD().compareTo("d") == 0) {
                 //COSTO SIN CONTEMPLAR TRASLAPE
                 getHD().costsMongoDB(files);
                 int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
-                this.HD.hybridOverlap(opc);
+                this.HD.hybridOverlapMongoDB(opc);
                 //COSTO CONTEMPLANDO TRASLAPE
-                getHD().costsPostgreSQL(files);
+                getHD().costsMongoDB(files);
             }
             if (getHD().getHVCost() > getHD().getVHCost()) {
                 setSentencia("El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.");

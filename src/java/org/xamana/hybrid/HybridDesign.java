@@ -4,6 +4,8 @@
  */
 package org.xamana.hybrid;
 
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bson.Document;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -88,44 +91,17 @@ public class HybridDesign {
                             }
                             NombreIp.put(nombre, ipLinea);
                         }
-                        int ValorAsignadoOperacion = 0;
-                        if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
-                            ValorAsignadoOperacion = 1;
-                        } else if ((actual.toLowerCase().contains("delete")
-                                || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
-                            ValorAsignadoOperacion = 2;
-                        } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
-                            ValorAsignadoOperacion = 3;
-                        }
-                        if (ValorAsignadoOperacion != 0) {
+                        int ValorAsignadoOperacion = this.VAO(actual);
+                        if (ValorAsignadoOperacion != 0 && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
                             String y[] = actual.split("\t");
                             String sujeto = y[1].substring(0, y[1].indexOf(" "));
                             String ipTraduccion = NombreIp.get(sujeto);
                             System.out.println(actual);
                             System.out.println("SITIO: " + ipTraduccion);
-                            //buscar en esquema si hay algun atributo (por lo menos uno) local 
-                            //(la operación se realiza en el mismo lugar a donde esta el atributo), 
-                            //si lo hay entonces considerar operación local
-                            //de otro modo es remota
-                            //primero sitiov y luego sitioh
-                            boolean siHay = false;
-                            for (HybridFragment fragmento : this.getFragments()) {
-                                if (fragmento.getSitiov().compareTo(ipLinea) == 0) {
-                                    for (Atributo l : fragmento.getAtts()) {
-                                        if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
-                                            siHay = true;
-                                        }
-                                    }
-                                }
-                            }
-                            if (!siHay) {
-                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
-                            }
-                            System.out.println("VAO: " + ValorAsignadoOperacion);
+
                             //calcular el número de sitios que necesita visitar para llevar
                             //a cabo la operación (será el número de reuniones necesarias)
                             //primero sitiov y luego sitioh
-
                             ///BUSCAR QUÉ FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
                             int nJoins = 0;
                             ArrayList<String> atributosOpe = buscarAtributos(actual);
@@ -173,64 +149,72 @@ public class HybridDesign {
                                 }
                             }
                             nJoins = (fResuelvenPredicados.size() < 1) ? 1 : fResuelvenPredicados.size();
-
+                            //buscar en esquema si la operación se resuelve en parte o entera de manera remota 
+                            //primero sitiov y luego sitioh
+                            boolean siHay = false;
+                            for (HybridFragment fragmento : fResuelvenPredicados) {
+                                if (fragmento.getSitiov().compareTo(ipLinea) != 0) {
+                                    siHay = true;
+                                }
+                            }
+                            if (siHay) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            System.out.println("VAO: " + ValorAsignadoOperacion);
                             System.out.println("CR: " + nJoins);
                             double costoOperacionv = 0.0;
                             for (Atributo a : this.oBD.getTabla().getAtributos()) {
                                 if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
                                     System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
                                     costoOperacionv += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
-                                    System.out.println("Costo de operación: " + costoOperacionv);
                                 }
                             }
                             System.out.println("Costo de operación vertical V: " + costoOperacionv);
                             this.setVHCost(this.getVHCost() + costoOperacionv);
                             //se recalcula pero ahora con sitioh para el HVcosto
+                            ValorAsignadoOperacion = this.VAO(actual);
                             siHay = false;
-                            for (HybridFragment fragmento : this.getFragments()) {
-                                if (fragmento.getSitioh().compareTo(ipLinea) == 0) {
-                                    for (Atributo l : fragmento.getAtts()) {
-                                        if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
-                                            siHay = true;
-                                        }
-                                    }
+                            for (HybridFragment fragmento : fResuelvenPredicados) {
+                                if (fragmento.getSitioh().compareTo(ipLinea) != 0) {
+                                    siHay = true;
                                 }
                             }
-                            if (!siHay) {
+                            if (siHay) {
                                 ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                             }
+                            System.out.println("VAO: " + ValorAsignadoOperacion);
                             double costoOperacionh = 0.0;
                             for (Atributo a : this.oBD.getTabla().getAtributos()) {
                                 if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
                                     System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
                                     costoOperacionh += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
-                                    System.out.println("Costo de operación: " + costoOperacionh);
                                 }
                             }
                             System.out.println("Costo de operación vertical h: " + costoOperacionh);
                             this.setHVCost(this.getHVCost() + costoOperacionh);
 
                             //////////horizontal
-                            ValorAsignadoOperacion = 0;
-                            if (actual.toLowerCase().contains("select")) {
-                                ValorAsignadoOperacion = 1;
-                            } else if ((actual.toLowerCase().contains("delete")
-                                    || actual.toLowerCase().contains("insert"))) {
-                                ValorAsignadoOperacion = 2;
-                            } else if (actual.toLowerCase().contains("update")) {
-                                ValorAsignadoOperacion = 3;
-                            }
                             String predicados = this.where_statement(actual).toLowerCase().replace("where", "");
                             double nTuplas = this.nTuplas(predicados);
                             System.out.println("Tuplas: " + nTuplas);
                             //¿qué sitios se requieren para satisfacer el predicado y atributos 
                             //de la operación? R: los mismos sitios de la vertical
 
-                            //¿se requieren sitios remotos?
-                            double vRemotoV = this.vRemoto(ipLinea, actual, "v");
-                            double vRemotoH = this.vRemoto(ipLinea, actual, "h");
-                            double costohorizontalv = nTuplas * ValorAsignadoOperacion * vRemotoV;
-                            double costohorizontalh = nTuplas * ValorAsignadoOperacion * vRemotoH;
+                            //¿se requieren sitios remotos? R: de la misma manera que en la vertical
+                            System.out.println("VAO para horizontal V: " + ValorAsignadoOperacion);
+                            double costohorizontalh = nTuplas * ValorAsignadoOperacion; //VAO ya contiene si es remota o local
+                            ValorAsignadoOperacion = this.VAO(actual);
+                            siHay = false;
+                            for (HybridFragment fragmento : fResuelvenPredicados) {
+                                if (fragmento.getSitiov().compareTo(ipLinea) != 0) {
+                                    siHay = true;
+                                }
+                            }
+                            if (siHay) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            double costohorizontalv = nTuplas * ValorAsignadoOperacion;
+
                             System.out.println("Costo remoto horizontal v: " + costohorizontalv);
                             System.out.println("Costo remoto horizontal h: " + costohorizontalh);
                             this.setVHCost(this.getVHCost() + costohorizontalv);
@@ -284,39 +268,12 @@ public class HybridDesign {
                             }
                             NombreIp.put(nombre, ipLinea);
                         }
-                        int ValorAsignadoOperacion = 0;
-                        if (actual.toLowerCase().contains("select") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
-                            ValorAsignadoOperacion = 1;
-                        } else if ((actual.toLowerCase().contains("delete")
-                                || actual.toLowerCase().contains("insert")) && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
-                            ValorAsignadoOperacion = 2;
-                        } else if (actual.toLowerCase().contains("update") && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
-                            ValorAsignadoOperacion = 3;
-                        }
-                        if (ValorAsignadoOperacion != 0) {
+                        int ValorAsignadoOperacion = this.VAO(actual);
+                        if (ValorAsignadoOperacion != 0 && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
                             String sujeto = actual.substring(actual.indexOf("[") + 1, actual.indexOf("]"));
                             String ipTraduccion = NombreIp.get(sujeto);
                             System.out.println(actual);
                             System.out.println("SITIO: " + ipTraduccion);
-                            //buscar en esquema si hay algun atributo (por lo menos uno) local 
-                            //(la operación se realiza en el mismo lugar a donde esta el atributo), 
-                            //si lo hay entonces considerar operación local
-                            //de otro modo es remota
-                            //primero sitiov y luego sitioh
-                            boolean siHay = false;
-                            for (HybridFragment fragmento : this.getFragments()) {
-                                if (fragmento.getSitiov().compareTo(ipLinea) == 0) {
-                                    for (Atributo l : fragmento.getAtts()) {
-                                        if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
-                                            siHay = true;
-                                        }
-                                    }
-                                }
-                            }
-                            if (!siHay) {
-                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
-                            }
-                            System.out.println("VAO: " + ValorAsignadoOperacion);
                             //calcular el número de sitios que necesita visitar para llevar
                             //a cabo la operación (será el número de reuniones necesarias)
                             //primero sitiov y luego sitioh
@@ -368,30 +325,37 @@ public class HybridDesign {
                                 }
                             }
                             nJoins = (fResuelvenPredicados.size() < 1) ? 1 : fResuelvenPredicados.size();
-
+                            //buscar en esquema si la operación se resuelve en parte o entera de manera remota 
+                            //primero sitiov y luego sitioh
+                            boolean siHay = false;
+                            for (HybridFragment fragmento : fResuelvenPredicados) {
+                                if (fragmento.getSitiov().compareTo(ipLinea) != 0) {
+                                    siHay = true;
+                                }
+                            }
+                            if (siHay) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            System.out.println("VAO: " + ValorAsignadoOperacion);
                             System.out.println("CR: " + nJoins);
                             double costoOperacionv = 0.0;
                             for (Atributo a : this.oBD.getTabla().getAtributos()) {
                                 if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
                                     System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
                                     costoOperacionv += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
-                                    System.out.println("Costo de operación: " + costoOperacionv);
                                 }
                             }
                             System.out.println("Costo de operación vertical V: " + costoOperacionv);
                             this.setVHCost(this.getVHCost() + costoOperacionv);
                             //se recalcula pero ahora con sitioh para el HVcosto
+                            ValorAsignadoOperacion = this.VAO(actual);
                             siHay = false;
-                            for (HybridFragment fragmento : this.getFragments()) {
-                                if (fragmento.getSitioh().compareTo(ipLinea) == 0) {
-                                    for (Atributo l : fragmento.getAtts()) {
-                                        if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (actual.contains("*") && actual.toLowerCase().contains("select"))) {
-                                            siHay = true;
-                                        }
-                                    }
+                            for (HybridFragment fragmento : fResuelvenPredicados) {
+                                if (fragmento.getSitioh().compareTo(ipLinea) != 0) {
+                                    siHay = true;
                                 }
                             }
-                            if (!siHay) {
+                            if (siHay) {
                                 ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                             }
                             double costoOperacionh = 0.0;
@@ -399,33 +363,30 @@ public class HybridDesign {
                                 if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
                                     System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
                                     costoOperacionh += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
-                                    System.out.println("Costo de operación: " + costoOperacionh);
                                 }
                             }
                             System.out.println("Costo de operación vertical h: " + costoOperacionh);
                             this.setHVCost(this.getHVCost() + costoOperacionh);
 
                             //////////horizontal
-                            ValorAsignadoOperacion = 0;
-                            if (actual.toLowerCase().contains("select")) {
-                                ValorAsignadoOperacion = 1;
-                            } else if ((actual.toLowerCase().contains("delete")
-                                    || actual.toLowerCase().contains("insert"))) {
-                                ValorAsignadoOperacion = 2;
-                            } else if (actual.toLowerCase().contains("update")) {
-                                ValorAsignadoOperacion = 3;
-                            }
-                            String predicados = this.where_statement(actual).toLowerCase().replace("where", "");
-                            double nTuplas = this.nTuplas(predicados);
-                            System.out.println("Tuplas: " + nTuplas);
+                            System.out.println("Tuplas: " + tuplasDelWhere);
                             //¿qué sitios se requieren para satisfacer el predicado y atributos 
                             //de la operación? R: los mismos sitios de la vertical
 
-                            //¿se requieren sitios remotos?
-                            double vRemotoV = this.vRemoto(ipLinea, actual, "v");
-                            double vRemotoH = this.vRemoto(ipLinea, actual, "h");
-                            double costohorizontalv = nTuplas * ValorAsignadoOperacion * vRemotoV;
-                            double costohorizontalh = nTuplas * ValorAsignadoOperacion * vRemotoH;
+                            //¿se requieren sitios remotos? R: de la misma manera que en la vertical
+                            double costohorizontalh = tuplasDelWhere * ValorAsignadoOperacion;
+                            ValorAsignadoOperacion = this.VAO(actual);
+                            siHay = false;
+                            for (HybridFragment fragmento : fResuelvenPredicados) {
+                                if (fragmento.getSitiov().compareTo(ipLinea) != 0) {
+                                    siHay = true;
+                                }
+                            }
+                            if (siHay) {
+                                ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                            }
+                            double costohorizontalv = tuplasDelWhere * ValorAsignadoOperacion;
+
                             System.out.println("Costo remoto horizontal v: " + costohorizontalv);
                             System.out.println("Costo remoto horizontal h: " + costohorizontalh);
                             this.setVHCost(this.getVHCost() + costohorizontalv);
@@ -461,6 +422,9 @@ public class HybridDesign {
         this.setVHCost(0.0);
         this.setHVCost(0.0);
         for (HybridFragment temp : this.getFragments()) {
+            if (temp.getPredicado().charAt(0) != '{') {
+                temp.setPredicado("{" + temp.getPredicado() + "}");
+            }
             temp.setCostoDesH(0.0);
             temp.setCostoDesV(0.0);
         }
@@ -477,19 +441,15 @@ public class HybridDesign {
                             JSONObject j2 = new JSONObject(j.get("attr").toString());
                             JSONObject j3 = new JSONObject(j2.get("command").toString());
                             String ns = "";
-                            int ValorAsignadoOperacion = 0;
-                            if (j3.has("find")) {
-                                ValorAsignadoOperacion = 1;
-                                ns = j3.get("find").toString().toLowerCase();
-                            } else if (j3.has("delete")) {
-                                ValorAsignadoOperacion = 2;
-                                ns = j3.get("delete").toString().toLowerCase();
-                            } else if (j3.has("insert")) {
-                                ValorAsignadoOperacion = 2;
-                                ns = j3.get("insert").toString().toLowerCase();
-                            } else if (j3.has("update")) {
-                                ValorAsignadoOperacion = 3;
-                                ns = j3.get("update").toString().toLowerCase();
+                            int ValorAsignadoOperacion = this.VAO(j2.get("command").toString());
+                            if (ValorAsignadoOperacion == 2) {
+                                if (j3.has("delete")) {
+                                    ns = j3.get("delete").toString().toLowerCase();
+                                } else if (j3.has("insert")) {
+                                    ns = j3.get("insert").toString().toLowerCase();
+                                }
+                            } else {
+                                ns = (ValorAsignadoOperacion == 1) ? j3.get("find").toString().toLowerCase() : j3.get("update").toString().toLowerCase();
                             }
                             if (ValorAsignadoOperacion != 0 && c.compareTo("command") == 0 && ns.compareTo(this.oBD.getTabla().getNombre().toLowerCase()) == 0) {
                                 j2 = new JSONObject(j.get("attr").toString());
@@ -498,25 +458,6 @@ public class HybridDesign {
                                 System.out.println(actual);
                                 System.out.println("SITIO: " + ipLinea);
                                 NombreIp.put(ipLinea, ipLinea);
-                                //buscar en esquema si hay algun atributo (por lo menos uno) local 
-                                //(la operación se realiza en el mismo lugar a donde esta el atributo), 
-                                //si lo hay entonces considerar operación local
-                                //de otro modo es remota
-                                //primero sitiov y luego sitioh
-                                boolean siHay = false;
-                                for (HybridFragment fragmento : this.getFragments()) {
-                                    if (fragmento.getSitiov().compareTo(ipLinea) == 0) {
-                                        for (Atributo l : fragmento.getAtts()) {
-                                            if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (!actual.toLowerCase().contains("projection") && j3.has("find"))) {
-                                                siHay = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (!siHay) {
-                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
-                                }
-                                System.out.println("VAO: " + ValorAsignadoOperacion);
                                 //calcular el número de sitios que necesita visitar para llevar
                                 //a cabo la operación (será el número de reuniones necesarias)
                                 //primero sitiov y luego sitioh
@@ -538,9 +479,131 @@ public class HybridDesign {
                                     }
                                 }
                                 String where_statement = where_statement(actual);
-                                double tuplasDelWhere = this.nTuplas(where_statement.toLowerCase().replace("where", ""));
+                                double tuplasDelWhere = this.nTuplas(where_statement.toLowerCase());
                                 ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
+                                //filtrado por predicado
+                                if (tuplasDelWhere > 0) {
+                                    for (HybridFragment fragmento : fResuelvenAtributos) {
+                                        double tuplasDeAmbosPredicados = 0;
+                                        if (!where_statement.isEmpty()) {
+                                            //fragmento sin predicado
+                                            if (fragmento.getPredicado().toLowerCase().contains("predicate") || fragmento.getPredicado().toLowerCase().contains("predicado")) {
+                                                String predicadoFragmento = "";
+                                                for (HybridFragment hf2 : this.getFragments()) {
+                                                    if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                                                        String campo = hf2.getPredicado().substring(1, hf2.getPredicado().indexOf(":"));
+                                                        String valor = hf2.getPredicado().substring(hf2.getPredicado().indexOf(":") + 1, hf2.getPredicado().length() - 1);
+                                                        if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                                                                && !valor.contains("$in") && !valor.contains("$lt")
+                                                                && !valor.contains("$lte") && !valor.contains("$ne")
+                                                                && !valor.contains("$nin")) {
+                                                            valor = "{$eq:" + valor + "}";
+                                                        }
+                                                        predicadoFragmento = "{" + campo + ":{$not:{" + valor + "}}}," + predicadoFragmento;
+                                                    }
+                                                }
+                                                tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + "," + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
+                                                System.out.println("Tuplas de {$and:[" + where_statement.toLowerCase() + "," + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
+                                            } else {
+                                                String campo = fragmento.getPredicado().substring(1, fragmento.getPredicado().indexOf(":"));
+                                                String valor = fragmento.getPredicado().substring(fragmento.getPredicado().indexOf(":") + 1, fragmento.getPredicado().length() - 1);
+                                                if(campo.contains("$and")){
+                                                    valor=valor.substring(0, valor.length()-1)+","+where_statement.toLowerCase()+"]";
+                                                    tuplasDeAmbosPredicados = this.nTuplas("{"+campo+":"+valor+"}");
+                                                }else{
+                                                    tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{"+valor+"}}]}");
+                                                }
+                                                System.out.println("Tuplas de " + "{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{"+valor+"}}]}" + ": " + tuplasDeAmbosPredicados);
+                                            }
+                                        } else {
+                                            tuplasDeAmbosPredicados = 1;
+                                        }
 
+                                        if (tuplasDeAmbosPredicados > 0) {
+                                            fResuelvenPredicados.add(fragmento);
+                                        }
+                                    }
+                                }
+                                nJoins = (fResuelvenPredicados.size() < 1) ? 1 : fResuelvenPredicados.size();
+                                //buscar en esquema si la operación se resuelve en parte o entera de manera remota 
+                                //primero sitiov y luego sitioh
+                                boolean siHay = false;
+                                for (HybridFragment fragmento : fResuelvenPredicados) {
+                                    if (fragmento.getSitiov().compareTo(ipLinea) != 0) {
+                                        siHay = true;
+                                    }
+                                }
+                                if (siHay) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                System.out.println("VAO: " + ValorAsignadoOperacion);
+                                System.out.println("CR: " + nJoins);
+                                double costoOperacionv = 0.0;
+                                for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                                    if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                        System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
+                                        costoOperacionv += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    }
+                                }
+                                System.out.println("Costo de operación vertical V: " + costoOperacionv);
+                                this.setVHCost(this.getVHCost() + costoOperacionv);
+                                //se recalcula pero ahora con sitioh para el HVcosto
+                                ValorAsignadoOperacion = this.VAO(actual);
+                                siHay = false;
+                                for (HybridFragment fragmento : fResuelvenPredicados) {
+                                    if (fragmento.getSitioh().compareTo(ipLinea) != 0) {
+                                        siHay = true;
+                                    }
+                                }
+                                if (siHay) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                double costoOperacionh = 0.0;
+                                for (Atributo a : this.oBD.getTabla().getAtributos()) {
+                                    if (actual.toLowerCase().contains(a.getNombre().toLowerCase())) {
+                                        System.out.println("\tTamaño de atributo " + a.getNombre() + ": " + Double.parseDouble(a.getTamanio()));
+                                        costoOperacionh += ValorAsignadoOperacion * nJoins * Double.parseDouble(a.getTamanio());
+                                    }
+                                }
+                                System.out.println("Costo de operación vertical h: " + costoOperacionh);
+                                this.setHVCost(this.getHVCost() + costoOperacionh);
+                                //////////horizontal
+                                System.out.println("Tuplas: " + tuplasDelWhere);
+                                //¿qué sitios se requieren para satisfacer el predicado y atributos 
+                                //de la operación? R: los mismos sitios de la vertical
+
+                                //¿se requieren sitios remotos? R: de la misma manera que en la vertical
+                                double costohorizontalh = tuplasDelWhere * ValorAsignadoOperacion;
+                                ValorAsignadoOperacion = this.VAO(actual);
+                                siHay = false;
+                                for (HybridFragment fragmento : fResuelvenPredicados) {
+                                    if (fragmento.getSitiov().compareTo(ipLinea) != 0) {
+                                        siHay = true;
+                                    }
+                                }
+                                if (siHay) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                double costohorizontalv = tuplasDelWhere * ValorAsignadoOperacion;
+
+                                System.out.println("Costo remoto horizontal v: " + costohorizontalv);
+                                System.out.println("Costo remoto horizontal h: " + costohorizontalh);
+                                this.setVHCost(this.getVHCost() + costohorizontalv);
+                                this.setHVCost(this.getHVCost() + costohorizontalh);
+
+                                //Agregar el costo a los fragmentos que resuelven la operación
+                                for (int i = 0; i < this.fragments.size(); i++) {
+                                    boolean b = false;
+                                    for (int r = 0; r < fResuelvenPredicados.size(); r++) {
+                                        if (fResuelvenPredicados.get(r).getNombre().compareTo(fragments.get(i).getNombre()) == 0) {
+                                            b = true;
+                                        }
+                                    }
+                                    if (b) {
+                                        fragments.get(i).setCostoDesV(fragments.get(i).getCostoDesV() + costoOperacionv + costohorizontalv);
+                                        fragments.get(i).setCostoDesH(fragments.get(i).getCostoDesH() + costoOperacionh + costohorizontalh);
+                                    }
+                                }
                             }
                         }
                     }
@@ -552,36 +615,52 @@ public class HybridDesign {
     }
 
     private double nTuplas(String predicado) {
-        String q1 = "";
-        if (!predicado.isEmpty()) {
-            q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
-        } else {
-            q1 = "select count(*) from " + this.oBD.getTabla().getNombre();
-        }
         double count1 = 0.0;
-        ArrayList r1 = new ArrayList();
-
-        try {
-            if (this.oBD.getTipoBD().compareTo("a") == 0) {
-                if (this.oBD.getAccexternomysql().conectar()) {
-                    r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
-
-                    this.oBD.getAccexternomysql().desconectar();
-                }
-            } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
-                if (this.oBD.getAccexternopost().conectar()) {
-                    r1 = this.oBD.getAccexternopost().ejecutarConsulta(q1);
-                    this.oBD.getAccexternopost().desconectar();
-                }
+        if (this.oBD.getTipoBD().compareTo("a") == 0 || this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+            String q1 = "";
+            if (!predicado.isEmpty()) {
+                q1 = "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado;
+            } else {
+                q1 = "select count(*) from " + this.oBD.getTabla().getNombre();
             }
-            if (r1 != null) {
-                if (r1.size() > 0) {
-                    count1 = (double) ((ArrayList) r1.get(0)).get(0);
+
+            ArrayList r1 = new ArrayList();
+
+            try {
+                if (this.oBD.getTipoBD().compareTo("a") == 0) {
+                    if (this.oBD.getAccexternomysql().conectar()) {
+                        r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
+
+                        this.oBD.getAccexternomysql().desconectar();
+                    }
+                } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+                    if (this.oBD.getAccexternopost().conectar()) {
+                        r1 = this.oBD.getAccexternopost().ejecutarConsulta(q1);
+                        this.oBD.getAccexternopost().desconectar();
+                    }
                 }
+                if (r1 != null) {
+                    if (r1.size() > 0) {
+                        count1 = (double) ((ArrayList) r1.get(0)).get(0);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else {
+            try {
+                //mongo
+                if (this.oBD.getAccexternomongo().conectar()) {
+                    MongoCollection<Document> doc = this.oBD.getAccexternomongo().getMongoClient().getDatabase(this.oBD.getNombd()).getCollection(this.oBD.getTabla().getNombre());
+                    System.out.println(predicado);
+                    Document d = Document.parse((predicado.isEmpty()) ? "{}" : predicado);
+                    count1 = doc.countDocuments(d);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
+
         return count1;
     }
 
@@ -671,116 +750,6 @@ public class HybridDesign {
             }
         }
         return ret;
-    }
-
-    private double vRemoto(String ip, String actual, String sitiovh) {
-        String predicado = this.where_statement(actual).toLowerCase().replace("where", "");
-        boolean local = false;
-        ArrayList<HybridFragment> hf = new ArrayList<>();
-        for (HybridFragment hf3 : this.getFragments()) {
-            if (sitiovh.compareTo("h") == 0) {
-                if (hf3.getSitioh().compareTo(ip) == 0) {
-                    hf.add(hf3);
-                }
-            } else if (sitiovh.compareTo("v") == 0) {
-
-                if (hf3.getSitiov().compareTo(ip) == 0) {
-                    hf.add(hf3);
-                }
-            }
-        }
-        if (!hf.isEmpty()) {
-            double count1 = 0.0;
-            String q1 = (!predicado.isEmpty()) ? "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicado : "select count(*) from " + this.oBD.getTabla().getNombre();
-            ArrayList r1 = new ArrayList();
-            try {
-                if (this.oBD.getTipoBD().compareTo("a") == 0) {
-                    if (this.oBD.getAccexternomysql().conectar()) {
-                        r1 = this.oBD.getAccexternomysql().ejecutarConsulta(q1);
-                        this.oBD.getAccexternomysql().desconectar();
-                    }
-                } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
-                    if (this.oBD.getAccexternopost().conectar()) {
-                        r1 = this.oBD.getAccexternopost().ejecutarConsulta(q1);
-                        this.oBD.getAccexternopost().desconectar();
-                    }
-                }
-
-                if (r1 != null) {
-                    if (!r1.isEmpty()) {
-                        count1 = (double) ((ArrayList) r1.get(0)).get(0);
-                    }
-
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            if (count1 > 0) {
-                ArrayList<HybridFragment> fResuelvenPredicados = new ArrayList<>();
-                for (HybridFragment hf4 : hf) {
-                    String predicadoFragmento = hf4.getPredicado();
-                    if (hf4.getPredicado().contains("predicate") || hf4.getPredicado().contains("predicado")) {
-                        predicadoFragmento = "";
-                        for (HybridFragment hf2 : this.getFragments()) {
-                            if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
-                                predicadoFragmento += "!(" + hf2.getPredicado() + ") AND ";
-                            }
-                        }
-                        predicadoFragmento = predicadoFragmento.substring(0, predicadoFragmento.length() - 5);
-                    }
-                    String q2 = (!predicado.isEmpty()) ? "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento + " and " + predicado : "select count(*) from " + this.oBD.getTabla().getNombre() + " where " + predicadoFragmento;
-
-                    ArrayList r2 = new ArrayList();
-                    try {
-                        if (this.oBD.getTipoBD().compareTo("a") == 0) {
-                            if (this.oBD.getAccexternomysql().conectar()) {
-                                r2 = this.oBD.getAccexternomysql().ejecutarConsulta(q2);
-                                this.oBD.getAccexternomysql().desconectar();
-                            }
-                        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
-                            if (this.oBD.getAccexternopost().conectar()) {
-                                r2 = this.oBD.getAccexternopost().ejecutarConsulta(q2);
-                                this.oBD.getAccexternopost().desconectar();
-                            }
-                        }
-                        if (r2 != null) {
-                            if (!r2.isEmpty()) {
-                                double nTuplas = ((double) ((ArrayList) r2.get(0)).get(0));
-                                if (nTuplas > 0) {
-                                    fResuelvenPredicados.add(hf4);
-                                }
-                            }
-                        }
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                //filtrar fResuelvenPredicados por atributos
-                ArrayList<String> atributosOpe = buscarAtributos(actual);
-                ArrayList<HybridFragment> fResuelvenAtributos = new ArrayList<>();
-                for (HybridFragment fragmento : fResuelvenPredicados) {
-                    boolean seUsa = false;
-                    for (Atributo l : fragmento.getAtts()) {
-                        if (atributosOpe.contains(l.getNombre().toLowerCase())) {
-                            seUsa = true;
-                        }
-                    }
-                    if (seUsa) {
-                        fResuelvenAtributos.add(fragmento);
-                    }
-                }
-                if (!fResuelvenAtributos.isEmpty()) {
-                    local = true;
-                }
-            } else {
-                local = true;
-            }
-        } else {
-            local = false;
-        }
-        return (local) ? 1 : 2;
     }
 
     /**
@@ -972,16 +941,16 @@ public class HybridDesign {
                 JSONObject j2 = new JSONObject(j.get("attr").toString());
                 JSONObject j3 = new JSONObject(j2.get("command").toString());
                 if (j3.has("find")) {
-                    if(j3.has("filter")){
+                    if (j3.has("filter")) {
                         JSONObject j4 = new JSONObject(j3.get("filter").toString());
                         ret = j4.toString();
                     }
                 } else if (j3.has("delete")) {
-                    if(j3.has("deletes")){
+                    if (j3.has("deletes")) {
                         JSONArray j4 = j3.getJSONArray("deletes");
-                        if(j4.length()>=0){
-                            JSONObject j5=new JSONObject(j4.get(0));
-                            if(j5.has("q")){
+                        if (j4.length() >= 0) {
+                            JSONObject j5 = new JSONObject(j4.get(0) + "");
+                            if (j5.has("q")) {
                                 ret = j5.get("q").toString();
                             }
                         }
@@ -990,12 +959,20 @@ public class HybridDesign {
                     //insert one
                     if (j3.has("documents")) {
                         JSONArray arr = j3.getJSONArray("documents");
-                        if(arr.length()>=0){
+                        if (arr.length() >= 0) {
                             ret = arr.get(0).toString();
                         }
                     }
                 } else if (j3.has("update")) {
-                    
+                    if (j3.has("updates")) {
+                        JSONArray j4 = j3.getJSONArray("updates");
+                        if (j4.length() >= 0) {
+                            JSONObject j5 = new JSONObject(j4.get(0) + "");
+                            if (j5.has("q")) {
+                                ret = j5.get("q").toString();
+                            }
+                        }
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1148,7 +1125,7 @@ public class HybridDesign {
         this.progress1 = 100;
     }
 
-    public void hybridOverlap(int opc) {
+    public void hybridOverlapRelational(int opc) {
         ArrayList<String> predicados = new ArrayList<>();
         for (HybridFragment f : this.fragments) {
             if (!predicados.contains(f.getPredicado())) {
@@ -1349,4 +1326,137 @@ public class HybridDesign {
         this.progress1 = 100;
     }
 
+    int VAO(String linea) {
+        int ret = 0;
+        if (this.oBD.getTipoBD().compareTo("a") == 0 || this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
+            if (linea.toLowerCase().contains("select")) {
+                ret = 1;
+            } else if ((linea.toLowerCase().contains("delete")
+                    || linea.toLowerCase().contains("insert"))) {
+                ret = 2;
+            } else if (linea.toLowerCase().contains("update")) {
+                ret = 3;
+            }
+        } else {
+            JSONObject j3 = null;
+            try {
+                j3 = new JSONObject(linea);
+                if (j3.has("find")) {
+                    ret = 1;
+                } else if (j3.has("delete") || j3.has("insert")) {
+                    ret = 2;
+                } else if (j3.has("update")) {
+                    ret = 3;
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
+    public void hybridOverlapMongoDB(int opc) {
+        ArrayList<String> predicados = new ArrayList<>();
+        for (HybridFragment f : this.fragments) {
+            if (!predicados.contains(f.getPredicado())) {
+                if (f.getPredicado().charAt(0) != '{') {
+                    predicados.add("{" + f.getPredicado() + "}");
+                    f.setPredicado("{" + f.getPredicado() + "}");
+                } else {
+                    predicados.add(f.getPredicado());
+                }
+
+            }
+        }
+        ArrayList<PredicadoCosto> predicadoCosto = new ArrayList<>();
+        String predicadoFragmento = "";
+        for (String item : predicados) {
+            if (item.contains("predicate") || item.contains("predicado")) {
+                predicadoFragmento = "";
+                for (HybridFragment hf2 : this.getFragments()) {
+                    if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                        String campo = hf2.getPredicado().substring(1, hf2.getPredicado().indexOf(":"));
+                        String valor = hf2.getPredicado().substring(hf2.getPredicado().indexOf(":") + 1, hf2.getPredicado().length() - 1);
+                        if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                                && !valor.contains("$in") && !valor.contains("$lt")
+                                && !valor.contains("$lte") && !valor.contains("$ne")
+                                && !valor.contains("$nin")) {
+                            valor = "{$eq:" + valor + "}";
+                        }
+                        predicadoFragmento = "{" + campo + ":{$not:{" + valor + "}}}," + predicadoFragmento;
+                    }
+                }
+                predicadoFragmento = "{$and:[" + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}";
+            }
+            int ocurrencias = 0;
+            double costo = 0;
+            for (HybridFragment f : this.fragments) {
+                if (f.getPredicado().compareTo(item) == 0) {
+                    ocurrencias++;
+                    costo = (opc == 1) ? costo + f.getCostoDesV() : costo + f.getCostoDesH();
+                }
+            }
+            PredicadoCosto p = new PredicadoCosto();
+            p.setPredicado(item);
+            p.setCosto(costo / ocurrencias);
+            predicadoCosto.add(p);
+        }
+        Collections.sort(predicadoCosto, (PredicadoCosto a, PredicadoCosto b) -> new Double(b.getCosto()).compareTo(new Double(a.getCosto())));
+        ArrayList<HybridFragment> ordenados = new ArrayList<>();
+        for (PredicadoCosto item : predicadoCosto) {
+            for (HybridFragment hf : this.getFragments()) {
+                if (hf.getPredicado().compareTo(item.getPredicado()) == 0) {
+                    ordenados.add(hf);
+                }
+            }
+        }
+        this.setFragments(ordenados);
+        String negado = "";
+        for (PredicadoCosto item : predicadoCosto) {
+            //item=(item.getPredicado().toLowerCase().contains("predicate") || item.getPredicado().toLowerCase().contains("predicado"))?
+            //      predicadoFragmento:item;    
+            if (!item.getPredicado().toLowerCase().contains("predicate") && !item.getPredicado().toLowerCase().contains("predicado")) {
+                String campo = item.getPredicado().substring(1, item.getPredicado().indexOf(":"));
+                String valor = item.getPredicado().substring(item.getPredicado().indexOf(":") + 1, item.getPredicado().length() - 1);
+                if (negado.isEmpty()) {
+                    if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                            && !valor.contains("$in") && !valor.contains("$lt")
+                            && !valor.contains("$lte") && !valor.contains("$ne")
+                            && !valor.contains("$nin")) {
+                        valor = "{$eq:" + valor + "}";
+                        item.setNegado("{" + campo + ":" + valor + "}");
+                    } else {
+                        item.setNegado("{" + campo + ":{" + valor + "}}");
+                    }
+                } else {
+                    item.setNegado(negado + item.getPredicado());
+                }
+                if (!negado.contains(item.getNegado())) {
+                    if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                            && !valor.contains("$in") && !valor.contains("$lt")
+                            && !valor.contains("$lte") && !valor.contains("$ne")
+                            && !valor.contains("$nin")) {
+                        valor = "{$eq:" + valor + "}";
+                    }
+                    negado = "{" + campo + ":{$not:{" + valor + "}}}," + negado;
+                }
+            } else {
+                item.setNegado(predicadoFragmento);
+            }
+        }
+        for (PredicadoCosto item : predicadoCosto) {
+            for (HybridFragment hf : this.getFragments()) {
+                if (hf.getPredicado().compareTo(item.getPredicado()) == 0) {
+                    hf.setPredicado(item.getNegado());
+                }
+            }
+        }
+        //eliminar ands
+        for (HybridFragment hf : this.getFragments()) {
+            if (hf.getPredicado().length() >= 1 && hf.getPredicado().charAt(hf.getPredicado().length() - 1) == ',') {
+                hf.setPredicado(hf.getPredicado().substring(0, hf.getPredicado().length() - 1).toLowerCase());
+            }
+        }
+        this.getFragments().forEach(x -> System.out.println(x.getPredicado()));
+    }
 }

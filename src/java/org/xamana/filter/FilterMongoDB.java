@@ -75,7 +75,7 @@ public class FilterMongoDB extends Filter implements Serializable {
         List<String> predicates = new ArrayList<>();
         pattern = Pattern.compile("filter:\\{(.*?)\\},lsid:");
         match = pattern.matcher(row);
-        if (match.find()&&!match.group(1).equals("")) {
+        if (match.find() && !match.group(1).equals("")) {
             predicates.addAll(this.buildPredicates(match.group(1)));
 
             pattern = Pattern.compile("nreturned:(.*?),");
@@ -97,16 +97,21 @@ public class FilterMongoDB extends Filter implements Serializable {
 
     @Override
     protected List<Operation> update(String row) {
+        System.out.println(row);
         List<Operation> items = new ArrayList<>();
         List<String> predicates;
         pattern = Pattern.compile("q:\\{(.*?)\\},u:");
         match = pattern.matcher(row);
-        if (match.find()&&!match.group(1).equals("")) {
+        if (match.find() && !match.group(1).equals("")) {
             predicates = this.buildPredicates(match.group(1));
             pattern = Pattern.compile("nModified:(.*?),");
             match = pattern.matcher(row);
-            match.find();
-            tuples = Integer.parseInt(match.group(1));
+            try {
+                match.find();
+                tuples = Integer.parseInt(match.group(1));
+            } catch (Exception e) {
+                tuples = 0;
+            }
             if (tuples > 0) {
                 pattern = Pattern.compile(regexSite);
                 match = pattern.matcher(row);
@@ -126,7 +131,7 @@ public class FilterMongoDB extends Filter implements Serializable {
         List<String> predicates;
         pattern = Pattern.compile("q:\\{(.*?)\\},limit");
         match = pattern.matcher(row);
-        if (match.find()&&!match.group(1).equals("")) {
+        if (match.find() && !match.group(1).equals("")) {
             predicates = this.buildPredicates(match.group(1));
             pattern = Pattern.compile("ndeleted:(.*?),");
             match = pattern.matcher(row);
@@ -167,6 +172,6 @@ public class FilterMongoDB extends Filter implements Serializable {
     }
 
     protected List<String> buildPredicates(String predicates) {
-        return Arrays.asList(predicates.replaceAll("[{}]","").replaceAll("\\$eq:","").split(","));
+        return Arrays.asList(predicates.replaceAll("[{}]", "").replaceAll("\\$eq:", "").split(","));
     }
 }

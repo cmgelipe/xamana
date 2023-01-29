@@ -1156,7 +1156,7 @@ public class BDJB implements Serializable {
 
     public void onTipoFragmentchange() {
         try {
-            if (this.obj.getTipoBD().compareTo("d") == 0 && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
+            if (this.obj.getTipoBD().compareTo("d") == 0 && (this.obj.getTabla().getTipoFragment().compareTo("b") == 0 || this.obj.getTabla().getTipoFragment().compareTo("c") == 0)) {
                 this.obj.listaAtributosMongoDB();
                 this.dtamanios = true;
             }
