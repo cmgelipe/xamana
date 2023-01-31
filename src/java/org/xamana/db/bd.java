@@ -39,6 +39,7 @@ import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.crearfrag.BuildTypes;
 import org.xamana.dhf.DHFragmentation;
+import org.xamana.hMongo.HMongo;
 import org.xamana.vertical.VerticalBD;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
@@ -1908,13 +1909,19 @@ public class bd implements Serializable {
         try {
             //vertical
             crearEquemaVertical(files);
-            //horizontal
-            DHFragmentation DHF = new DHFragmentation(this);
-            DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
-            
             setHD(new HybridDesign(this));
-            getHD().mix(DHF.getSchema(), this.esquemaVertical);
-            
+            if (this.getTipoBD().compareTo("d") != 0) {
+                //horizontal
+                DHFragmentation DHF = new DHFragmentation(this);
+                DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
+                getHD().mix(DHF.getSchema(), this.esquemaVertical);
+            } else {
+                HMongo horizontal=new HMongo(this, files);
+                horizontal.crearEsquema();
+                getHD().mixMongo(horizontal.getEsquema(), this.esquemaVertical);
+                
+            }
+
             if (this.getTipoBD().compareTo("a") == 0) {
                 //COSTO SIN CONTEMPLAR TRASLAPE
                 getHD().costsMySQL(files);
@@ -1944,7 +1951,7 @@ public class bd implements Serializable {
             } else {
                 setSentencia("Ambos esquemas poseen el mismo costo, se aplicará el esquema vertical-horizontal");
             }
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }

@@ -64,6 +64,21 @@ public class HybridDesign {
             }
         }
     }
+    
+    public void mixMongo(List<Fragment> hfs, ArrayList<TablaCosto> esquemaVertical) {
+        for (Fragment hf : hfs) {
+            for (int i = 0; i < esquemaVertical.size(); i++) {
+                TablaCosto vf = esquemaVertical.get(i);
+                HybridFragment newFragment = new HybridFragment();
+                newFragment.setNombre(hf.getName() + "_" + i);
+                newFragment.setPredicado(hf.getPredicate());
+                newFragment.setAtts(vf.getArrAtri());
+                newFragment.setSitioh(hf.getSite());
+                newFragment.setSitiov(vf.getSitio());
+                getFragments().add(newFragment);
+            }
+        }
+    }
 
     public void costsMySQL(UploadedFiles files) {
         System.out.println("-----------COSTOS PIPE HÍBRIDA-------------");
@@ -421,9 +436,30 @@ public class HybridDesign {
         //limpiar
         this.setVHCost(0.0);
         this.setHVCost(0.0);
+        //FORMATO
         for (HybridFragment temp : this.getFragments()) {
-            if (temp.getPredicado().charAt(0) != '{') {
-                temp.setPredicado("{" + temp.getPredicado() + "}");
+            if (!temp.getPredicado().toLowerCase().contains("predicate") && !temp.getPredicado().toLowerCase().contains("predicado")) {
+                String campo = temp.getPredicado().substring(1, temp.getPredicado().indexOf(":"));
+                String valor = temp.getPredicado().substring(temp.getPredicado().indexOf(":") + 1, temp.getPredicado().length() - 1);
+                if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                        && !valor.contains("$in") && !valor.contains("$lt")
+                        && !valor.contains("$lte") && !valor.contains("$ne")
+                        && !valor.contains("$nin")) {
+                    valor = "{$eq:" + valor + "}";
+                }
+                if (temp.getPredicado().charAt(0) != '{') {
+                    temp.setPredicado("{" + campo + ":" + valor + "}");
+                }
+            } else {
+                String predicadoFragmento = "";
+                for (HybridFragment hf2 : this.getFragments()) {
+                    if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                        String campo = hf2.getPredicado().substring(1, hf2.getPredicado().indexOf(":"));
+                        String valor = hf2.getPredicado().substring(hf2.getPredicado().indexOf(":") + 1, hf2.getPredicado().length() - 1);
+                        predicadoFragmento = "{" + campo + ":{$not:{" + valor + "}}}," + predicadoFragmento;
+                    }
+                }
+                temp.setPredicado("{$and:[" + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
             }
             temp.setCostoDesH(0.0);
             temp.setCostoDesV(0.0);
@@ -493,27 +529,21 @@ public class HybridDesign {
                                                     if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
                                                         String campo = hf2.getPredicado().substring(1, hf2.getPredicado().indexOf(":"));
                                                         String valor = hf2.getPredicado().substring(hf2.getPredicado().indexOf(":") + 1, hf2.getPredicado().length() - 1);
-                                                        if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
-                                                                && !valor.contains("$in") && !valor.contains("$lt")
-                                                                && !valor.contains("$lte") && !valor.contains("$ne")
-                                                                && !valor.contains("$nin")) {
-                                                            valor = "{$eq:" + valor + "}";
-                                                        }
                                                         predicadoFragmento = "{" + campo + ":{$not:{" + valor + "}}}," + predicadoFragmento;
                                                     }
                                                 }
-                                                tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + "," + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
+                                                //tuplasDeAmbosPredicados = this.nTuplas();
                                                 System.out.println("Tuplas de {$and:[" + where_statement.toLowerCase() + "," + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
                                             } else {
                                                 String campo = fragmento.getPredicado().substring(1, fragmento.getPredicado().indexOf(":"));
                                                 String valor = fragmento.getPredicado().substring(fragmento.getPredicado().indexOf(":") + 1, fragmento.getPredicado().length() - 1);
-                                                if(campo.contains("$and")){
-                                                    valor=valor.substring(0, valor.length()-1)+","+where_statement.toLowerCase()+"]";
-                                                    tuplasDeAmbosPredicados = this.nTuplas("{"+campo+":"+valor+"}");
-                                                }else{
-                                                    tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{"+valor+"}}]}");
+                                                if (campo.contains("$and")) {
+                                                    valor = valor.substring(0, valor.length() - 1) + "," + where_statement.toLowerCase() + "]";
+                                                    tuplasDeAmbosPredicados = this.nTuplas("{" + campo + ":" + valor + "}");
+                                                } else {
+                                                    tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{" + valor + "}}]}");
                                                 }
-                                                System.out.println("Tuplas de " + "{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{"+valor+"}}]}" + ": " + tuplasDeAmbosPredicados);
+                                                System.out.println("Tuplas de " + "{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{" + valor + "}}]}" + ": " + tuplasDeAmbosPredicados);
                                             }
                                         } else {
                                             tuplasDeAmbosPredicados = 1;
