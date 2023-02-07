@@ -20,6 +20,7 @@ public class Fragment {
     private String percent;
     private double approximateOperations;
     private double performance;
+    private String predicadoTraslape;
 
     public Fragment() {
 
@@ -86,6 +87,20 @@ public class Fragment {
     public String toString() {
       return "{name:"+this.name+",predicate:"+this.predicate+""
               + ",site:"+this.site+", tuples"+this.tuples+"}";
+    }
+
+    /**
+     * @return the predicadoTraslape
+     */
+    public String getPredicadoTraslape() {
+        return predicadoTraslape;
+    }
+
+    /**
+     * @param predicadoTraslape the predicadoTraslape to set
+     */
+    public void setPredicadoTraslape(String predicadoTraslape) {
+        this.predicadoTraslape = predicadoTraslape;
     }
       
 }

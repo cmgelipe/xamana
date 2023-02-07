@@ -64,7 +64,7 @@ public class HybridDesign {
             }
         }
     }
-    
+
     public void mixMongo(List<Fragment> hfs, ArrayList<TablaCosto> esquemaVertical) {
         for (Fragment hf : hfs) {
             for (int i = 0; i < esquemaVertical.size(); i++) {
@@ -436,31 +436,8 @@ public class HybridDesign {
         //limpiar
         this.setVHCost(0.0);
         this.setHVCost(0.0);
-        //FORMATO
+
         for (HybridFragment temp : this.getFragments()) {
-            if (!temp.getPredicado().toLowerCase().contains("predicate") && !temp.getPredicado().toLowerCase().contains("predicado")) {
-                String campo = temp.getPredicado().substring(1, temp.getPredicado().indexOf(":"));
-                String valor = temp.getPredicado().substring(temp.getPredicado().indexOf(":") + 1, temp.getPredicado().length() - 1);
-                if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
-                        && !valor.contains("$in") && !valor.contains("$lt")
-                        && !valor.contains("$lte") && !valor.contains("$ne")
-                        && !valor.contains("$nin")) {
-                    valor = "{$eq:" + valor + "}";
-                }
-                if (temp.getPredicado().charAt(0) != '{') {
-                    temp.setPredicado("{" + campo + ":" + valor + "}");
-                }
-            } else {
-                String predicadoFragmento = "";
-                for (HybridFragment hf2 : this.getFragments()) {
-                    if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
-                        String campo = hf2.getPredicado().substring(1, hf2.getPredicado().indexOf(":"));
-                        String valor = hf2.getPredicado().substring(hf2.getPredicado().indexOf(":") + 1, hf2.getPredicado().length() - 1);
-                        predicadoFragmento = "{" + campo + ":{$not:{" + valor + "}}}," + predicadoFragmento;
-                    }
-                }
-                temp.setPredicado("{$and:[" + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
-            }
             temp.setCostoDesH(0.0);
             temp.setCostoDesV(0.0);
         }
@@ -501,7 +478,8 @@ public class HybridDesign {
                                 ///BUSCAR QUÉ FRAGMENTOS OCUPAN EL PREDICADO DE LA OPERACIÓN 
                                 int nJoins = 0;
                                 ArrayList<String> atributosOpe = buscarAtributos(actual);
-                                atributosOpe.forEach(x -> System.out.println(x));
+                                System.out.println("");
+                                atributosOpe.forEach(x -> System.out.print(x));
                                 ArrayList<HybridFragment> fResuelvenAtributos = new ArrayList<>();
                                 for (HybridFragment fragmento : this.getFragments()) {
                                     boolean seUsa = false;
@@ -529,10 +507,10 @@ public class HybridDesign {
                                                     if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
                                                         String campo = hf2.getPredicado().substring(1, hf2.getPredicado().indexOf(":"));
                                                         String valor = hf2.getPredicado().substring(hf2.getPredicado().indexOf(":") + 1, hf2.getPredicado().length() - 1);
-                                                        predicadoFragmento = "{" + campo + ":{$not:{" + valor + "}}}," + predicadoFragmento;
+                                                        predicadoFragmento = "{" + campo + ":{$not:" + valor + "}}," + predicadoFragmento;
                                                     }
                                                 }
-                                                //tuplasDeAmbosPredicados = this.nTuplas();
+                                                tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + "," + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
                                                 System.out.println("Tuplas de {$and:[" + where_statement.toLowerCase() + "," + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}");
                                             } else {
                                                 String campo = fragmento.getPredicado().substring(1, fragmento.getPredicado().indexOf(":"));
@@ -541,9 +519,9 @@ public class HybridDesign {
                                                     valor = valor.substring(0, valor.length() - 1) + "," + where_statement.toLowerCase() + "]";
                                                     tuplasDeAmbosPredicados = this.nTuplas("{" + campo + ":" + valor + "}");
                                                 } else {
-                                                    tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{" + valor + "}}]}");
+                                                    tuplasDeAmbosPredicados = this.nTuplas("{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":" + valor + "}]}");
                                                 }
-                                                System.out.println("Tuplas de " + "{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":{" + valor + "}}]}" + ": " + tuplasDeAmbosPredicados);
+                                                System.out.println("Tuplas de " + "{$and:[" + where_statement.toLowerCase() + ",{" + campo + ":" + valor + "}]}" + ": " + tuplasDeAmbosPredicados);
                                             }
                                         } else {
                                             tuplasDeAmbosPredicados = 1;
@@ -578,7 +556,7 @@ public class HybridDesign {
                                 System.out.println("Costo de operación vertical V: " + costoOperacionv);
                                 this.setVHCost(this.getVHCost() + costoOperacionv);
                                 //se recalcula pero ahora con sitioh para el HVcosto
-                                ValorAsignadoOperacion = this.VAO(actual);
+                                ValorAsignadoOperacion = this.VAO(j2.get("command").toString());
                                 siHay = false;
                                 for (HybridFragment fragmento : fResuelvenPredicados) {
                                     if (fragmento.getSitioh().compareTo(ipLinea) != 0) {
@@ -604,7 +582,7 @@ public class HybridDesign {
 
                                 //¿se requieren sitios remotos? R: de la misma manera que en la vertical
                                 double costohorizontalh = tuplasDelWhere * ValorAsignadoOperacion;
-                                ValorAsignadoOperacion = this.VAO(actual);
+                                ValorAsignadoOperacion = this.VAO(j2.get("command").toString());
                                 siHay = false;
                                 for (HybridFragment fragmento : fResuelvenPredicados) {
                                     if (fragmento.getSitiov().compareTo(ipLinea) != 0) {
@@ -614,6 +592,7 @@ public class HybridDesign {
                                 if (siHay) {
                                     ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                                 }
+                                System.out.println("Valor asignado de operacion: "+ValorAsignadoOperacion);
                                 double costohorizontalv = tuplasDelWhere * ValorAsignadoOperacion;
 
                                 System.out.println("Costo remoto horizontal v: " + costohorizontalv);
@@ -625,6 +604,7 @@ public class HybridDesign {
                                 for (int i = 0; i < this.fragments.size(); i++) {
                                     boolean b = false;
                                     for (int r = 0; r < fResuelvenPredicados.size(); r++) {
+                                        
                                         if (fResuelvenPredicados.get(r).getNombre().compareTo(fragments.get(i).getNombre()) == 0) {
                                             b = true;
                                         }
@@ -1413,7 +1393,7 @@ public class HybridDesign {
                                 && !valor.contains("$nin")) {
                             valor = "{$eq:" + valor + "}";
                         }
-                        predicadoFragmento = "{" + campo + ":{$not:{" + valor + "}}}," + predicadoFragmento;
+                        predicadoFragmento = "{" + campo + ":{$not:" + valor + "}}," + predicadoFragmento;
                     }
                 }
                 predicadoFragmento = "{$and:[" + predicadoFragmento.substring(0, predicadoFragmento.length() - 1) + "]}";
@@ -1456,7 +1436,7 @@ public class HybridDesign {
                         valor = "{$eq:" + valor + "}";
                         item.setNegado("{" + campo + ":" + valor + "}");
                     } else {
-                        item.setNegado("{" + campo + ":{" + valor + "}}");
+                        item.setNegado("{" + campo + ":" + valor + "}");
                     }
                 } else {
                     item.setNegado(negado + item.getPredicado());
@@ -1468,7 +1448,7 @@ public class HybridDesign {
                             && !valor.contains("$nin")) {
                         valor = "{$eq:" + valor + "}";
                     }
-                    negado = "{" + campo + ":{$not:{" + valor + "}}}," + negado;
+                    negado = "{" + campo + ":{$not:" + valor + "}}," + negado;
                 }
             } else {
                 item.setNegado(predicadoFragmento);

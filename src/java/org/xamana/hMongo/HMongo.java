@@ -8,6 +8,7 @@ import com.mongodb.client.MongoCollection;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -80,34 +81,34 @@ public class HMongo {
                                                     || r.contains("$in") || r.contains("$lt")
                                                     || r.contains("$lte") || r.contains("$ne")
                                                     || r.contains("$nin")) {
-                                                String p = "{" + r + "}}";
+                                                String p = "{\"" + r + "}}";
                                                 double tuplas = this.nTuplas(p);
                                                 double costoOpe = (ipLinea.compareTo(this.oBD.getDirbd()) == 0)
                                                         ? ValorAsignadoOperacion * 1 * tuplas : ValorAsignadoOperacion * 2 * tuplas;
                                                 if (predicadoCosto.containsKey(p)) {
-                                                    if(predicadoCosto.get(p).getCostoSitio().containsKey(ipLinea)){
-                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea,predicadoCosto.get(p).getCostoSitio().get(ipLinea)+costoOpe);
-                                                    }else{
-                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea,costoOpe);
+                                                    if (predicadoCosto.get(p).getCostoSitio().containsKey(ipLinea)) {
+                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea, predicadoCosto.get(p).getCostoSitio().get(ipLinea) + costoOpe);
+                                                    } else {
+                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea, costoOpe);
                                                     }
                                                 } else {
-                                                    costoSitio cs=new costoSitio();
+                                                    costoSitio cs = new costoSitio();
                                                     cs.getCostoSitio().put(ipLinea, costoOpe);
                                                     predicadoCosto.put(p, cs);
                                                 }
                                             } else {
-                                                String p = "{" + r + "}";
+                                                String p = "{\"" + r + "}";
                                                 double tuplas = this.nTuplas(p);
                                                 double costoOpe = (ipLinea.compareTo(this.oBD.getDirbd()) == 0)
                                                         ? ValorAsignadoOperacion * 1 * tuplas : ValorAsignadoOperacion * 2 * tuplas;
                                                 if (predicadoCosto.containsKey(p)) {
-                                                    if(predicadoCosto.get(p).getCostoSitio().containsKey(ipLinea)){
-                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea,predicadoCosto.get(p).getCostoSitio().get(ipLinea)+costoOpe);
-                                                    }else{
-                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea,costoOpe);
+                                                    if (predicadoCosto.get(p).getCostoSitio().containsKey(ipLinea)) {
+                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea, predicadoCosto.get(p).getCostoSitio().get(ipLinea) + costoOpe);
+                                                    } else {
+                                                        predicadoCosto.get(p).getCostoSitio().put(ipLinea, costoOpe);
                                                     }
                                                 } else {
-                                                    costoSitio cs=new costoSitio();
+                                                    costoSitio cs = new costoSitio();
                                                     cs.getCostoSitio().put(ipLinea, costoOpe);
                                                     predicadoCosto.put(p, cs);
                                                 }
@@ -131,8 +132,8 @@ public class HMongo {
                 for (String clave : predicadoCosto.keySet()) {
                     if (clave.contains(a.getNombre())) {
                         //sumar valores de sitios por predicado
-                        double costoPredicadoSitio=0.0;
-                        for(String sitio : predicadoCosto.get(clave).getCostoSitio().keySet()){
+                        double costoPredicadoSitio = 0.0;
+                        for (String sitio : predicadoCosto.get(clave).getCostoSitio().keySet()) {
                             costoPredicadoSitio += predicadoCosto.get(clave).getCostoSitio().get(sitio);
                         }
                         if (atributoValor.containsKey(a.getNombre())) {
@@ -144,45 +145,53 @@ public class HMongo {
                 }
             }
         }
-        String atributo="";
+        String atributo = "";
         if (!atributoValor.isEmpty()) {
-            double valor=0.0;
+            double valor = 0.0;
             for (String clave : atributoValor.keySet()) {
-                if(atributoValor.get(clave)>=valor){
-                    atributo=clave;
-                    valor=atributoValor.get(clave);
+                if (atributoValor.get(clave) >= valor) {
+                    atributo = clave;
+                    valor = atributoValor.get(clave);
                 }
             }
         }
-        System.out.println("Atributo que define: "+atributo);
+        System.out.println("Atributo que define: " + atributo);
         //Tabla final
-        HashMap<String,costoSitio> predicadoCostoFiltrado=new HashMap<>();
-        if(!atributo.isEmpty()){
+        HashMap<String, costoSitio> predicadoCostoFiltrado = new HashMap<>();
+        if (!atributo.isEmpty()) {
             for (String clave : predicadoCosto.keySet()) {
-                if(clave.contains(atributo)){
+                if (clave.contains(atributo)) {
                     predicadoCostoFiltrado.put(clave, predicadoCosto.get(clave));
                 }
             }
         }
-        if(!predicadoCostoFiltrado.isEmpty()){
+        if (!predicadoCostoFiltrado.isEmpty()) {
             for (String clave : predicadoCostoFiltrado.keySet()) {
-                Fragment f=new Fragment();
+                Fragment f = new Fragment();
                 f.setPredicate(clave);
                 //donde asignar
-                double sitioMasCostoso=0.0;
-                String sitioAsignacion="";
+                double sitioMasCostoso = 0.0;
+                double costoFragmento = 0.0;
+                String sitioAsignacion = "";
                 for (String s : predicadoCostoFiltrado.get(clave).getCostoSitio().keySet()) {
-                    if(predicadoCostoFiltrado.get(clave).getCostoSitio().get(s)>=sitioMasCostoso){
-                        sitioMasCostoso=predicadoCostoFiltrado.get(clave).getCostoSitio().get(s);
-                        sitioAsignacion=s;
+                    if (predicadoCostoFiltrado.get(clave).getCostoSitio().get(s) >= sitioMasCostoso) {
+                        sitioMasCostoso = predicadoCostoFiltrado.get(clave).getCostoSitio().get(s);
+                        sitioAsignacion = s;
                     }
+                    costoFragmento += predicadoCostoFiltrado.get(clave).getCostoSitio().get(s);
                 }
+                f.setPerformance(costoFragmento);
                 f.setSite(sitioAsignacion);
                 this.esquema.add(f);
             }
         }
         this.nombrar();
-        //atender fragmento sin predicado
+        //traslape, filtrado y fragmento sin predicado
+        this.traslape();
+        this.setEsquema(this.filtrado());
+        System.out.println("ESQUEMA HORIZONTAL");
+        this.esquema.forEach(x -> System.out.println(x.getPredicate()+" "+x.getPredicadoTraslape()));
+        
     }
 
     int VAO(String linea) {
@@ -253,12 +262,12 @@ public class HMongo {
     }
 
     private double nTuplas(String predicado) {
+        System.out.println("Contar tuplas de: "+predicado);
         double count1 = 0.0;
         try {
             //mongo
             if (this.oBD.getAccexternomongo().conectar()) {
                 MongoCollection<Document> doc = this.oBD.getAccexternomongo().getMongoClient().getDatabase(this.oBD.getNombd()).getCollection(this.oBD.getTabla().getNombre());
-                System.out.println(predicado);
                 Document d = Document.parse((predicado.isEmpty()) ? "{}" : predicado);
                 count1 = doc.countDocuments(d);
             }
@@ -283,9 +292,71 @@ public class HMongo {
     }
 
     private void nombrar() {
-        for(int i=0;i<this.getEsquema().size();i++){
-            this.getEsquema().get(i).setName(this.oBD.getTabla().getNombre()+"_f"+i);
+        for (int i = 0; i < this.getEsquema().size(); i++) {
+            this.getEsquema().get(i).setName(this.oBD.getTabla().getNombre() + "_f" + i);
         }
+    }
+
+    private List<Fragment> filtrado() {
+        ArrayList<Fragment> arr = new ArrayList<>();
+        //eliminar fragmentos que no contienen tuplas
+        for (Fragment f : this.esquema) {
+            String predicado = f.getPredicadoTraslape();
+            if (this.nTuplas(predicado) > 0) {
+                arr.add(f);
+            }
+        }
+        return arr;
+    }
+
+    private void traslape() {
+        Collections.sort(this.esquema, (Fragment f1, Fragment f2) -> new Double(f2.getPerformance()).compareTo(new Double(f1.getPerformance())));
+        //producir predicados con traslape
+        String negado = "";
+        for (Fragment f : this.esquema) {
+            String campo = f.getPredicate().substring(1, f.getPredicate().indexOf(":"));
+            String valor = f.getPredicate().substring(f.getPredicate().indexOf(":") + 1, f.getPredicate().length() - 1);
+            if (negado.isEmpty()) {
+                if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                        && !valor.contains("$in") && !valor.contains("$lt")
+                        && !valor.contains("$lte") && !valor.contains("$ne")
+                        && !valor.contains("$nin")) {
+                    valor = "{$eq:" + valor + "}";
+                    f.setPredicadoTraslape("{" + campo + ":" + valor + "}");
+                } else {
+                    f.setPredicadoTraslape("{" + campo + ":" + valor + "}");
+                }
+            } else {
+                f.setPredicadoTraslape(negado + f.getPredicate());
+            }
+            if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                    && !valor.contains("$in") && !valor.contains("$lt")
+                    && !valor.contains("$lte") && !valor.contains("$ne")
+                    && !valor.contains("$nin")) {
+                valor = "{$eq:" + valor + "}";
+            }
+            negado = "{" + campo + ":{$not:" + valor + "}}," + negado;
+        }
+        for (Fragment f2 : this.esquema) {
+            if (f2.getPredicadoTraslape().length() >= 1 && f2.getPredicadoTraslape().charAt(f2.getPredicadoTraslape().length() - 1) == ',') {
+                f2.setPredicadoTraslape(f2.getPredicadoTraslape().substring(0, f2.getPredicadoTraslape().length() - 1).toLowerCase());
+            }
+            f2.setPredicadoTraslape("{$and:[" +f2.getPredicadoTraslape()+ "]}");
+        }
+        if (negado.length() >= 1 && negado.charAt(negado.length() - 1) == ',') {
+            negado = negado.substring(0, negado.length() - 1).toLowerCase();
+        }
+        //frag Sin predicado
+        String and = "{$and:[" + negado + "]}";
+        if (this.nTuplas(and) > 0) {
+            Fragment fsp = new Fragment();
+            fsp.setName("Sin predicado");
+            fsp.setPerformance(0);
+            fsp.setPredicate(negado);
+            fsp.setPredicadoTraslape(negado);
+            this.getEsquema().add(fsp);
+        }
+
     }
 
 }
