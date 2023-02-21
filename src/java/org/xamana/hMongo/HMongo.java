@@ -5,6 +5,8 @@
 package org.xamana.hMongo;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -18,10 +20,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
+import org.xamana.datos.AccesoDatos;
+import org.xamana.datos.AccesoDatosMG;
 import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
-import org.xamana.dhf.schema.Schema;
+import org.xamana.verticalCBIR.model.TablaCosto;
 
 /**
  *
@@ -190,8 +194,7 @@ public class HMongo {
         this.traslape();
         this.setEsquema(this.filtrado());
         System.out.println("ESQUEMA HORIZONTAL");
-        this.esquema.forEach(x -> System.out.println(x.getPredicate()+" "+x.getPredicadoTraslape()));
-        
+        this.esquema.forEach(x -> System.out.println(x.getPredicate() + " " + x.getPredicadoTraslape()));
     }
 
     int VAO(String linea) {
@@ -262,7 +265,7 @@ public class HMongo {
     }
 
     private double nTuplas(String predicado) {
-        System.out.println("Contar tuplas de: "+predicado);
+        System.out.println("Contar tuplas de: " + predicado);
         double count1 = 0.0;
         try {
             //mongo
@@ -340,23 +343,79 @@ public class HMongo {
         for (Fragment f2 : this.esquema) {
             if (f2.getPredicadoTraslape().length() >= 1 && f2.getPredicadoTraslape().charAt(f2.getPredicadoTraslape().length() - 1) == ',') {
                 f2.setPredicadoTraslape(f2.getPredicadoTraslape().substring(0, f2.getPredicadoTraslape().length() - 1).toLowerCase());
+                f2.setTuples((long) this.nTuplas(f2.getPredicadoTraslape()));
             }
-            f2.setPredicadoTraslape("{$and:[" +f2.getPredicadoTraslape()+ "]}");
+            f2.setPredicadoTraslape("{$and:[" + f2.getPredicadoTraslape() + "]}");
+            f2.setTuples((long) this.nTuplas(f2.getPredicadoTraslape()));
         }
         if (negado.length() >= 1 && negado.charAt(negado.length() - 1) == ',') {
             negado = negado.substring(0, negado.length() - 1).toLowerCase();
         }
         //frag Sin predicado
         String and = "{$and:[" + negado + "]}";
-        if (this.nTuplas(and) > 0) {
+        double tuplas = this.nTuplas(and);
+        if (tuplas > 0) {
             Fragment fsp = new Fragment();
             fsp.setName("Sin predicado");
             fsp.setPerformance(0);
             fsp.setPredicate(negado);
             fsp.setPredicadoTraslape(negado);
+            fsp.setTuples((long) tuplas);
             this.getEsquema().add(fsp);
         }
 
+    }
+
+    public void aplicarEsquema() {
+        try {
+            this.oBD.setProgress1(1);
+            int percent = 100 / this.esquema.size();
+            this.oBD.guardarDatos();
+            String sql = "";
+            for (Fragment ta : this.esquema) {
+                AccesoDatosMG accDestino = new AccesoDatosMG(ta.getSite() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getTabla().getNombre(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                AccesoDatosMG accOrigen = new AccesoDatosMG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getPortbd(), this.oBD.getTabla().getNombre(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                if (accDestino.conectar() && accOrigen.conectar()) {
+                    //Destino
+                    MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(this.oBD.getNombd());
+                    MongoCollection<Document> docDestino = dbDestino.getCollection(ta.getName());
+                    dbDestino.createCollection(ta.getName());
+
+                    //Origen
+                    MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(this.oBD.getNombd());
+                    MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.oBD.getTabla().getNombre());
+
+                    Document d = Document.parse((ta.getPredicadoTraslape().isEmpty()) ? "{}" : ta.getPredicadoTraslape());
+                    MongoCursor<Document> resultado = docOrigen.find(d).iterator();
+                    while (resultado.hasNext()) {
+                        docDestino.insertOne(resultado.next());
+                    }
+                }
+                //Insertar a XAMANA
+                //SITIO
+                String id_sitio = "";
+                String idFragmento = "";
+
+                AccesoDatos accXamana = new AccesoDatos();
+                if (accXamana.conectar()) {
+                    sql = "insert into Sitio (direccion) "
+                            + "select * from (select '" + ta.getSite() + "' as direccion ) as tmp "
+                            + "where not exists (select direccion from Sitio where direccion='" + ta.getSite() + "') limit 1;";
+                    accXamana.ejecutarComando(sql);
+                    sql = "select id_sitio from Sitio where direccion='" + ta.getSite() + "'";
+
+                    id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
+
+                    //FRAGMENTO
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + ta.getName() + "', " + this.oBD.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0," + ta.getPerformance() + ",0)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

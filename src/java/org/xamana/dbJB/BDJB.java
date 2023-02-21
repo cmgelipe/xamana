@@ -38,6 +38,8 @@ import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.db.esquemaHorMultimedia;
 import org.xamana.dhf.DHFragmentation;
+import org.xamana.dhf.model.Fragment;
+import org.xamana.hMongo.HMongo;
 import org.xamana.vertical.VerticalBD;
 import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
@@ -76,6 +78,7 @@ public class BDJB implements Serializable {
     ArrayList<TablaCosto> AsignacionSitio;
     private boolean dtamanios = false;
     private boolean dHybrid = true;
+    private HMongo horizontalMongo;
 
     /**
      * Creates a new instance of BD
@@ -290,13 +293,20 @@ public class BDJB implements Serializable {
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
             // Fragmentacion Horizontal Dinamica                
             try {
-                DHF = new DHFragmentation(this.obj);
-                DHF.implementMethod(files, obj.getNombd(), obj.getTabla().getNombre());
-                this.infoEsquema1 = true;
+                if (this.obj.getTipoBD().compareTo("d") == 0) {
+                    horizontalMongo = new HMongo(this.obj, this.files);
+                    horizontalMongo.crearEsquema();
+                    tipoEsquema = "esquemaFHDMongo.xhtml";
+                } else {
+                    DHF = new DHFragmentation(this.obj);
+                    DHF.implementMethod(files, obj.getNombd(), obj.getTabla().getNombre());
+                    this.infoEsquema1 = true;
+                    tipoEsquema = "esquemaFHD.xhtml";
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            tipoEsquema = "esquemaFHD.xhtml";
+
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")) {
             //híbrida no cbir
             this.obj.crearEsquemaHybrid(this.files);
@@ -481,6 +491,11 @@ public class BDJB implements Serializable {
                 this.obj.fragmentarHorCBIRMongoDB(valoresColumna);
             }
             this.setBToken(true);
+        } else if (this.obj.getTabla().getTipoFragment().compareTo("a") == 0 && !this.obj.getTabla().isCBIR()) {
+            //SOLO PARA MONGO
+            this.obj.setProgress1(0);
+            this.horizontalMongo.aplicarEsquema();
+            
         } else if (this.obj.isVerticalCBIR()) {
             this.obj.setProgress1(0);
             this.obj.fragmentarVertical(this.esquemaVerticalCBIR);
@@ -1156,9 +1171,11 @@ public class BDJB implements Serializable {
 
     public void onTipoFragmentchange() {
         try {
-            if (this.obj.getTipoBD().compareTo("d") == 0 && (this.obj.getTabla().getTipoFragment().compareTo("b") == 0 || this.obj.getTabla().getTipoFragment().compareTo("c") == 0)) {
+            if (this.obj.getTipoBD().compareTo("d") == 0 && (this.getObj().getTabla().getTipoFragment().compareTo("a")!=0)) {
                 this.obj.listaAtributosMongoDB();
                 this.dtamanios = true;
+            }else if(this.obj.getTipoBD().compareTo("d")==0 && this.getObj().getTabla().getTipoFragment().compareTo("a")==0){
+                this.obj.listaAtributosMongoDB();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1181,5 +1198,19 @@ public class BDJB implements Serializable {
 
     public void okHybrid() {
         this.dHybrid = false;
+    }
+
+    /**
+     * @return the horizontalMongo
+     */
+    public HMongo getHorizontalMongo() {
+        return horizontalMongo;
+    }
+
+    /**
+     * @param horizontalMongo the horizontalMongo to set
+     */
+    public void setHorizontalMongo(HMongo horizontalMongo) {
+        this.horizontalMongo = horizontalMongo;
     }
 }
