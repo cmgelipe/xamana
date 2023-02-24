@@ -60,7 +60,7 @@ and open the template in the editor.
         </header>
         <h:form id="f8">
             <p:growl id="growl" showDetail="true" sticky="true"  />
-            <p:tabView id="tabView" dynamic="true" cache="true">
+            <p:tabView id="tabView">
                 <p:tab title="Costos"><!-- Costo de cada atributo por cada sitio -->
                     <p:panelGrid>
                         <p:row>
@@ -110,17 +110,18 @@ and open the template in the editor.
                             <h:outputText value="#{t.costo}" />
                         </p:column>
                     </p:dataTable>
+
+                    <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
+                        <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
+                    </p:progressBar>
+                    <br/>
+                    <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:d6" />
+                    <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
+                        <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
+                        <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
+                    </p:dialog>
                 </p:tab>
             </p:tabView>
-            <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
-                <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
-            </p:progressBar>
-            <br/>
-            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:d6" />
-            <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
-                <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
-                <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
-            </p:dialog>
         </h:form>
     </h:body>
 </html>

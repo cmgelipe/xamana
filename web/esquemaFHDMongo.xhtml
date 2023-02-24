@@ -54,32 +54,65 @@
         </header>
 
         <h:form id="dh2">
+
             <p:growl id="growl" showDetail="true" sticky="true"  />
+            <p:tabView>
+                <p:tab title="MCRUD">
+                    <p:dataTable value="#{bd.horizontalMongo.MCRUD}" var="t">
+                        <p:column headerText="Predicado">
+                            <h:outputText value="#{t.get(2)}" />
+                        </p:column>
+                        <p:column headerText="Sitio">
+                            <h:outputText value="#{t.get(1)}" />
+                        </p:column>
+                        <p:column headerText="VAO">
+                            <h:outputText value="#{t.get(0)}" />
+                        </p:column>
+                        <p:column headerText="Tuplas">
+                            <h:outputText value="#{t.get(3)}" />
+                        </p:column>
+                        <p:column headerText="Costo">
+                            <h:outputText value="#{t.get(4)}" />
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab title="ALP">
+                    <p:dataTable value="#{bd.horizontalMongo.ALP}" var="t">
+                        <p:column headerText="Atributo">
+                            <h:outputText value="#{t.get(0)}" />
+                        </p:column>
+                        <p:column headerText="Costo">
+                            <h:outputText value="#{t.get(1)}" />
+                        </p:column>
+                    </p:dataTable> 
+                </p:tab>
+                <p:tab title="Esquema">
+                    <p:dataTable value="#{bd.horizontalMongo.esquema}" var="t">
+                        <p:column headerText="Fragmento">
+                            <h:outputText value="#{t.name}" />
+                        </p:column>
+                        <p:column headerText="Predicado">
+                            <h:outputText value="#{t.predicate}" />
+                        </p:column>
 
-            <p:dataTable value="#{bd.horizontalMongo.esquema}" var="t">
-                <p:column headerText="Fragmento">
-                    <h:outputText value="#{t.name}" />
-                </p:column>
-                <p:column headerText="Predicado">
-                    <h:outputText value="#{t.predicate}" />
-                </p:column>
-
-                <p:column headerText="Sitio">
-                    <h:outputText value="#{t.site}" />
-                </p:column>
-                <p:column headerText="Número de tuplas">
-                    <h:outputText value="#{t.tuples}" />
-                </p:column>
-                <p:column headerText="Valor de desempeño">
-                    <h:outputText value="#{t.performance}" />
-                </p:column>
-            </p:dataTable>
-            <br />
-            <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
-                <p:ajax event="complete" listener="#{bd.onComplete}" update="dh2:growl" oncomplete="PF('startButton2').enable()"/>
-            </p:progressBar>
-            <br/>
-            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="dh2:growl" />
+                        <p:column headerText="Sitio">
+                            <h:outputText value="#{t.site}" />
+                        </p:column>
+                        <p:column headerText="Número de tuplas">
+                            <h:outputText value="#{t.tuples}" />
+                        </p:column>
+                        <p:column headerText="Valor de desempeño">
+                            <h:outputText value="#{t.performance}" />
+                        </p:column>
+                    </p:dataTable>
+                    <br />
+                    <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
+                        <p:ajax event="complete" listener="#{bd.onComplete}" update="dh2:growl" oncomplete="PF('startButton2').enable()"/>
+                    </p:progressBar>
+                    <br/>
+                    <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="dh2:growl" />
+                </p:tab>
+            </p:tabView>
         </h:form>
     </h:body>
 </html>

@@ -34,6 +34,8 @@ import org.xamana.verticalCBIR.model.TablaCosto;
 public class HMongo {
 
     private List<Fragment> esquema;
+    private List<ArrayList<String>> MCRUD;
+    private List<ArrayList<String>> ALP;
     UploadedFiles files;
     bd oBD;
 
@@ -46,6 +48,7 @@ public class HMongo {
     public void crearEsquema() {
         //MCRUD
         HashMap<String, costoSitio> predicadoCosto = new HashMap<>();
+        this.MCRUD=new ArrayList<>();
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
@@ -75,6 +78,8 @@ public class HMongo {
                                 System.out.println(actual);
                                 System.out.println("SITIO: " + ipLinea);
                                 String where = this.where_statement(actual);
+                                
+                                
                                 for (Atributo a : this.oBD.getTabla().getAtributos()) {
                                     if (where.contains(a.getNombre())) {
                                         Pattern pattern = Pattern.compile(a.getNombre());
@@ -85,10 +90,16 @@ public class HMongo {
                                                     || r.contains("$in") || r.contains("$lt")
                                                     || r.contains("$lte") || r.contains("$ne")
                                                     || r.contains("$nin")) {
+                                                ArrayList<String> item = new ArrayList<>();
+                                                item.add("" + ValorAsignadoOperacion);
+                                                item.add(ipLinea);
                                                 String p = "{\"" + r + "}}";
+                                                item.add(p);
                                                 double tuplas = this.nTuplas(p);
+                                                item.add("" + tuplas);
                                                 double costoOpe = (ipLinea.compareTo(this.oBD.getDirbd()) == 0)
                                                         ? ValorAsignadoOperacion * 1 * tuplas : ValorAsignadoOperacion * 2 * tuplas;
+                                                item.add("" + costoOpe);
                                                 if (predicadoCosto.containsKey(p)) {
                                                     if (predicadoCosto.get(p).getCostoSitio().containsKey(ipLinea)) {
                                                         predicadoCosto.get(p).getCostoSitio().put(ipLinea, predicadoCosto.get(p).getCostoSitio().get(ipLinea) + costoOpe);
@@ -100,11 +111,18 @@ public class HMongo {
                                                     cs.getCostoSitio().put(ipLinea, costoOpe);
                                                     predicadoCosto.put(p, cs);
                                                 }
+                                                this.getMCRUD().add(item);
                                             } else {
+                                                ArrayList<String> item = new ArrayList<>();
+                                                item.add("" + ValorAsignadoOperacion);
+                                                item.add(ipLinea);
                                                 String p = "{\"" + r + "}";
+                                                item.add(p);
                                                 double tuplas = this.nTuplas(p);
+                                                item.add("" + tuplas);
                                                 double costoOpe = (ipLinea.compareTo(this.oBD.getDirbd()) == 0)
                                                         ? ValorAsignadoOperacion * 1 * tuplas : ValorAsignadoOperacion * 2 * tuplas;
+                                                item.add("" + costoOpe);
                                                 if (predicadoCosto.containsKey(p)) {
                                                     if (predicadoCosto.get(p).getCostoSitio().containsKey(ipLinea)) {
                                                         predicadoCosto.get(p).getCostoSitio().put(ipLinea, predicadoCosto.get(p).getCostoSitio().get(ipLinea) + costoOpe);
@@ -116,9 +134,11 @@ public class HMongo {
                                                     cs.getCostoSitio().put(ipLinea, costoOpe);
                                                     predicadoCosto.put(p, cs);
                                                 }
+                                                this.getMCRUD().add(item);
                                             }
                                         }
                                     }
+
                                 }
                             }
                         }
@@ -150,9 +170,15 @@ public class HMongo {
             }
         }
         String atributo = "";
+        
+        this.ALP=new ArrayList<>();
         if (!atributoValor.isEmpty()) {
             double valor = 0.0;
             for (String clave : atributoValor.keySet()) {
+                ArrayList<String> item2=new ArrayList<>();
+                item2.add(clave);
+                item2.add(""+atributoValor.get(clave));
+                this.ALP.add(item2);
                 if (atributoValor.get(clave) >= valor) {
                     atributo = clave;
                     valor = atributoValor.get(clave);
@@ -390,6 +416,7 @@ public class HMongo {
                     while (resultado.hasNext()) {
                         docDestino.insertOne(resultado.next());
                     }
+
                 }
                 //Insertar a XAMANA
                 //SITIO
@@ -412,10 +439,40 @@ public class HMongo {
                             + ", " + id_sitio + ",0," + ta.getPerformance() + ",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                 }
+                this.oBD.setProgress1(this.oBD.getProgress1() + percent);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        this.oBD.setProgress1(100);
+    }
+
+    /**
+     * @return the MCRUD
+     */
+    public List<ArrayList<String>> getMCRUD() {
+        return MCRUD;
+    }
+
+    /**
+     * @param MCRUD the MCRUD to set
+     */
+    public void setMCRUD(List<ArrayList<String>> MCRUD) {
+        this.MCRUD = MCRUD;
+    }
+
+    /**
+     * @return the ALP
+     */
+    public List<ArrayList<String>> getALP() {
+        return ALP;
+    }
+
+    /**
+     * @param ALP the ALP to set
+     */
+    public void setALP(List<ArrayList<String>> ALP) {
+        this.ALP = ALP;
     }
 
 }
