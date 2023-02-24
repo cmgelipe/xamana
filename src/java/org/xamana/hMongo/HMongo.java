@@ -25,7 +25,6 @@ import org.xamana.datos.AccesoDatosMG;
 import org.xamana.db.Atributo;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
-import org.xamana.verticalCBIR.model.TablaCosto;
 
 /**
  *

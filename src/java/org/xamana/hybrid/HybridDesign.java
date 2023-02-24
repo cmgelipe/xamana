@@ -5,6 +5,9 @@
 package org.xamana.hybrid;
 
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Projections;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -15,11 +18,13 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
 import org.xamana.datos.AccesoDatos;
+import org.xamana.datos.AccesoDatosMG;
 import org.xamana.datos.AccesoDatosPG;
 import org.xamana.db.Atributo;
 import org.xamana.db.bd;
@@ -587,7 +592,7 @@ public class HybridDesign {
                                 if (siHay) {
                                     ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                                 }
-                                System.out.println("Valor asignado de operacion: "+ValorAsignadoOperacion);
+                                System.out.println("Valor asignado de operacion: " + ValorAsignadoOperacion);
                                 double costohorizontalv = tuplasDelWhere * ValorAsignadoOperacion;
 
                                 System.out.println("Costo remoto horizontal v: " + costohorizontalv);
@@ -599,7 +604,7 @@ public class HybridDesign {
                                 for (int i = 0; i < this.fragments.size(); i++) {
                                     boolean b = false;
                                     for (int r = 0; r < fResuelvenPredicados.size(); r++) {
-                                        
+
                                         if (fResuelvenPredicados.get(r).getNombre().compareTo(fragments.get(i).getNombre()) == 0) {
                                             b = true;
                                         }
@@ -1010,7 +1015,7 @@ public class HybridDesign {
         } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
             hybridFragmentationPostgreSQL(opc);
         } else {
-            
+            hybridFragmentationMongoDB(opc);
         }
     }
 
@@ -1331,6 +1336,73 @@ public class HybridDesign {
         this.progress1 = 100;
     }
 
+    private void hybridFragmentationMongoDB(int opc) {
+        try {
+            //creación de tablas
+            int percent = 100 / this.fragments.size();
+            for (HybridFragment frag : this.fragments) {
+                String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
+                double costo = (opc == 1) ? frag.getCostoDesV() : frag.getCostoDesH();
+                AccesoDatosMG accDestino = new AccesoDatosMG(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getTabla().getNombre(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                AccesoDatosMG accOrigen = new AccesoDatosMG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getPortbd(), this.oBD.getTabla().getNombre(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                if (accDestino.conectar() && accOrigen.conectar()) {
+                    //Destino
+                    MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(this.oBD.getNombd());
+                    MongoCollection<Document> docDestino = dbDestino.getCollection(frag.getNombre());
+                    dbDestino.createCollection(frag.getNombre());
+
+                    //Origen
+                    MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(this.oBD.getNombd());
+                    MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.oBD.getTabla().getNombre());
+
+                    List<String> nombresAtt = new ArrayList<>();
+                    frag.getAtts().forEach(x -> nombresAtt.add(x.getNombre()));
+                    Bson proyeccion = Projections.fields(Projections.include(nombresAtt));
+                    Document d = Document.parse((frag.getPredicado().isEmpty()) ? "{}" : frag.getPredicado());
+                    MongoCursor<Document> resultado = docOrigen.find(d).projection(proyeccion).iterator();
+                    while (resultado.hasNext()) {
+                        docDestino.insertOne(resultado.next());
+                    }
+
+                }
+                //Insertar a XAMANA
+                //SITIO
+                String id_sitio = "";
+                String idFragmento = "";
+                String sql;
+                AccesoDatos accXamana = new AccesoDatos();
+                if (accXamana.conectar()) {
+                    sql = "insert into Sitio (direccion) "
+                            + "select * from (select '" + sitio + "' as direccion ) as tmp "
+                            + "where not exists (select direccion from Sitio where direccion='" + sitio + "') limit 1;";
+                    accXamana.ejecutarComando(sql);
+                    sql = "select id_sitio from Sitio where direccion='" + sitio + "'";
+
+                    id_sitio = "" + ((ArrayList) accXamana.ejecutarConsulta(sql).get(0)).get(0);
+                    //FRAGMENTO
+                    accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
+                            + frag.getNombre() + "', " + this.oBD.getTabla().getIdTabla()
+                            + ", " + id_sitio + ",0," + costo + ",0)");
+                    idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
+                    if (!this.isNullorEmpty(idFragmento)) {
+                        for (Atributo a : frag.getAtts()) {
+                            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                                    + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
+                                    + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean isNullorEmpty(String s) {
+        return (s != null) ? ((!s.isEmpty()) ? false : true) : true;
+    }
+
     int VAO(String linea) {
         int ret = 0;
         if (this.oBD.getTipoBD().compareTo("a") == 0 || this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
@@ -1464,4 +1536,5 @@ public class HybridDesign {
         }
         this.getFragments().forEach(x -> System.out.println(x.getPredicado()));
     }
+
 }
