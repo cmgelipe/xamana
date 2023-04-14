@@ -5,6 +5,8 @@
  */
 package org.xamana.db;
 
+import java.util.HashMap;
+
 /**
  *
  * @author pipe
@@ -16,7 +18,13 @@ public class Atributo {
     private String tamanio;
     private boolean multimedia;
     private boolean descriptor;
+    private HashMap<String, Double> costoAtributoxSitio;
+    private String sitioMasCostoso;
     private boolean pk;
+    
+    public Atributo(){
+        costoAtributoxSitio=new HashMap<>();
+    }
     /**
      * @return the nombre
      */
@@ -113,6 +121,34 @@ public class Atributo {
      */
     public void setPk(boolean pk) {
         this.pk = pk;
+    }
+
+    /**
+     * @return the costoAtributoxSitio
+     */
+    public HashMap<String, Double> getCostoAtributoxSitio() {
+        return costoAtributoxSitio;
+    }
+
+    /**
+     * @param costoAtributoxSitio the costoAtributoxSitio to set
+     */
+    public void setCostoAtributoxSitio(HashMap<String, Double> costoAtributoxSitio) {
+        this.costoAtributoxSitio = costoAtributoxSitio;
+    }
+
+    /**
+     * @return the sitioMasCostoso
+     */
+    public String getSitioMasCostoso() {
+        return sitioMasCostoso;
+    }
+
+    /**
+     * @param sitioMasCostoso the sitioMasCostoso to set
+     */
+    public void setSitioMasCostoso(String sitioMasCostoso) {
+        this.sitioMasCostoso = sitioMasCostoso;
     }
     
 }

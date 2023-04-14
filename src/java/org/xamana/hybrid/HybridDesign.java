@@ -1339,6 +1339,7 @@ public class HybridDesign {
     private void hybridFragmentationMongoDB(int opc) {
         try {
             //creación de tablas
+            this.oBD.setProgress1(1);
             int percent = 100 / this.fragments.size();
             for (HybridFragment frag : this.fragments) {
                 String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
@@ -1393,10 +1394,12 @@ public class HybridDesign {
                         }
                     }
                 }
+            this.oBD.setProgress1(this.oBD.getProgress1() + percent);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        this.oBD.setProgress1(100);
     }
 
     public boolean isNullorEmpty(String s) {

@@ -1,11 +1,13 @@
 package org.xamana.vertical;
 
 import java.io.*;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
@@ -73,10 +75,11 @@ public class VerticalBD {
             this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[1].split(":")[0])).setDescriptor(false);
             listaAtr.add(this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[1].split(":")[0])));
             tabla.setArrAtri(listaAtr);
+            tabla.setMultimedia(true);
             //¿A dónde se debe asignar?
             //¿Cúal es el costo total?
             //Primera posición sitio, segunda costo
-            ArrayList<String> sitioCosto = new ArrayList<>();
+            /*ArrayList<String> sitioCosto = new ArrayList<>();
             if (this.oBD.getTipoBD().compareTo("a") == 0) {
                 sitioCosto = costoxSitioMySQL(listaAtr);
             } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
@@ -85,8 +88,7 @@ public class VerticalBD {
                 sitioCosto = costoxSitioMongo(listaAtr);
             }
             tabla.setSitio(sitioCosto.get(0));
-            tabla.setCosto(Double.parseDouble(sitioCosto.get(1)));
-            tabla.setMultimedia(true);
+            tabla.setCosto(Double.parseDouble(sitioCosto.get(1)));*/
             arr.add(tabla);
         }
         return arr;
@@ -104,8 +106,10 @@ public class VerticalBD {
         }
         if (!this.oBD.isNullorEmpty(normales)) {
             ret.setArrAtri(normales);
+            ret.setMultimedia(false);
+
             //Primera posición sitio, segunda costo
-            ArrayList<String> sitioCosto = new ArrayList<>();
+            /*ArrayList<String> sitioCosto = new ArrayList<>();
             if (this.oBD.getTipoBD().compareTo("a") == 0) {
                 sitioCosto = costoxSitioMySQL(normales);
             } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
@@ -114,8 +118,7 @@ public class VerticalBD {
                 sitioCosto = costoxSitioMongo(normales);
             }
             ret.setSitio(sitioCosto.get(0));
-            ret.setCosto(Double.parseDouble(sitioCosto.get(1)));
-            ret.setMultimedia(false);
+            ret.setCosto(Double.parseDouble(sitioCosto.get(1)));*/
         } else {
             ret = null;
         }
@@ -410,6 +413,161 @@ public class VerticalBD {
     }
 
     //PIPE
+    public ArrayList<TablaCosto> costoxSitioMongoV2(ArrayList<TablaCosto> preEsquema) {
+        ArrayList<TablaCosto> ret = new ArrayList<>();
+        System.out.println("-----------COSTOS PIPE-------------");
+        for (UploadedFile f : this.files.getFiles()) {
+            if (f != null && !"".equals(f.getFileName())) {
+                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                    String actual = "";
+                    String ipLinea = "";
+                    String nombre = "";
+                    while ((actual = bufferedReader.readLine()) != null) {
+                        if (actual.toLowerCase().contains("command")
+                                && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
+                            JSONObject j = new JSONObject(actual);
+                            String c = j.get("c").toString().toLowerCase().trim();
+                            JSONObject j2 = new JSONObject(j.get("attr").toString());
+                            JSONObject j3 = new JSONObject(j2.get("command").toString());
+                            String ns = "";
+                            int ValorAsignadoOperacion = 0;
+                            if (j3.has("find")) {
+                                ValorAsignadoOperacion = 1;
+                                ns = j3.get("find").toString().toLowerCase();
+                            } else if (j3.has("delete")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("delete").toString().toLowerCase();
+                            } else if (j3.has("insert")) {
+                                ValorAsignadoOperacion = 2;
+                                ns = j3.get("insert").toString().toLowerCase();
+                            } else if (j3.has("update")) {
+                                ValorAsignadoOperacion = 3;
+                                ns = j3.get("update").toString().toLowerCase();
+                            }
+                            if (ValorAsignadoOperacion != 0 && c.compareTo("command") == 0
+                                    && ns.compareTo(this.oBD.getTabla().getNombre().toLowerCase()) == 0) {
+
+                                j2 = new JSONObject(j.get("attr").toString());
+                                String remote = j2.get("remote").toString().toLowerCase().trim();
+                                ipLinea = remote.substring(0, remote.indexOf(":"));
+                                System.out.println(actual);
+                                System.out.println("SITIO: " + ipLinea);
+                                if (this.oBD.getDirbd().compareTo(ipLinea) != 0) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                System.out.println("VAO: " + ValorAsignadoOperacion);
+                                int nJoins = incidencias(actual.toLowerCase(), "$lookup");
+                                System.out.println("CR: " + nJoins);
+
+                                for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
+                                    if (actual.toLowerCase().contains(this.oBD.getTabla().getAtributos().get(o).getNombre().toLowerCase())) {
+                                        System.out.println("\tTamaño de atributo " + this.oBD.getTabla().getAtributos().get(o).getNombre() + ": " + Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio()));
+                                        double costoOperacion = 0.0;
+                                        if (this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().containsKey(ipLinea)) {
+                                            costoOperacion = this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().get(ipLinea);
+                                        }
+                                        double valorActual = ValorAsignadoOperacion * nJoins * Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio());
+                                        System.out.println("Costo de operación: " + valorActual);
+                                        costoOperacion += valorActual;
+                                        this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().put(ipLinea, costoOperacion);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+        //SITIOS Y COSTOS MULTIMEDIA
+        for (TablaCosto tc : preEsquema) {
+            if (tc.isMultimedia()) {
+                Entry<String, Double> entryTemp = new AbstractMap.SimpleEntry<>(this.oBD.getDirbd(), 0.0);
+                double costoFragmento = 0.0;
+                for (int o = 0; o < tc.getArrAtri().size(); o++) {
+                    for (String clave : tc.getArrAtri().get(o).getCostoAtributoxSitio().keySet()) {
+                        costoFragmento += tc.getArrAtri().get(o).getCostoAtributoxSitio().get(clave);
+                    }
+                    try {
+                        Entry<String, Double> entry = this.getMaxEntry(tc.getArrAtri().get(o).getCostoAtributoxSitio());
+                        if (entry.getValue() > entryTemp.getValue()) {
+                            entryTemp = entry;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Atributo sin costo en log " + tc.getArrAtri().get(o));
+                    }
+                }
+                tc.setCosto(costoFragmento);
+                tc.setSitio(entryTemp.getKey());
+            }
+        }
+
+        //FRAGMENTACIÓN, SITIOS Y COSTOS NO MULTIMEDIA
+        ArrayList<TablaCosto> nuevosFragmentos = new ArrayList<>();
+        for (TablaCosto tc : preEsquema) {
+            if (!tc.isMultimedia()) {
+                double costoFragmento = 0.0;
+                for (int o = 0; o < tc.getArrAtri().size(); o++) {
+                    try {
+                        String sitio = this.getMaxEntry(tc.getArrAtri().get(o).getCostoAtributoxSitio()).getKey();
+                        boolean existe = false;
+                        for (TablaCosto nuevo : nuevosFragmentos) {
+                            if (nuevo.getSitio().compareTo(sitio) == 0) {
+                                nuevo.getArrAtri().add(tc.getArrAtri().get(o));
+                                existe = true;
+                            }
+                        }
+                        if (!existe) {
+                            TablaCosto nuevo = new TablaCosto();
+                            nuevo.setArrAtri(new ArrayList<>());
+                            nuevo.getArrAtri().add(this.oBD.getTabla().getAtributoLlave());
+                            nuevo.getArrAtri().add(tc.getArrAtri().get(o));
+                            nuevo.setSitio(sitio);
+                            nuevo.setMultimedia(false);
+                            nuevosFragmentos.add(nuevo);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Atributo sin costo en log " + tc.getArrAtri().get(o) + " asignación a este sitio");
+                        boolean existe = false;
+                        for (TablaCosto nuevo : nuevosFragmentos) {
+                            if (nuevo.getSitio().compareTo(this.oBD.getDirbd()) == 0) {
+                                nuevo.getArrAtri().add(tc.getArrAtri().get(o));
+                                existe = true;
+                            }
+                        }
+                        if (!existe) {
+                            TablaCosto nuevo = new TablaCosto();
+                            nuevo.setArrAtri(new ArrayList<>());
+                            nuevo.getArrAtri().add(this.oBD.getTabla().getAtributoLlave());
+                            nuevo.getArrAtri().add(tc.getArrAtri().get(o));
+                            nuevo.setSitio(this.oBD.getDirbd());
+                            nuevo.setMultimedia(false);
+                            nuevosFragmentos.add(nuevo);
+                        }
+                    }
+                }
+            }
+        }
+        preEsquema.removeIf(x -> !x.isMultimedia());
+        ret.addAll(preEsquema);
+        ret.addAll(nuevosFragmentos);
+
+        for (TablaCosto tc : ret) {
+            if (!tc.isMultimedia()) {
+                double costoFragmento = 0.0;
+                for (int o = 0; o < tc.getArrAtri().size(); o++) {
+                    for (String clave : tc.getArrAtri().get(o).getCostoAtributoxSitio().keySet()) {
+                        costoFragmento += tc.getArrAtri().get(o).getCostoAtributoxSitio().get(clave);
+                    }
+                }
+                tc.setCosto(costoFragmento);
+            }
+        }
+        return ret;
+    }
+
+    //PIPE
     private int incidencias(String origen, String palabra) {
         //costo de reuniones=n+1 
         int i = 1;
@@ -470,7 +628,7 @@ public class VerticalBD {
                             if (ipLinea.toLowerCase().compareTo("localhost") == 0 || ipLinea.toLowerCase().compareTo("::1") == 0) {
                                 ipLinea = "127.0.0.1";
                             }
-                            System.out.println("Agregado: "+nombre+" "+ipLinea);
+                            System.out.println("Agregado: " + nombre + " " + ipLinea);
                             this.oBD.getNombreIp().put(nombre, ipLinea);
                         }
                         int ValorAsignadoOperacion = 0;
@@ -536,7 +694,7 @@ public class VerticalBD {
                 }
             }
         }
-        
+
         //DETERMINAR FRAGMENTOS
         ArrayList<Atributo> attsSinCosto = new ArrayList<>();
         for (String clave : costoxSitio.keySet()) {
@@ -756,7 +914,7 @@ public class VerticalBD {
                                 double costoOperacion = 0.0;
                                 for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                     Atributo a = this.oBD.getTabla().getAtributos().get(o);
-                                    System.out.println("Atributo: " + a.getNombre()+a.getTamanio() + " indice: " + o);
+                                    System.out.println("Atributo: " + a.getNombre() + a.getTamanio() + " indice: " + o);
                                     if (actual.toLowerCase().contains(a.getNombre().toLowerCase()) || !actual.contains("projection")) {
                                         HashMap<String, Double> atributoSitios = new HashMap<>();
                                         if (costoAtributoxSitio.get(o) != null) {
@@ -835,12 +993,12 @@ public class VerticalBD {
         if (attsSinCosto.size() > 0) {
             esquemaVertical.get(0).getArrAtri().addAll(attsSinCosto);
         }
-        esquemaVertical.removeIf(a->a.getArrAtri().size()==1 && a.getArrAtri().get(0).getNombre().compareTo("_id")==0 && a.getCosto()==0.0);
+        esquemaVertical.removeIf(a -> a.getArrAtri().size() == 1 && a.getArrAtri().get(0).getNombre().compareTo("_id") == 0 && a.getCosto() == 0.0);
         esquemaVertical = this.nombrar(esquemaVertical);
-        System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: "+costoEsquemaVerticalMongoDB()+">>>>>");
+        System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + costoEsquemaVerticalMongoDB() + ">>>>>");
     }
-    //PIPE
 
+    //PIPE
     public ArrayList<String> deHashaArraySitios() {
         ArrayList<String> ret = new ArrayList<>();
         for (String clave : this.oBD.getNombreIp().keySet()) {
@@ -881,11 +1039,10 @@ public class VerticalBD {
 
         return maxEntry;
     }
-    
+
     public double costoEsquemaVerticalMongoDB() {
         this.oBD.setNombreIp(new HashMap<>());
         double costoEsquema = 0.0;
-        System.out.println("PASAAAAAA");
         for (UploadedFile f : this.files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
@@ -920,28 +1077,11 @@ public class VerticalBD {
                                 String remote = j2.get("remote").toString().toLowerCase().trim();
                                 ipLinea = remote.substring(0, remote.indexOf(":"));
                                 this.oBD.getNombreIp().put(ipLinea, ipLinea);
-
-                                //buscar en esquema si hay algun atributo (por lo menos uno) local 
-                                //(la operación se realiza en el mismo lugar a donde esta el atributo), 
-                                //si lo hay entonces considerar operación local
-                                //de otro modo es remota
-                                boolean siHay = false;
-                                for (TablaCosto tc : this.esquemaVertical) {
-                                    if (tc.getSitio().compareTo(ipLinea) == 0) {
-                                        for (Atributo l : tc.getArrAtri()) {
-                                            if (actual.toLowerCase().contains(l.getNombre().toLowerCase()) || (!actual.contains("projection") && j3.has("find"))) {
-                                                siHay = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (!siHay) {
-                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
-                                }
-                                System.out.println("VAO: " + ValorAsignadoOperacion);
                                 //calcular el número de sitios que necesita visitar para llevar
                                 //a cabo la operación (será el número de reuniones necesarias)
                                 int nJoins = 0;
+                                ArrayList<String> atributosOpe = buscarAtributos(actual, this.oBD.getTabla().getAtributos());
+                                ArrayList<TablaCosto> fResuelvenAtributos = new ArrayList<>();
                                 for (TablaCosto tc : this.esquemaVertical) {
                                     boolean seUsa = false;
                                     for (Atributo l : tc.getArrAtri()) {
@@ -949,13 +1089,26 @@ public class VerticalBD {
                                             seUsa = true;
                                         }
                                     }
-                                    if(seUsa){
-                                        nJoins++;
+                                    if (seUsa) {
+                                        fResuelvenAtributos.add(tc);
                                     }
                                 }
-                                if(nJoins<1){
-                                    nJoins=1;
+                                nJoins = (fResuelvenAtributos.size() < 1) ? 1 : fResuelvenAtributos.size();
+
+                                //buscar en esquema si hay algun atributo (por lo menos uno) remoto ,
+                                //si lo hay entonces considerar operación remota
+                                //de otro modo es local
+                                boolean siHay = false;
+                                for (TablaCosto tc : this.esquemaVertical) {
+                                    if (tc.getSitio().compareTo(ipLinea) != 0) {
+                                        siHay = true;
+                                    }
                                 }
+                                if (!siHay) {
+                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                }
+                                System.out.println("VAO: " + ValorAsignadoOperacion);
+
                                 for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                     Atributo a = this.oBD.getTabla().getAtributos().get(o);
                                     if (actual.toLowerCase().contains(a.getNombre().toLowerCase()) || (!actual.contains("projection") && j3.has("find"))) {
@@ -973,5 +1126,64 @@ public class VerticalBD {
             }
         }
         return costoEsquema;
+    }
+
+    private ArrayList<String> buscarAtributos(String actual, ArrayList<Atributo> atts) {
+        JSONObject j;
+        ArrayList<String> ret = new ArrayList<>();
+        //QUE ATRIBUTOS SON LOS DEL ESQUEMA?
+        try {
+            j = new JSONObject(actual);
+            String c = j.get("c").toString().toLowerCase().trim();
+            JSONObject j2 = new JSONObject(j.get("attr").toString());
+            JSONObject j3 = new JSONObject(j2.get("command").toString());
+            if (j3.has("find")) {
+                if (j3.has("projection")) {
+                    JSONObject j4 = new JSONObject(j3.get("projection").toString());
+                    for (Atributo a : atts) {
+                        if (j4.has(a.getNombre())) {
+                            ret.add(a.getNombre().toLowerCase());
+                        }
+                    }
+                } else {
+                    for (Atributo a : atts) {
+                        ret.add(a.getNombre().toLowerCase());
+                    }
+                }
+            } else if (j3.has("delete")) {
+                for (Atributo a : atts) {
+                    ret.add(a.getNombre().toLowerCase());
+                }
+            } else if (j3.has("insert")) {
+                //insert many
+                if (j3.has("documents")) {
+                    JSONArray arr = j3.getJSONArray("documents");
+                    for (int i = 0; i < arr.length(); i++) {
+                        for (Atributo a : atts) {
+                            JSONObject j4 = new JSONObject(arr.get(i).toString());
+                            if (j4.has(a.getNombre())) {
+                                if (!ret.contains(a.getNombre())) {
+                                    ret.add(a.getNombre());
+                                }
+                            }
+                        }
+
+                    }
+                }
+            } else if (j3.has("update")) {
+                JSONArray arr = j3.getJSONArray("updates");
+                JSONObject j4 = new JSONObject(arr.get(0).toString());
+                JSONObject j5 = new JSONObject(j4.get("u").toString());
+                JSONObject j6 = new JSONObject(j5.get("$set").toString());
+                for (Atributo a : atts) {
+                    if (j6.has(a.getNombre())) {
+                        ret.add(a.getNombre().toLowerCase());
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return ret;
     }
 }

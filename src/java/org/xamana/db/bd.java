@@ -1414,6 +1414,7 @@ public class bd implements Serializable {
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
         juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
+        juntos = a.costoxSitioMongoV2(juntos);
         juntos = a.nombrar(juntos);
         a.setEsquemaVertical(juntos);
         System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + a.costoEsquemaVerticalMongoDB() + ">>>>>");
@@ -1916,10 +1917,10 @@ public class bd implements Serializable {
                 DHF.implementMethod(files, this.getNombd(), this.getTabla().getNombre());
                 getHD().mix(DHF.getSchema(), this.esquemaVertical);
             } else {
-                HMongo horizontal=new HMongo(this, files);
+                HMongo horizontal = new HMongo(this, files);
                 horizontal.crearEsquema();
                 getHD().mixMongo(horizontal.getEsquema(), this.esquemaVertical);
-                
+
             }
 
             if (this.getTipoBD().compareTo("a") == 0) {
