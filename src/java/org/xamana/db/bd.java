@@ -7,8 +7,6 @@ import static com.mongodb.client.model.Accumulators.sum;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.faces.model.SelectItem;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -19,13 +17,9 @@ import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.Updates;
 import static com.mongodb.client.model.Updates.unset;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
@@ -41,7 +35,6 @@ import org.xamana.crearfrag.BuildTypes;
 import org.xamana.dhf.DHFragmentation;
 import org.xamana.hMongo.HMongo;
 import org.xamana.vertical.VerticalBD;
-import org.xamana.verticalCBIR.model.Query;
 import org.xamana.verticalCBIR.model.TablaCosto;
 import org.xamana.hybrid.*;
 
@@ -234,10 +227,11 @@ public class bd implements Serializable {
                 Atributo att = new Atributo();
                 att.setNombre(t[0]);
                 att.setTipo(t[1]);
-                this.tabla.getAtributos().add(att);
                 if (att.getNombre().compareTo("_id") == 0) {
                     this.tabla.setAtributoLlave(att);
+                    att.setPk(true);
                 }
+                this.tabla.getAtributos().add(att);
             });
         }
         System.out.println("PASA");
@@ -1413,8 +1407,8 @@ public class bd implements Serializable {
         VerticalBD a = new VerticalBD(this, files, attM);
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
-        juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
-        juntos = a.costoxSitioMongoV2(juntos);
+        //juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
+        juntos = a.costoxSitioMongoV3(juntos);
         juntos = a.nombrar(juntos);
         a.setEsquemaVertical(juntos);
         System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + a.costoEsquemaVerticalMongoDB() + ">>>>>");

@@ -47,7 +47,7 @@ public class HMongo {
     public void crearEsquema() {
         //MCRUD
         HashMap<String, costoSitio> predicadoCosto = new HashMap<>();
-        this.MCRUD=new ArrayList<>();
+        this.MCRUD = new ArrayList<>();
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
@@ -77,8 +77,7 @@ public class HMongo {
                                 System.out.println(actual);
                                 System.out.println("SITIO: " + ipLinea);
                                 String where = this.where_statement(actual);
-                                
-                                
+
                                 for (Atributo a : this.oBD.getTabla().getAtributos()) {
                                     if (where.contains(a.getNombre())) {
                                         Pattern pattern = Pattern.compile(a.getNombre());
@@ -169,14 +168,14 @@ public class HMongo {
             }
         }
         String atributo = "";
-        
-        this.ALP=new ArrayList<>();
+
+        this.ALP = new ArrayList<>();
         if (!atributoValor.isEmpty()) {
             double valor = 0.0;
             for (String clave : atributoValor.keySet()) {
-                ArrayList<String> item2=new ArrayList<>();
+                ArrayList<String> item2 = new ArrayList<>();
                 item2.add(clave);
-                item2.add(""+atributoValor.get(clave));
+                item2.add("" + atributoValor.get(clave));
                 this.ALP.add(item2);
                 if (atributoValor.get(clave) >= valor) {
                     atributo = clave;
@@ -298,6 +297,7 @@ public class HMongo {
                 MongoCollection<Document> doc = this.oBD.getAccexternomongo().getMongoClient().getDatabase(this.oBD.getNombd()).getCollection(this.oBD.getTabla().getNombre());
                 Document d = Document.parse((predicado.isEmpty()) ? "{}" : predicado);
                 count1 = doc.countDocuments(d);
+                this.oBD.getAccexternomongo().getMongoClient().close();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -342,36 +342,40 @@ public class HMongo {
         //producir predicados con traslape
         String negado = "";
         for (Fragment f : this.esquema) {
-            String campo = f.getPredicate().substring(1, f.getPredicate().indexOf(":"));
-            String valor = f.getPredicate().substring(f.getPredicate().indexOf(":") + 1, f.getPredicate().length() - 1);
-            if (negado.isEmpty()) {
+            if (f.getPredicate().contains(":")) {
+                String campo = f.getPredicate().substring(1, f.getPredicate().indexOf(":"));
+                String valor = f.getPredicate().substring(f.getPredicate().indexOf(":") + 1, f.getPredicate().length() - 1);
+                if (negado.isEmpty()) {
+                    if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                            && !valor.contains("$in") && !valor.contains("$lt")
+                            && !valor.contains("$lte") && !valor.contains("$ne")
+                            && !valor.contains("$nin")) {
+                        valor = "{$eq:" + valor + "}";
+                        f.setPredicadoTraslape("{" + campo + ":" + valor + "}");
+                    } else {
+                        f.setPredicadoTraslape("{" + campo + ":" + valor + "}");
+                    }
+                } else {
+                    f.setPredicadoTraslape(negado + f.getPredicate());
+                }
                 if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
                         && !valor.contains("$in") && !valor.contains("$lt")
                         && !valor.contains("$lte") && !valor.contains("$ne")
                         && !valor.contains("$nin")) {
                     valor = "{$eq:" + valor + "}";
-                    f.setPredicadoTraslape("{" + campo + ":" + valor + "}");
-                } else {
-                    f.setPredicadoTraslape("{" + campo + ":" + valor + "}");
                 }
-            } else {
-                f.setPredicadoTraslape(negado + f.getPredicate());
+                negado = "{" + campo + ":{$not:" + valor + "}}," + negado;
             }
-            if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
-                    && !valor.contains("$in") && !valor.contains("$lt")
-                    && !valor.contains("$lte") && !valor.contains("$ne")
-                    && !valor.contains("$nin")) {
-                valor = "{$eq:" + valor + "}";
-            }
-            negado = "{" + campo + ":{$not:" + valor + "}}," + negado;
         }
         for (Fragment f2 : this.esquema) {
-            if (f2.getPredicadoTraslape().length() >= 1 && f2.getPredicadoTraslape().charAt(f2.getPredicadoTraslape().length() - 1) == ',') {
-                f2.setPredicadoTraslape(f2.getPredicadoTraslape().substring(0, f2.getPredicadoTraslape().length() - 1).toLowerCase());
+            if (f2.getPredicadoTraslape() != null) {
+                if (f2.getPredicadoTraslape().length() >= 1 && f2.getPredicadoTraslape().charAt(f2.getPredicadoTraslape().length() - 1) == ',') {
+                    f2.setPredicadoTraslape(f2.getPredicadoTraslape().substring(0, f2.getPredicadoTraslape().length() - 1).toLowerCase());
+                    f2.setTuples((long) this.nTuplas(f2.getPredicadoTraslape()));
+                }
+                f2.setPredicadoTraslape("{$and:[" + f2.getPredicadoTraslape() + "]}");
                 f2.setTuples((long) this.nTuplas(f2.getPredicadoTraslape()));
             }
-            f2.setPredicadoTraslape("{$and:[" + f2.getPredicadoTraslape() + "]}");
-            f2.setTuples((long) this.nTuplas(f2.getPredicadoTraslape()));
         }
         if (negado.length() >= 1 && negado.charAt(negado.length() - 1) == ',') {
             negado = negado.substring(0, negado.length() - 1).toLowerCase();

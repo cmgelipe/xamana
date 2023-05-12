@@ -665,6 +665,7 @@ public class HybridDesign {
                     System.out.println(predicado);
                     Document d = Document.parse((predicado.isEmpty()) ? "{}" : predicado);
                     count1 = doc.countDocuments(d);
+                    this.oBD.getAccexternomongo().getMongoClient().close();
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
