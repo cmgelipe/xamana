@@ -1408,7 +1408,13 @@ public class bd implements Serializable {
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
         //juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
-        juntos = a.costoxSitioMongoV3(juntos);
+        if(this.getTipoBD().compareTo("a") == 0){
+            juntos = a.costoxSitioMySQL(juntos);
+        }else if(this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0){
+            juntos = a.costoxSitioPostgres(juntos);
+        }else{
+            juntos = a.costoxSitioMongoV3(juntos);
+        }
         juntos = a.nombrar(juntos);
         a.setEsquemaVertical(juntos);
         System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + a.costoEsquemaVerticalMongoDB() + ">>>>>");

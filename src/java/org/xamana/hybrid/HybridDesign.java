@@ -610,6 +610,7 @@ public class HybridDesign {
                                         }
                                     }
                                     if (b) {
+                                        System.out.println("El costo de la ope se asigno al frag "+fragments.get(i).getNombre());
                                         fragments.get(i).setCostoDesV(fragments.get(i).getCostoDesV() + costoOperacionv + costohorizontalv);
                                         fragments.get(i).setCostoDesH(fragments.get(i).getCostoDesH() + costoOperacionh + costohorizontalh);
                                     }
@@ -1384,7 +1385,7 @@ public class HybridDesign {
                     //FRAGMENTO
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.oBD.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0," + costo + ",0)");
+                            + ", " + id_sitio + ",0," + ((costo==0)?"0":costo) + ",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                     if (!this.isNullorEmpty(idFragmento)) {
                         for (Atributo a : frag.getAtts()) {
