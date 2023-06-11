@@ -1384,19 +1384,25 @@ public class bd implements Serializable {
 
     public void crearEquemaVertical(UploadedFiles files) {
         VerticalBD a = new VerticalBD(this, files);
+        ArrayList<TablaCosto> juntos = new ArrayList();
         try {
             if (this.getTipoBD().compareTo("a") == 0) {
+                juntos = a.costoxSitioMySQL(juntos);
                 this.listaAtributosMySQL();
-                a.esquemaVerticalMySQL();
+                //a.esquemaVerticalMySQL();
             } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
                 listaAtributosPostgreSQL();
-                a.esquemaVerticalPostgres();
+                //a.esquemaVerticalPostgres();
+                juntos = a.costoxSitioPostgres(juntos);
             } else if (this.getTipoBD().compareTo("d") == 0) {
-                a.esquemaVerticalMongo();
+                //a.esquemaVerticalMongo();
+                juntos = a.costoxSitioMongoV3(juntos);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        juntos = a.nombrar(juntos);
+        a.setEsquemaVertical(juntos);
         this.setCostoAtributoxSitio(a.getCostoAtributoxSitio());
         this.setSitios(a.getSitios());
         this.setEsquemaVertical(a.getEsquemaVertical());
@@ -1417,7 +1423,7 @@ public class bd implements Serializable {
         }
         juntos = a.nombrar(juntos);
         a.setEsquemaVertical(juntos);
-        System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + a.costoEsquemaVerticalMongoDB() + ">>>>>");
+        //System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + a.costoEsquemaVerticalMongoDB() + ">>>>>");
         return juntos;
     }
 

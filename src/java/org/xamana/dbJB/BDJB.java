@@ -486,7 +486,7 @@ public class BDJB implements Serializable {
             //SOLO PARA MONGO
             this.obj.setProgress1(0);
             this.horizontalMongo.aplicarEsquema();
-            
+            this.setBToken(true);
         } else if (this.obj.isVerticalCBIR()) {
             this.obj.setProgress1(0);
             this.obj.fragmentarVertical(this.esquemaVerticalCBIR);

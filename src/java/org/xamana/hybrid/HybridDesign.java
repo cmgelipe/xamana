@@ -1385,7 +1385,7 @@ public class HybridDesign {
                     //FRAGMENTO
                     accXamana.ejecutarComando("insert into Fragmento(nombre, id_tabla, id_sitio, noperaciones, ndesempenio, isCBIR) value ('"
                             + frag.getNombre() + "', " + this.oBD.getTabla().getIdTabla()
-                            + ", " + id_sitio + ",0," + ((costo==0)?"0":costo) + ",0)");
+                            + ", " + id_sitio + ",0," + costo + ",0)");
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                     if (!this.isNullorEmpty(idFragmento)) {
                         for (Atributo a : frag.getAtts()) {
