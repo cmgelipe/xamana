@@ -61,19 +61,22 @@ and open the template in the editor.
                     </p:column>
                 </p:row>
             </p:panelGrid>
-            
+
             <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.HD.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
                 <p:ajax event="complete" listener="#{bd.onComplete}" update="f9:growl" oncomplete="PF('startButton2').enable()"/>
             </p:progressBar>
             <br/>
-            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f9:growl" />
-            
-            
+            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f9:growl f9:d6" />
+            <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
+                <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
+                <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
+            </p:dialog>
+
             <p:dialog id="dHybrid" header="Esquema menos costoso" visible="#{bd.DHybrid}" minHeight="40" width="350" showEffect="fade">
                 <h:outputText value="#{bd.obj.sentencia}" /><br />
                 <p:commandButton value="OK" icon="pi pi-thumbs-up-fill" action="#{bd.okHybrid()}" update="dHybrid" />
             </p:dialog>
-            
+
         </h:form>
     </h:body>
 </html>

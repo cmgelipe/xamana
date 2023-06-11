@@ -499,6 +499,7 @@ public class BDJB implements Serializable {
             this.setBToken(true);
         } else if (this.obj.getTabla().getTipoFragment().compareTo("c") == 0 && !this.obj.getTabla().isCBIR()) {
             this.obj.getHD().hybridFragmentation();
+            this.setBToken(true);
         }
     }
 
