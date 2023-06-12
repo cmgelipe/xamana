@@ -1542,4 +1542,10 @@ public class HybridDesign {
         this.getFragments().forEach(x -> System.out.println(x.getPredicado()));
     }
 
+    public void nombrar() {
+        for (int i = 0; i < this.getFragments().size(); i++) {
+            this.getFragments().get(i).setNombre(this.oBD.getTabla().getNombre() + "_f" + i);
+        }
+    }
+
 }

@@ -213,9 +213,10 @@ public class HMongo {
                 this.esquema.add(f);
             }
         }
-        this.nombrar();
+        
         //traslape, filtrado y fragmento sin predicado
         this.traslape();
+        this.nombrar();
         this.setEsquema(this.filtrado());
         System.out.println("ESQUEMA HORIZONTAL");
         this.esquema.forEach(x -> System.out.println(x.getPredicate() + " " + x.getPredicadoTraslape()));

@@ -1951,6 +1951,7 @@ public class bd implements Serializable {
                 //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsMongoDB(files);
             }
+            this.HD.nombrar();
             if (getHD().getHVCost() > getHD().getVHCost()) {
                 setSentencia("El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.");
             } else if (getHD().getHVCost() < getHD().getVHCost()) {
