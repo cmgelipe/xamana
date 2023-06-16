@@ -8,4 +8,12 @@
         <managed-bean-class>org.xamana.dbJB.BDJB</managed-bean-class>
         <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
+    <converter>
+        <converter-id>
+            convertidor
+        </converter-id>
+        <converter-class>
+            org.xamana.dbJB.conversorAtributo
+        </converter-class>
+    </converter>
 </faces-config>

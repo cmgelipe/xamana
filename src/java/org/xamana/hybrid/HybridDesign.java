@@ -610,7 +610,7 @@ public class HybridDesign {
                                         }
                                     }
                                     if (b) {
-                                        System.out.println("El costo de la ope se asigno al frag "+fragments.get(i).getNombre());
+                                        System.out.println("El costo de la ope se asigno al frag " + fragments.get(i).getNombre());
                                         fragments.get(i).setCostoDesV(fragments.get(i).getCostoDesV() + costoOperacionv + costohorizontalv);
                                         fragments.get(i).setCostoDesH(fragments.get(i).getCostoDesH() + costoOperacionh + costohorizontalh);
                                     }
@@ -1341,9 +1341,10 @@ public class HybridDesign {
     private void hybridFragmentationMongoDB(int opc) {
         try {
             //creación de tablas
-            this.oBD.setProgress1(1);
+            this.progress1=1;
             int percent = 100 / this.fragments.size();
             for (HybridFragment frag : this.fragments) {
+                this.progress1 += percent;
                 String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
                 double costo = (opc == 1) ? frag.getCostoDesV() : frag.getCostoDesH();
                 AccesoDatosMG accDestino = new AccesoDatosMG(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getTabla().getNombre(), this.oBD.getUsubd(), this.oBD.getPassbd());
@@ -1368,12 +1369,16 @@ public class HybridDesign {
                     }
 
                 }
+
+                double cDesempenioTablaOriginal = (opc == 1) ? this.VHCost : this.HVCost;
+                
                 //Insertar a XAMANA
                 //SITIO
                 String id_sitio = "";
                 String idFragmento = "";
                 String sql;
                 AccesoDatos accXamana = new AccesoDatos();
+
                 if (accXamana.conectar()) {
                     sql = "insert into Sitio (direccion) "
                             + "select * from (select '" + sitio + "' as direccion ) as tmp "
@@ -1394,13 +1399,16 @@ public class HybridDesign {
                                     + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
                                     + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
                         }
+                        //Desempenio de tabla original
+                        accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.oBD.getTabla().getIdTabla());
                     }
                 }
-            this.oBD.setProgress1(this.oBD.getProgress1() + percent);
+                this.oBD.setProgress1(this.oBD.getProgress1() + percent);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        this.progress1=100;
         this.oBD.setProgress1(100);
     }
 

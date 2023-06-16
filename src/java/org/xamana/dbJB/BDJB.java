@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package org.xamana.dbJB;
+
 import com.mongodb.client.MongoDatabase;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -21,7 +22,9 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
+import javax.faces.model.SelectItemGroup;
 import javax.servlet.ServletContext;
+import org.primefaces.event.SelectEvent;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFiles;
@@ -70,7 +73,8 @@ public class BDJB implements Serializable {
     private boolean dtamanios = false;
     private boolean dHybrid = true;
     private HMongo horizontalMongo;
-
+    private ArrayList<SelectItem> pull=new ArrayList<>();
+    private ArrayList aAgregar;
     /**
      * Creates a new instance of BD
      */
@@ -463,6 +467,8 @@ public class BDJB implements Serializable {
     }
 
     public void fragEstatica() {
+        
+        //agregar process
         if (this.obj.isHorizontalCBIR()) {
             boolean ban = false;
             for (esquemaHorMultimedia t : valoresColumna) {
@@ -1163,10 +1169,10 @@ public class BDJB implements Serializable {
 
     public void onTipoFragmentchange() {
         try {
-            if (this.obj.getTipoBD().compareTo("d") == 0 && (this.getObj().getTabla().getTipoFragment().compareTo("a")!=0)) {
+            if (this.obj.getTipoBD().compareTo("d") == 0 && (this.getObj().getTabla().getTipoFragment().compareTo("a") != 0)) {
                 this.obj.listaAtributosMongoDB();
                 this.dtamanios = true;
-            }else if(this.obj.getTipoBD().compareTo("d")==0 && this.getObj().getTabla().getTipoFragment().compareTo("a")==0){
+            } else if (this.obj.getTipoBD().compareTo("d") == 0 && this.getObj().getTabla().getTipoFragment().compareTo("a") == 0) {
                 this.obj.listaAtributosMongoDB();
             }
         } catch (Exception e) {
@@ -1204,5 +1210,71 @@ public class BDJB implements Serializable {
      */
     public void setHorizontalMongo(HMongo horizontalMongo) {
         this.horizontalMongo = horizontalMongo;
+    }
+
+    public void onClose(Atributo u, TablaCosto f) {
+        if (u.getNombre().compareTo(this.obj.getTabla().getAtributoLlave().getNombre()) != 0) {
+            for (TablaCosto tc : this.obj.getEsquemaVertical()) {
+                if (tc.getNombre().compareTo(f.getNombre()) == 0) {
+                    tc.getArrAtri().remove(u);
+                    if(u.getCostoAtributoxSitio()!=null){
+                        if(u.getCostoAtributoxSitio().get(tc.getSitio())!=null){
+                            tc.setCosto(tc.getCosto() - u.getCostoAtributoxSitio().get(tc.getSitio()));
+                        }
+                    }
+                    SelectItemGroup g=new SelectItemGroup(u.getNombre());
+                    SelectItem[] i=new SelectItem[this.obj.getEsquemaVertical().size()];
+                    for(int o=0;o<this.obj.getEsquemaVertical().size();o++){
+                        SelectItem s=new SelectItem(this.obj.getEsquemaVertical().get(o).getNombre());
+                        ArrayList atributo_fragmento=new ArrayList();
+                        atributo_fragmento.add(u);
+                        atributo_fragmento.add(this.obj.getEsquemaVertical().get(o).getNombre());
+                        s.setValue(atributo_fragmento);
+                        s.setLabel(this.obj.getEsquemaVertical().get(o).getNombre());
+                        i[o]=s;
+                    }
+                    g.setSelectItems(i);
+                    this.pull.add(g);
+                }
+            }
+        }else{
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se pueden eliminar llaves primarias, elimine el fragmento entero"));
+        }
+
+    }
+    
+    public void onItemSelect(SelectEvent event){
+        SelectItem si=((SelectItem) event.getObject());
+        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Fragmento seleccionado", si.getLabel()+":"+((Atributo)si.getValue()).getNombre());
+        FacesContext.getCurrentInstance().addMessage(null, message);
+        
+    }
+
+    /**
+     * @return the pull
+     */
+    public ArrayList<SelectItem> getPull() {
+        return pull;
+    }
+
+    /**
+     * @param pull the pull to set
+     */
+    public void setPull(ArrayList<SelectItem> pull) {
+        this.pull = pull;
+    }
+
+    /**
+     * @return the aAgregar
+     */
+    public ArrayList getAAgregar() {
+        return aAgregar;
+    }
+
+    /**
+     * @param aAgregar the aAgregar to set
+     */
+    public void setAAgregar(ArrayList aAgregar) {
+        this.aAgregar = aAgregar;
     }
 }

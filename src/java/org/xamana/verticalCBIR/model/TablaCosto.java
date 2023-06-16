@@ -74,6 +74,15 @@ public class TablaCosto {
         }
         
     }
+    
+    public ArrayList<String> getAtributosxLista() {
+        ArrayList<String> cad = new ArrayList<>();
+        for (Atributo at : this.getArrAtri()) {
+            cad.add(at.getNombre());
+        }
+        return cad;
+        
+    }
 
     /**
      * @return the multimedia

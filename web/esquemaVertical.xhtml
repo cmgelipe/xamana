@@ -59,69 +59,42 @@ and open the template in the editor.
             <text>Scheme</text>
         </header>
         <h:form id="f8">
-            <p:growl id="growl" showDetail="true" sticky="true"  />
-            <p:tabView id="tabView">
-                <p:tab title="Costos"><!-- Costo de cada atributo por cada sitio -->
-                    <p:panelGrid>
-                        <p:row>
-                            <p:column style="width: 10%">
-                                <p:dataTable value="#{bd.obj.tabla.atributos}" var="u">
-                                    <f:facet name="header">
-                                        <h:outputText value="-" />
-                                    </f:facet>
-                                    <p:column style="text-align: right">
-                                        <f:facet name="header">
-                                            <h:outputText value="Atributo" />
-                                        </f:facet>
-                                        <h:outputText value="#{u.nombre}" />
-                                    </p:column>
-                                </p:dataTable>
-                            </p:column>
-                            <p:column>
-                                <p:dataTable value="#{bd.obj.costoAtributoxSitio}" var="x">
-                                    <f:facet name="header">
-                                        <h:outputText value="Costo de atributos por sitios"/>
-                                    </f:facet>
-                                    <p:columns value="#{bd.obj.sitios}" var="col">
-                                        <f:facet name="header">
-                                            <h:outputText value="#{col}"/>
-                                        </f:facet>
-                                        <h:outputText value="#{x.get(col)}" />
-                                    </p:columns>
-                                </p:dataTable>
-                            </p:column>
-                        </p:row>
-                    </p:panelGrid>
-
-
-                </p:tab>
-                <p:tab title="Esquema">
-                    <p:dataTable value="#{bd.obj.esquemaVertical}" var="t">
-                        <p:column headerText="Nombre de Frag.">
-                            <h:outputText value="#{t.nombre}" />
-                        </p:column>
-                        <p:column headerText="Sitio">
-                            <h:outputText value="#{t.sitio}" />
-                        </p:column>
-                        <p:column headerText="Atributos">
-                            <h:outputText value="#{t.atributosxComa}" />
-                        </p:column>
-                        <p:column headerText="Costo">
-                            <h:outputText value="#{t.costo}" />
+            <p:growl id="growl" showDetail="true"/>
+            <p:cascadeSelect id="pull" value="#{bd.AAgregar}" placeholder="Atributos disponibles" converter="convertidor">
+                <p:ajax event="itemSelect" listener="#{bd.onItemSelect}" update="growl pull f8:tprincipal:mitabla f8:tprincipal" />
+                <f:selectItems value="#{bd.pull}"/>
+            </p:cascadeSelect>
+            <br />
+            <br />
+            <p:dataTable id="tprincipal" value="#{bd.obj.esquemaVertical}" var="t">
+                <p:column headerText="Nombre de Frag.">
+                    <h:outputText value="#{t.nombre}" />
+                </p:column>
+                <p:column headerText="Sitio">
+                    <h:outputText value="#{t.sitio}" />
+                </p:column>
+                <p:column headerText="Atributos (selecciona para eliminar)">
+                    <p:dataTable id="mitabla" value="#{t.arrAtri}" var="u" styleClass="style">
+                        <p:column headerText="Atributos de #{t.nombre}">
+                            <p:commandButton value="#{u.nombre}" action="#{bd.onClose(u,t)}" ajax="true" update="mitabla f8:tprincipal f8:growl f8:pull"/>
                         </p:column>
                     </p:dataTable>
+                </p:column>
+                <p:column headerText="Costo">
+                    <h:outputText value="#{t.costo}" />
+                </p:column>
+            </p:dataTable>
 
-                    <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
-                        <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
-                    </p:progressBar>
-                    <br/>
-                    <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl" />
-                    <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
-                        <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
-                        <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
-                    </p:dialog>
-                </p:tab>
-            </p:tabView>
+            <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
+                <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
+            </p:progressBar>
+            <br/>
+            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="f8:growl f8:f6" />
+            <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
+                <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
+                <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
+            </p:dialog>
+
         </h:form>
     </h:body>
 </html>

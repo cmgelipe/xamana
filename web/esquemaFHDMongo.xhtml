@@ -112,7 +112,7 @@
                         <p:ajax event="complete" listener="#{bd.onComplete}" update="dh2:growl" oncomplete="PF('startButton2').enable()"/>
                     </p:progressBar>
                     <br/>
-                    <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="dh2:growl dh2:d6" />
+                    <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="dh2:growl d6" />
                     <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
                         <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
                         <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />

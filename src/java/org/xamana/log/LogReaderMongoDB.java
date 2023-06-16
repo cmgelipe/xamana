@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.model.file.UploadedFiles;
-import org.primefaces.shaded.commons.io.IOUtils;
+import org.apache.commons.io.IOUtils;
 
 /**
  *
