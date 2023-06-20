@@ -46,6 +46,8 @@ import org.xamana.verticalCBIR.model.TablaCosto;
 @SessionScoped
 public class BDJB implements Serializable {
 
+    
+
     private bd obj = new bd();
     private boolean bconfig = false;
     private boolean bbotonfragmentar = false;
@@ -73,8 +75,9 @@ public class BDJB implements Serializable {
     private boolean dtamanios = false;
     private boolean dHybrid = true;
     private HMongo horizontalMongo;
-    private ArrayList<SelectItem> pull=new ArrayList<>();
-    private ArrayList aAgregar;
+    private Atributo aAgregar;
+    private String fAgregar;
+
     /**
      * Creates a new instance of BD
      */
@@ -467,7 +470,7 @@ public class BDJB implements Serializable {
     }
 
     public void fragEstatica() {
-        
+
         //agregar process
         if (this.obj.isHorizontalCBIR()) {
             boolean ban = false;
@@ -499,9 +502,7 @@ public class BDJB implements Serializable {
             this.setBToken(true);
         } else if (this.obj.getTabla().getTipoFragment().compareTo("b") == 0 && !this.obj.getTabla().isCBIR()) {
             this.obj.setProgress1(0);
-            this.visible = false;
             this.obj.fragmentarVertical(this.obj.getEsquemaVertical());
-            this.visible = true;
             this.setBToken(true);
         } else if (this.obj.getTabla().getTipoFragment().compareTo("c") == 0 && !this.obj.getTabla().isCBIR()) {
             this.obj.getHD().hybridFragmentation();
@@ -1217,64 +1218,88 @@ public class BDJB implements Serializable {
             for (TablaCosto tc : this.obj.getEsquemaVertical()) {
                 if (tc.getNombre().compareTo(f.getNombre()) == 0) {
                     tc.getArrAtri().remove(u);
-                    if(u.getCostoAtributoxSitio()!=null){
-                        if(u.getCostoAtributoxSitio().get(tc.getSitio())!=null){
+                    if (u.getCostoAtributoxSitio() != null) {
+                        if (u.getCostoAtributoxSitio().get(tc.getSitio()) != null) {
                             tc.setCosto(tc.getCosto() - u.getCostoAtributoxSitio().get(tc.getSitio()));
                         }
                     }
-                    SelectItemGroup g=new SelectItemGroup(u.getNombre());
-                    SelectItem[] i=new SelectItem[this.obj.getEsquemaVertical().size()];
-                    for(int o=0;o<this.obj.getEsquemaVertical().size();o++){
-                        SelectItem s=new SelectItem(this.obj.getEsquemaVertical().get(o).getNombre());
-                        ArrayList atributo_fragmento=new ArrayList();
-                        atributo_fragmento.add(u);
-                        atributo_fragmento.add(this.obj.getEsquemaVertical().get(o).getNombre());
-                        s.setValue(atributo_fragmento);
-                        s.setLabel(this.obj.getEsquemaVertical().get(o).getNombre());
-                        i[o]=s;
-                    }
-                    g.setSelectItems(i);
-                    this.pull.add(g);
                 }
             }
-        }else{
+        } else {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributos", "No se pueden eliminar llaves primarias, elimine el fragmento entero"));
         }
 
     }
+
+    public void agregarAttAFragmento() {
+        for (TablaCosto tc : this.obj.getEsquemaVertical()) {
+            if (tc.getNombre().compareTo(this.fAgregar) == 0) {
+                tc.getArrAtri().add(this.aAgregar);
+                try{
+                    tc.setCosto(tc.getCosto()+this.aAgregar.getCostoAtributoxSitio().get(tc.getSitio()));
+                }catch(Exception e){
+                    
+                }
+                
+            }
+        }
+        this.visible=false;
+    }
     
-    public void onItemSelect(SelectEvent event){
-        SelectItem si=((SelectItem) event.getObject());
-        FacesMessage message = new FacesMessage(FacesMessage.SEVERITY_INFO, "Fragmento seleccionado", si.getLabel()+":"+((Atributo)si.getValue()).getNombre());
-        FacesContext.getCurrentInstance().addMessage(null, message);
-        
-    }
-
-    /**
-     * @return the pull
-     */
-    public ArrayList<SelectItem> getPull() {
-        return pull;
-    }
-
-    /**
-     * @param pull the pull to set
-     */
-    public void setPull(ArrayList<SelectItem> pull) {
-        this.pull = pull;
+    public void seleccionAtt(Atributo a){
+        //si ese atributo ya esta agregado a otro fragmento, no agregar
+        boolean yaEsta=false;
+        for(TablaCosto tc:this.obj.getEsquemaVertical()){
+            for(Atributo b:tc.getArrAtri()){
+                if(b.getNombre().compareTo(a.getNombre())==0){
+                    yaEsta=true;
+                }
+            }
+        }
+        if(yaEsta){
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributo", "No se puede agregar este atributo, ya esta presente en otro fragmento. Eliminelo y agregue nuevamente."));
+        }else{
+            this.aAgregar=a;
+            this.visible=true;
+        }
     }
 
     /**
      * @return the aAgregar
      */
-    public ArrayList getAAgregar() {
+    public Atributo getAAgregar() {
         return aAgregar;
     }
 
     /**
      * @param aAgregar the aAgregar to set
      */
-    public void setAAgregar(ArrayList aAgregar) {
+    public void setAAgregar(Atributo aAgregar) {
         this.aAgregar = aAgregar;
+    }
+
+    public String getFragAgregar() {
+        return fAgregar;
+    }
+
+    /**
+     * @param aAgregar the aAgregar to set
+     */
+    public void setFragAgregar(String aAgregar) {
+        this.fAgregar = aAgregar;
+    }
+    
+    /**
+     * @return the visible
+     */
+    public boolean isVisible() {
+        return visible;
+    }
+
+    /**
+     * @param visible the visible to set
+     */
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 }
