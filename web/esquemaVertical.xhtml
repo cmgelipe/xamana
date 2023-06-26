@@ -67,7 +67,8 @@ and open the template in the editor.
                             <p:column headerText="Atributos (seleccione para agregar)">
                                 <p:commandButton value="#{att.nombre}" ajax="true" disabled="#{att.pk}" action="#{bd.seleccionAtt(att)}" update="f8:d7 f8:growl" />
                             </p:column>
-                        </p:dataTable>
+                        </p:dataTable> <br/>
+                        <p:commandButton value="Agregar fragmento" action="#{bd.setDlgAgregarF(true)}" update="f8:dlgAgregarFragmento"/>
                     </p:column>
                     <p:column>
                         <p:dataTable id="tprincipal" value="#{bd.obj.esquemaVertical}" var="t">
@@ -87,6 +88,9 @@ and open the template in the editor.
                             <p:column headerText="Costo">
                                 <h:outputText value="#{t.costo}" />
                             </p:column>
+                            <p:column>
+                                <p:commandButton value="Delete" style="background-color: brown" action="#{bd.eliminarFragmento(t)}" update="mitabla f8:tprincipal f8:growl f8:lstFrag" />
+                            </p:column>
                         </p:dataTable>
                     </p:column>
                 </p:row>
@@ -95,12 +99,17 @@ and open the template in the editor.
                 <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
                 <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
             </p:dialog>
+            <p:dialog id="dlgAgregarFragmento" visible="#{bd.dlgAgregarF}" header="New Fragment" closable="false">
+                <h:outputText value="Assign this new fragment to a site" /><br />
+                <p:inputText value="#{bd.sitioNuevoFragmento}" />
+                <p:commandButton value="Asign" action="#{bd.agregarFragmento()}" update="f8:tprincipal:mitabla f8:tprincipal f8:growl f8:dlgAgregarFragmento f8:lstFrag"/>
+            </p:dialog>
             <p:dialog id="d7" visible="#{bd.visible}" header="Fragmento">
                 <h:outputText value="Select the fragment to which this attribute will be assigned." /><br />
                 <p:selectOneMenu id="lstFrag" value="#{bd.fragAgregar}">
                     <f:selectItems value="#{bd.obj.esquemaVertical}" var="x" itemLabel="#{x.nombre}" itemValue="#{x.nombre}" />
                 </p:selectOneMenu><br /><br />
-                <p:commandButton value="Asign" action="#{bd.agregarAttAFragmento()}" update="f8:tprincipal:mitabla f8:tprincipal growl f8:d7"/>
+                <p:commandButton value="Asign" action="#{bd.agregarAttAFragmento()}" update="f8:tprincipal:mitabla f8:tprincipal f8:growl f8:d7"/>
                 <p:commandButton value="Cancel" action="#{bd.setVisible(false)}" update="f8:d7"/>
             </p:dialog>
             <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">

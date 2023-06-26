@@ -1403,7 +1403,7 @@ public class HybridDesign {
                         accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.oBD.getTabla().getIdTabla());
                     }
                 }
-                this.oBD.setProgress1(this.oBD.getProgress1() + percent);
+                this.progress1=this.getProgress1() + percent;
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -2014,4 +2014,11 @@ public class bd implements Serializable {
     public void setSentencia(String sentencia) {
         this.sentencia = sentencia;
     }
+    
+    public ArrayList<TablaCosto> nombrarFaltantes(ArrayList<TablaCosto> ori) {
+        for (int i = 0; i < ori.size(); i++) {
+            ori.get(i).setNombre(this.getTabla().getNombre() + "_" + (i + 1));
+        }
+        return ori;
+    }
 }

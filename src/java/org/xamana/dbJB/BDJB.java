@@ -77,6 +77,8 @@ public class BDJB implements Serializable {
     private HMongo horizontalMongo;
     private Atributo aAgregar;
     private String fAgregar;
+    private String sitioNuevoFragmento;
+    private boolean dlgAgregarF;
 
     /**
      * Creates a new instance of BD
@@ -1263,6 +1265,34 @@ public class BDJB implements Serializable {
             this.visible=true;
         }
     }
+    
+    public void agregarFragmento(){
+        TablaCosto nuevoFrag=new TablaCosto();
+        ArrayList<Atributo> att=new ArrayList<>();
+        att.add(this.obj.getTabla().getAtributoLlave());
+        nuevoFrag.setArrAtri(att);
+        nuevoFrag.setMultimedia(false);
+        nuevoFrag.setSitio(this.getSitioNuevoFragmento());
+        double costo=0.0;
+        for(Atributo a:this.obj.getTabla().getAtributos()){
+            if(a.getNombre().compareTo(this.obj.getTabla().getAtributoLlave().getNombre())==0){
+                if(a.getCostoAtributoxSitio().get(this.sitioNuevoFragmento)!=null){
+                    costo=a.getCostoAtributoxSitio().get(this.sitioNuevoFragmento);
+                }else{
+                    costo=0.0;
+                }
+            }
+        }
+        nuevoFrag.setCosto(costo);
+        this.obj.getEsquemaVertical().add(nuevoFrag);
+        this.obj.setEsquemaVertical(this.obj.nombrarFaltantes(this.obj.getEsquemaVertical()));
+        this.setDlgAgregarF(false);
+    }
+    
+    public void eliminarFragmento(TablaCosto aEliminar){
+        this.obj.getEsquemaVertical().removeIf(x->x.getNombre().compareTo(aEliminar.getNombre())==0);
+        this.obj.setEsquemaVertical(this.obj.nombrarFaltantes(this.obj.getEsquemaVertical()));
+    }
 
     /**
      * @return the aAgregar
@@ -1301,5 +1331,33 @@ public class BDJB implements Serializable {
      */
     public void setVisible(boolean visible) {
         this.visible = visible;
+    }
+
+    /**
+     * @return the sitioNuevoFragmento
+     */
+    public String getSitioNuevoFragmento() {
+        return sitioNuevoFragmento;
+    }
+
+    /**
+     * @param sitioNuevoFragmento the sitioNuevoFragmento to set
+     */
+    public void setSitioNuevoFragmento(String sitioNuevoFragmento) {
+        this.sitioNuevoFragmento = sitioNuevoFragmento;
+    }
+
+    /**
+     * @return the dlgAgregarF
+     */
+    public boolean isDlgAgregarF() {
+        return dlgAgregarF;
+    }
+
+    /**
+     * @param dlgAgregarF the dlgAgregarF to set
+     */
+    public void setDlgAgregarF(boolean dlgAgregarF) {
+        this.dlgAgregarF = dlgAgregarF;
     }
 }
