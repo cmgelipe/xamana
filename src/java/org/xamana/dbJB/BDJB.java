@@ -46,8 +46,6 @@ import org.xamana.verticalCBIR.model.TablaCosto;
 @SessionScoped
 public class BDJB implements Serializable {
 
-    
-
     private bd obj = new bd();
     private boolean bconfig = false;
     private boolean bbotonfragmentar = false;
@@ -503,9 +501,28 @@ public class BDJB implements Serializable {
             this.obj.fragmentarVertical(this.esquemaVerticalCBIR);
             this.setBToken(true);
         } else if (this.obj.getTabla().getTipoFragment().compareTo("b") == 0 && !this.obj.getTabla().isCBIR()) {
-            this.obj.setProgress1(0);
-            this.obj.fragmentarVertical(this.obj.getEsquemaVertical());
-            this.setBToken(true);
+            boolean notienetodos = false;
+            for (Atributo a : this.obj.getTabla().getAtributos()) {
+                boolean tieneatributo = false;
+                for (TablaCosto tc : this.obj.getEsquemaVertical()) {
+                    for (Atributo a2 : tc.getArrAtri()) {
+                        if (a.getNombre().compareTo(a2.getNombre()) == 0) {
+                            tieneatributo = true;
+                        }
+                    }
+                }
+                if (!tieneatributo) {
+                    notienetodos = true;
+                }
+            }
+            if (notienetodos) {
+                FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Attributes", "All attributes must be added to the schema"));
+            } else {
+                this.obj.setProgress1(0);
+                this.obj.fragmentarVertical(this.obj.getEsquemaVertical());
+                this.setBToken(true);
+            }
+
         } else if (this.obj.getTabla().getTipoFragment().compareTo("c") == 0 && !this.obj.getTabla().isCBIR()) {
             this.obj.getHD().hybridFragmentation();
             this.setBToken(true);
@@ -1237,49 +1254,49 @@ public class BDJB implements Serializable {
         for (TablaCosto tc : this.obj.getEsquemaVertical()) {
             if (tc.getNombre().compareTo(this.fAgregar) == 0) {
                 tc.getArrAtri().add(this.aAgregar);
-                try{
-                    tc.setCosto(tc.getCosto()+this.aAgregar.getCostoAtributoxSitio().get(tc.getSitio()));
-                }catch(Exception e){
-                    
+                try {
+                    tc.setCosto(tc.getCosto() + this.aAgregar.getCostoAtributoxSitio().get(tc.getSitio()));
+                } catch (Exception e) {
+
                 }
-                
+
             }
         }
-        this.visible=false;
+        this.visible = false;
     }
-    
-    public void seleccionAtt(Atributo a){
+
+    public void seleccionAtt(Atributo a) {
         //si ese atributo ya esta agregado a otro fragmento, no agregar
-        boolean yaEsta=false;
-        for(TablaCosto tc:this.obj.getEsquemaVertical()){
-            for(Atributo b:tc.getArrAtri()){
-                if(b.getNombre().compareTo(a.getNombre())==0){
-                    yaEsta=true;
+        boolean yaEsta = false;
+        for (TablaCosto tc : this.obj.getEsquemaVertical()) {
+            for (Atributo b : tc.getArrAtri()) {
+                if (b.getNombre().compareTo(a.getNombre()) == 0) {
+                    yaEsta = true;
                 }
             }
         }
-        if(yaEsta){
+        if (yaEsta) {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "Atributo", "No se puede agregar este atributo, ya esta presente en otro fragmento. Eliminelo y agregue nuevamente."));
-        }else{
-            this.aAgregar=a;
-            this.visible=true;
+        } else {
+            this.aAgregar = a;
+            this.visible = true;
         }
     }
-    
-    public void agregarFragmento(){
-        TablaCosto nuevoFrag=new TablaCosto();
-        ArrayList<Atributo> att=new ArrayList<>();
+
+    public void agregarFragmento() {
+        TablaCosto nuevoFrag = new TablaCosto();
+        ArrayList<Atributo> att = new ArrayList<>();
         att.add(this.obj.getTabla().getAtributoLlave());
         nuevoFrag.setArrAtri(att);
         nuevoFrag.setMultimedia(false);
         nuevoFrag.setSitio(this.getSitioNuevoFragmento());
-        double costo=0.0;
-        for(Atributo a:this.obj.getTabla().getAtributos()){
-            if(a.getNombre().compareTo(this.obj.getTabla().getAtributoLlave().getNombre())==0){
-                if(a.getCostoAtributoxSitio().get(this.sitioNuevoFragmento)!=null){
-                    costo=a.getCostoAtributoxSitio().get(this.sitioNuevoFragmento);
-                }else{
-                    costo=0.0;
+        double costo = 0.0;
+        for (Atributo a : this.obj.getTabla().getAtributos()) {
+            if (a.getNombre().compareTo(this.obj.getTabla().getAtributoLlave().getNombre()) == 0) {
+                if (a.getCostoAtributoxSitio().get(this.sitioNuevoFragmento) != null) {
+                    costo = a.getCostoAtributoxSitio().get(this.sitioNuevoFragmento);
+                } else {
+                    costo = 0.0;
                 }
             }
         }
@@ -1288,9 +1305,9 @@ public class BDJB implements Serializable {
         this.obj.setEsquemaVertical(this.obj.nombrarFaltantes(this.obj.getEsquemaVertical()));
         this.setDlgAgregarF(false);
     }
-    
-    public void eliminarFragmento(TablaCosto aEliminar){
-        this.obj.getEsquemaVertical().removeIf(x->x.getNombre().compareTo(aEliminar.getNombre())==0);
+
+    public void eliminarFragmento(TablaCosto aEliminar) {
+        this.obj.getEsquemaVertical().removeIf(x -> x.getNombre().compareTo(aEliminar.getNombre()) == 0);
         this.obj.setEsquemaVertical(this.obj.nombrarFaltantes(this.obj.getEsquemaVertical()));
     }
 
@@ -1318,7 +1335,7 @@ public class BDJB implements Serializable {
     public void setFragAgregar(String aAgregar) {
         this.fAgregar = aAgregar;
     }
-    
+
     /**
      * @return the visible
      */

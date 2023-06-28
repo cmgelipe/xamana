@@ -68,7 +68,7 @@ and open the template in the editor.
                                 <p:commandButton value="#{att.nombre}" ajax="true" disabled="#{att.pk}" action="#{bd.seleccionAtt(att)}" update="f8:d7 f8:growl" />
                             </p:column>
                         </p:dataTable> <br/>
-                        <p:commandButton value="Agregar fragmento" action="#{bd.setDlgAgregarF(true)}" update="f8:dlgAgregarFragmento"/>
+                        <p:commandButton value="Add fragment" action="#{bd.setDlgAgregarF(true)}" update="f8:dlgAgregarFragmento"/>
                     </p:column>
                     <p:column>
                         <p:dataTable id="tprincipal" value="#{bd.obj.esquemaVertical}" var="t">
