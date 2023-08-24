@@ -283,10 +283,12 @@ public class BDJB implements Serializable {
             }
             tipoEsquema = "esquema.xhtml";
         } else if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
-            this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIR(getAttsMultimediaDescriptor(), this.files));
+            String ruta = ((ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext()).getRealPath("/");
+            this.setEsquemaVerticalCBIR(this.obj.esquemaVerticalCBIR(getAttsMultimediaDescriptor(), this.files,ruta));
             tipoEsquema = "esquemaVerticalCBIR.xhtml";
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
-            this.obj.crearEquemaVertical(this.files);
+            String ruta = ((ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext()).getRealPath("/");
+            this.obj.crearEquemaVertical(this.files, ruta);
             tipoEsquema = "esquemaVertical.xhtml";
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("a")) {
             // Fragmentacion Horizontal Dinamica                
@@ -307,10 +309,12 @@ public class BDJB implements Serializable {
 
         } else if (!this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")) {
             //híbrida no cbir
-            this.obj.crearEsquemaHybrid(this.files);
+            String ruta = ((ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext()).getRealPath("/");
+            this.obj.crearEsquemaHybrid(this.files,ruta);
             tipoEsquema = "esquemaMixto.xhtml";
         } else if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")) {
-            this.obj.crearEsquemaHybridCBIR(getAttsMultimediaDescriptor(), this.files);
+            String ruta = ((ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext()).getRealPath("/");
+            this.obj.crearEsquemaHybridCBIR(getAttsMultimediaDescriptor(), this.files,ruta);
             tipoEsquema = "esquemaHybrid.xhtml";
         }
         return tipoEsquema;

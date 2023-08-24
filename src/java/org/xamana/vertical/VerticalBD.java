@@ -190,7 +190,8 @@ public class VerticalBD {
                                     this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().put(ipLinea, costoOperacion);
                                 }
                             }
-                            this.matrizAfinidad(desordenados, ipLinea, costoOperacionReal);
+                            //Solo agregar nuevas nuevos conjuntos de atributos para despues asignar su costo
+                            this.initMatrizAfinidad(desordenados);
                         } else {
                             System.out.println("algo pasa");
                         }
@@ -401,15 +402,16 @@ public class VerticalBD {
                                     this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().put(ipLinea, costoOperacion);
                                 }
                             }
-                            this.matrizAfinidad(desordenados, ipLinea, costoOperacionReal);
-                        }else{
+                            //Solo agregar nuevos conjuntos de atributos, posteriormente agregar costos
+                            this.initMatrizAfinidad(desordenados);
+                        } else {
                             System.out.println("Algo pasa");
                         }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }else{
+            } else {
                 System.out.println("Algo pasa");
             }
         }
@@ -822,224 +824,278 @@ public class VerticalBD {
     }
 
     //PIPE
-    public ArrayList<TablaCosto> costoxSitioMongoV3(ArrayList<TablaCosto> preEsquema) {
+    public ArrayList<TablaCosto> costoxSitioMongoV3(ArrayList<TablaCosto> preEsquema, String rutaLogXAMANA) {
         ArrayList<TablaCosto> ret = new ArrayList<>();
         int contador = 0;
         double costoTotal = 0.0;
+        ArrayList<String> sitios = new ArrayList<>();
         System.out.println("-----------COSTOS PIPE-------------");
-        for (UploadedFile f : this.files.getFiles()) {
-            if (f != null && !"".equals(f.getFileName())) {
-                try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+        try {
+            RandomAccessFile ran = new RandomAccessFile(rutaLogXAMANA + "/estatus.log", "rw");
+            for (UploadedFile f : this.files.getFiles()) {
+                if (f != null && !"".equals(f.getFileName())) {
                     String actual = "";
-                    String ipLinea = "";
-                    while ((actual = bufferedReader.readLine()) != null) {
+                    try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
+                        String ipLinea = "";
+                        while ((actual = bufferedReader.readLine()) != null) {
+                            ran.writeBytes(actual + "\n");
+                            ran.writeBytes("OPERACIÓN: " + contador + "\n");
+                            if (actual.toLowerCase().contains("command")
+                                    && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
 
-                        if (actual.toLowerCase().contains("command")
-                                && actual.toLowerCase().contains(this.oBD.getTabla().getNombre().toLowerCase())) {
-
-                            JSONObject j = new JSONObject(actual);
-                            String c = j.get("c").toString().toLowerCase().trim();
-                            JSONObject j2 = new JSONObject(j.get("attr").toString());
-                            JSONObject j3 = new JSONObject(j2.get("command").toString());
-                            String ns = "";
-                            int ValorAsignadoOperacion = 0;
-                            if (j3.has("find")) {
-                                ValorAsignadoOperacion = 1;
-                                ns = j3.get("find").toString().toLowerCase();
-                            } else if (j3.has("delete")) {
-                                ValorAsignadoOperacion = 2;
-                                ns = j3.get("delete").toString().toLowerCase();
-                            } else if (j3.has("insert")) {
-                                ValorAsignadoOperacion = 2;
-                                ns = j3.get("insert").toString().toLowerCase();
-                            } else if (j3.has("update")) {
-                                ValorAsignadoOperacion = 3;
-                                ns = j3.get("update").toString().toLowerCase();
-                            }
-                            if (ValorAsignadoOperacion != 0 && c.compareTo("command") == 0
-                                    && ns.compareTo(this.oBD.getTabla().getNombre().toLowerCase()) == 0) {
-                                contador++;
-                                System.out.println("OPERACIÓN: " + contador);
-                                j2 = new JSONObject(j.get("attr").toString());
-                                String remote = j2.get("remote").toString().toLowerCase().trim();
-                                ipLinea = remote.substring(0, remote.indexOf(":"));
-
-                                System.out.println("SITIO: " + ipLinea);
-                                int nJoins = 1; //centralizada
-                                System.out.println("CR: " + nJoins);
-                                if (this.oBD.getDirbd().compareTo(ipLinea) != 0) {
-                                    ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
+                                JSONObject j = new JSONObject(actual);
+                                String c = j.get("c").toString().toLowerCase().trim();
+                                JSONObject j2 = new JSONObject(j.get("attr").toString());
+                                JSONObject j3 = new JSONObject(j2.get("command").toString());
+                                String ns = "";
+                                int ValorAsignadoOperacion = 0;
+                                if (j3.has("find")) {
+                                    ValorAsignadoOperacion = 1;
+                                    ns = j3.get("find").toString().toLowerCase();
+                                } else if (j3.has("delete")) {
+                                    ValorAsignadoOperacion = 2;
+                                    ns = j3.get("delete").toString().toLowerCase();
+                                } else if (j3.has("insert")) {
+                                    ValorAsignadoOperacion = 2;
+                                    ns = j3.get("insert").toString().toLowerCase();
+                                } else if (j3.has("update")) {
+                                    ValorAsignadoOperacion = 3;
+                                    ns = j3.get("update").toString().toLowerCase();
                                 }
-                                System.out.println("VAO: " + ValorAsignadoOperacion);
-                                ArrayList<Atributo> desordenados = new ArrayList<>();
-                                double costoOperacionReal = 0.0;
-                                for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
-                                    if (actual.toLowerCase().contains(this.oBD.getTabla().getAtributos().get(o).getNombre().toLowerCase())) {
-                                        desordenados.add(this.oBD.getTabla().getAtributos().get(o));
-                                        System.out.println("\tTamaño de atributo " + this.oBD.getTabla().getAtributos().get(o).getNombre() + ": " + Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio()));
-                                        double costoOperacion = 0.0;
-                                        if (this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().containsKey(ipLinea)) {
-                                            costoOperacion = this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().get(ipLinea);
-                                        }
-                                        //System.out.println("PASA");
-                                        double valorActual = ValorAsignadoOperacion * nJoins * Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio());
-                                        System.out.println("Costo de operación: " + valorActual);
-                                        costoTotal += valorActual;
-                                        costoOperacion += valorActual;
-                                        costoOperacionReal += valorActual;
-                                        this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().put(ipLinea, costoOperacion);
+                                if (ValorAsignadoOperacion != 0 && c.compareTo("command") == 0
+                                        && ns.compareTo(this.oBD.getTabla().getNombre().toLowerCase()) == 0) {
+
+                                    j2 = new JSONObject(j.get("attr").toString());
+                                    String remote = j2.get("remote").toString().toLowerCase().trim();
+                                    ipLinea = remote.substring(0, remote.indexOf(":"));
+
+                                    ran.writeBytes("SITIO: " + ipLinea + "\n");
+                                    int nJoins = 1; //centralizada
+                                    ran.writeBytes("CR: " + nJoins + "\n");
+                                    if (this.oBD.getDirbd().compareTo(ipLinea) != 0) {
+                                        ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                                     }
-                                }
-                                this.matrizAfinidad(desordenados, ipLinea, costoOperacionReal);
+                                    ran.writeBytes("VAO: " + ValorAsignadoOperacion + "\n");
+                                    ArrayList<Atributo> desordenados = new ArrayList<>();
+                                    for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
+                                        if (actual.toLowerCase().contains(this.oBD.getTabla().getAtributos().get(o).getNombre().toLowerCase())) {
+                                            desordenados.add(this.oBD.getTabla().getAtributos().get(o));
+                                            ran.writeBytes("\tTamaño de atributo " + this.oBD.getTabla().getAtributos().get(o).getNombre() + ": " + Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio()) + "\n");
+                                            double costoOperacion = 0.0;
+                                            if (this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().containsKey(ipLinea)) {
+                                                costoOperacion = this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().get(ipLinea);
+                                            }
+                                            double valorActual = ValorAsignadoOperacion * nJoins * Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio());
+                                            ran.writeBytes("Costo de operación: " + valorActual + "\n");
+                                            costoTotal += valorActual;
+                                            costoOperacion += valorActual;
 
+                                            this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().put(ipLinea, costoOperacion);
+                                        } else {
+                                            ran.writeBytes("Esta operación no contiene: " + this.oBD.getTabla().getAtributos().get(o).getNombre() + "\n");
+                                        }
+                                    }
+                                    //no calcular costo, sino hasta que ya se haya creado getCostoAtributoxSitio por completo
+                                    this.initMatrizAfinidad(desordenados);
+                                    if (!sitios.contains(ipLinea)) {
+                                        sitios.add(ipLinea);
+                                    }
+                                } else {
+                                    System.out.println("algo pasa");
+                                }
                             } else {
                                 System.out.println("algo pasa");
                             }
-                        } else {
-                            System.out.println("algo pasa");
+                            contador++;
+                        }
+                        bufferedReader.close();
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        System.out.println("ERROR: " + actual);
+                    }
+                }
+            }
+
+            //AFINIDAD
+            //.5.- Crear atributosSitioCostos sumando solo los conjuntos 
+            //de atributos por sitio que tengan valor mayor a 0 en cada uno de sus atributos en cada sitio,
+            // colocar en 0 si uno de los atributos del conjunto no se ocupa en el sitio en turno
+            Iterator<ArrayList<Atributo>> llaves = this.atributosSitioCostos.keySet().iterator();
+            double sumaSitio=0.0;
+            while (llaves.hasNext()) {
+                ArrayList<Atributo> llave = llaves.next();
+                for (String s : sitios) {
+                    //averiguar si comparten sitio
+                    boolean comparten=true;
+                    for (Atributo a : llave) {
+                        if (!a.isPk()) {
+                            if(a.getCostoAtributoxSitio().containsKey(s)){
+                                if(a.getCostoAtributoxSitio().get(s)==0){
+                                    comparten=false;
+                                }
+                            }else{
+                                comparten=false;
+                            }
                         }
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                    //si sí comparten se suma, de otro modo 0
+                    if(comparten){
+                        for (Atributo a : llave) {
+                            sumaSitio+=a.getCostoAtributoxSitio().get(s);
+                        }
+                        this.atributosSitioCostos.get(llave).put(s, sumaSitio);
+                    }else{
+                        this.atributosSitioCostos.get(llave).put(s, 0.0);
+                    }
+                }
+
+            }
+
+            //1.- ELIMINAR CONJUNTOS MULTIMEDIA, TODO AQUELLO QUE TENGA ATRIBUTOS MULTIMEDIA
+            //1.1.- Eliminar el conjunto con la llave primaria sola, si es que es existe
+            //LOS COSTOS RELACIONADOS A LOS CONJUNTOS ELIMINADOS NO SON RELEVANTES, YA QUE NINGUN
+            //COSTO DE LA MATRIZ DE AFINIDAD ES EL COSTO FINAL DEL FRAGMENTO, LOS COSTOS REALES
+            //SE TOMAN DE getCostoAtributoxSitio DE CADA ATRIBUTO INCLUIDO EN EL CONJUNTO
+            ArrayList<ArrayList<Atributo>> aEliminar = new ArrayList<>();
+
+            for (ArrayList<Atributo> arr : this.atributosSitioCostos.keySet()) {
+                boolean hayMultimedia = false;
+                boolean esSoloPK = false;
+                for (int i = 0; i < arr.size() && !hayMultimedia; i++) {
+                    if (arr.get(i).isMultimedia() || arr.get(i).isDescriptor()) {
+                        hayMultimedia = true;
+                    }
+                    if (arr.get(i).isPk()) {
+                        esSoloPK = true;
+                    }
+                }
+                if (hayMultimedia || (esSoloPK && arr.size() == 1)) {
+                    aEliminar.add(arr);
                 }
             }
-        }
-        //AFINIDAD
-        //1.- ELIMINAR CONJUNTOS MULTIMEDIA, TODO AQUELLO QUE TENGA ATRIBUTOS MULTIMEDIA
-        //1.1.- Eliminar el conjunto con la llave primaria sola, si es que es existe
+            for (ArrayList<Atributo> arr : aEliminar) {
+                this.atributosSitioCostos.remove(arr);
+            }
 
-        //LOS COSTOS RELACIONADOS A LOS CONJUNTOS ELIMINADOS NO SON RELEVANTES, YA QUE NINGUN
-        //COSTO DE LA MATRIZ DE AFINIDAD ES EL COSTO FINAL DEL FRAGMENTO, LOS COSTOS REALES
-        //SE TOMAN DE getCostoAtributoxSitio DE CADA ATRIBUTO INCLUIDO EN EL CONJUNTO
-        ArrayList<ArrayList<Atributo>> aEliminar = new ArrayList<>();
-
-        for (ArrayList<Atributo> arr : this.atributosSitioCostos.keySet()) {
-            boolean hayMultimedia = false;
-            boolean esSoloPK = false;
-            for (int i = 0; i < arr.size() && !hayMultimedia; i++) {
-                if (arr.get(i).isMultimedia() || arr.get(i).isDescriptor()) {
-                    hayMultimedia = true;
+            //2.- SUMAR COSTOS DE CONJUNTOS EN CADA SITIO (UN COSTO POR CONJUNTO)
+            HashMap<ArrayList<Atributo>, Double> atributosSuma = new HashMap<>();
+            for (ArrayList<Atributo> arr : this.atributosSitioCostos.keySet()) {
+                Double sum = 0.0;
+                for (String ips : this.atributosSitioCostos.get(arr).keySet()) {
+                    sum += this.atributosSitioCostos.get(arr).get(ips);
                 }
-                if (arr.get(i).isPk()) {
-                    esSoloPK = true;
+                atributosSuma.put(arr, sum);
+            }
+
+            //3.- ORDENAR CONJUNTOS POR COSTO
+            ArrayList atributosSumaOrden = (ArrayList) atributosSuma.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue())).collect(Collectors.toList());
+
+            HashMap<ArrayList<Atributo>, Double> filtrados = new HashMap<>();
+            //4.- SELECCIONAR Y ELIMINAR CONJUNTOS SUBSECUENTES QUE CONTENGAN ATRIBUTOS YA PRESENTES EN LAS SELECCIONES ANTERIORES
+            //ATENDER LLAVE PRIMARIA (no tomarla en cuenta, sino, siempre habría un solo conjunto, porque todos los conjuntos
+            //tienen llave primaria)
+            for (Object o : atributosSumaOrden) {
+                Entry e = (Entry) o;
+                ArrayList<Atributo> llave = (ArrayList<Atributo>) e.getKey();
+                Double valor = (Double) e.getValue();
+                boolean yaLoContiene = false;
+                for (int j = 0; j < llave.size() && !yaLoContiene; j++) {
+                    if (!llave.get(j).isPk()) {
+                        for (ArrayList<Atributo> i : filtrados.keySet()) {
+                            for (int u = 0; u < i.size() && !yaLoContiene; u++) {
+                                if (llave.get(j).getNombre().compareTo(i.get(u).getNombre()) == 0) {
+                                    yaLoContiene = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!yaLoContiene) {
+                    filtrados.put(llave, valor);
                 }
             }
-            if (hayMultimedia || (esSoloPK && arr.size() == 1)) {
-                aEliminar.add(arr);
+
+            //5.- AGREGAR ATRIBUTOS FALTANTES (ATRIBUTOS SIN CONJUNTOS NI COSTO) A SITIO ORIGINAL
+            //no agregar atts multimedia
+            ArrayList<Atributo> faltantes = new ArrayList<>();
+            for (Atributo t : this.oBD.getTabla().getAtributos()) {
+                boolean yaLoContiene = false;
+                for (ArrayList<Atributo> l : filtrados.keySet()) {
+                    for (Atributo i : l) {
+                        if (i.getNombre().compareTo(t.getNombre()) == 0) {
+                            yaLoContiene = true;
+                        }
+                    }
+                }
+                if (!yaLoContiene && !t.isMultimedia() && !t.isDescriptor()) {
+                    faltantes.add(t);
+                }
             }
-        }
-        for (ArrayList<Atributo> arr : aEliminar) {
-            this.atributosSitioCostos.remove(arr);
-        }
-
-        //2.- SUMAR COSTOS DE CONJUNTOS EN CADA SITIO (UN COSTO POR CONJUNTO)
-        HashMap<ArrayList<Atributo>, Double> atributosSuma = new HashMap<>();
-        for (ArrayList<Atributo> arr : this.atributosSitioCostos.keySet()) {
-            Double sum = 0.0;
-            for (String sitios : this.atributosSitioCostos.get(arr).keySet()) {
-                sum += this.atributosSitioCostos.get(arr).get(sitios);
+            if (!faltantes.isEmpty()) {
+                faltantes.add(this.oBD.getTabla().getAtributoLlave());
+                filtrados.put(faltantes, 0.0);
             }
-            atributosSuma.put(arr, sum);
-        }
 
-        //3.- ORDENAR CONJUNTOS POR COSTO
-        ArrayList atributosSumaOrden = (ArrayList) atributosSuma.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue())).collect(Collectors.toList());
+            //Agregar a preesquema los nuevos fragmentos
+            for (ArrayList<Atributo> listaAtt : filtrados.keySet()) {
+                TablaCosto tc = new TablaCosto();
+                tc.setArrAtri(listaAtt);
+                tc.setCosto(filtrados.get(listaAtt));
+                tc.setMultimedia(false);
+                preEsquema.add(tc);
+            }
 
-        HashMap<ArrayList<Atributo>, Double> filtrados = new HashMap<>();
-        //4.- SELECCIONAR Y ELIMINAR CONJUNTOS SUBSECUENTES QUE CONTENGAN ATRIBUTOS YA PRESENTES EN LAS SELECCIONES ANTERIORES
-        //ATENDER LLAVE PRIMARIA (no tomarla en cuenta, sino, siempre habría un solo conjunto, porque todos los conjuntos
-        //tienen llave primaria)
-        for (Object o : atributosSumaOrden) {
-            Entry e = (Entry) o;
-            ArrayList<Atributo> llave = (ArrayList<Atributo>) e.getKey();
-            Double valor = (Double) e.getValue();
-            boolean yaLoContiene = false;
-            for (int j = 0; j < llave.size() && !yaLoContiene; j++) {
-                if (!llave.get(j).isPk()) {
-                    for (ArrayList<Atributo> i : filtrados.keySet()) {
-                        for (int u = 0; u < i.size() && !yaLoContiene; u++) {
-                            if (llave.get(j).getNombre().compareTo(i.get(u).getNombre()) == 0) {
-                                yaLoContiene = true;
+            //SITIOS Y COSTOS MULTIMEDIA
+            for (TablaCosto tc : preEsquema) {
+                double costoFragmento = 0.0;
+                for (int o = 0; o < tc.getArrAtri().size(); o++) {
+                    //buscar en OBD estos atributos y sumar su costo en cada sitio
+                    for (Atributo att : this.oBD.getTabla().getAtributos()) {
+                        if (att.getNombre().compareTo(tc.getArrAtri().get(o).getNombre()) == 0) {
+                            costoFragmento += att.getCostoAtributoxSitio().values().stream().mapToDouble(Double::doubleValue).sum();
+                        }
+                    }
+                }
+                tc.setCosto(costoFragmento);
+            }
+
+            //1.- sumar por sitio el costo de cada atributo en el conjunto sacado de obd
+            HashMap<ArrayList<Atributo>, HashMap<String, Double>> sumaXSitio = new HashMap<>();
+            for (TablaCosto tc : preEsquema) {
+                sumaXSitio.put(tc.getArrAtri(), new HashMap<>());
+                for (int o = 0; o < tc.getArrAtri().size(); o++) {
+                    for (Atributo att : this.oBD.getTabla().getAtributos()) {
+                        if (att.getNombre().compareTo(tc.getArrAtri().get(o).getNombre()) == 0) {
+                            for (String sitio : att.getCostoAtributoxSitio().keySet()) {
+                                if (sumaXSitio.get(tc.getArrAtri()).containsKey(sitio)) {
+                                    sumaXSitio.get(tc.getArrAtri()).put(sitio, sumaXSitio.get(tc.getArrAtri()).get(sitio) + att.getCostoAtributoxSitio().get(sitio));
+                                } else {
+                                    sumaXSitio.get(tc.getArrAtri()).put(sitio, att.getCostoAtributoxSitio().get(sitio));
+                                }
                             }
                         }
                     }
                 }
             }
-            if (!yaLoContiene) {
-                filtrados.put(llave, valor);
-            }
-        }
+            //2.- hacer un maxentry del nuevo hashmap y ese será el sitio a donde asignar
+            for (TablaCosto tc : preEsquema) {
 
-        //5.- AGREGAR ATRIBUTOS FALTANTES (ATRIBUTOS SIN CONJUNTOS NI COSTO) A SITIO ORIGINAL
-        //no agregar atts multimedia
-        ArrayList<Atributo> faltantes = new ArrayList<>();
-        for (Atributo t : this.oBD.getTabla().getAtributos()) {
-            boolean yaLoContiene = false;
-            for (ArrayList<Atributo> l : filtrados.keySet()) {
-                for (Atributo i : l) {
-                    if (i.getNombre().compareTo(t.getNombre()) == 0) {
-                        yaLoContiene = true;
-                    }
+                Entry<String, Double> entry = this.getMaxEntry(sumaXSitio.get(tc.getArrAtri()));
+                if (entry != null) {
+                    tc.setSitio(entry.getKey());
+                } else {
+                    tc.setSitio(this.oBD.getDirbd());
                 }
-            }
-            if (!yaLoContiene && !t.isMultimedia() && !t.isDescriptor()) {
-                faltantes.add(t);
-            }
-        }
-        if (!faltantes.isEmpty()) {
-            faltantes.add(this.oBD.getTabla().getAtributoLlave());
-            filtrados.put(faltantes, 0.0);
-        }
 
-        //Agregar a preesquema los nuevos fragmentos
-        for (ArrayList<Atributo> listaAtt : filtrados.keySet()) {
-            TablaCosto tc = new TablaCosto();
-            tc.setArrAtri(listaAtt);
-            tc.setCosto(filtrados.get(listaAtt));
-            tc.setMultimedia(false);
-            preEsquema.add(tc);
-        }
-
-        //SITIOS Y COSTOS MULTIMEDIA
-        for (TablaCosto tc : preEsquema) {
-            double costoFragmento = 0.0;
-            for (int o = 0; o < tc.getArrAtri().size(); o++) {
-                //buscar en OBD estos atributos y sumar su costo en cada sitio
-                for (Atributo att : this.oBD.getTabla().getAtributos()) {
-                    if (att.getNombre().compareTo(tc.getArrAtri().get(o).getNombre()) == 0) {
-                        costoFragmento += att.getCostoAtributoxSitio().values().stream().mapToDouble(Double::doubleValue).sum();
-                    }
-                }
             }
-            tc.setCosto(costoFragmento);
-        }
-        //1.- sumar por sitio el costo de cada atributo en el conjunto sacado de obd
-        HashMap<ArrayList<Atributo>, HashMap<String, Double>> sumaXSitio = new HashMap<>();
-        for (TablaCosto tc : preEsquema) {
-            sumaXSitio.put(tc.getArrAtri(), new HashMap<>());
-            for (int o = 0; o < tc.getArrAtri().size(); o++) {
-                for (Atributo att : this.oBD.getTabla().getAtributos()) {
-                    if (att.getNombre().compareTo(tc.getArrAtri().get(o).getNombre()) == 0) {
-                        for (String sitio : att.getCostoAtributoxSitio().keySet()) {
-                            if (sumaXSitio.get(tc.getArrAtri()).containsKey(sitio)) {
-                                sumaXSitio.get(tc.getArrAtri()).put(sitio, sumaXSitio.get(tc.getArrAtri()).get(sitio) + att.getCostoAtributoxSitio().get(sitio));
-                            } else {
-                                sumaXSitio.get(tc.getArrAtri()).put(sitio, att.getCostoAtributoxSitio().get(sitio));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        //2.- hacer un maxentry del nuevo hashmap y ese será el sitio a donde asignar
-        for (TablaCosto tc : preEsquema) {
-            Entry<String, Double> entry = this.getMaxEntry(sumaXSitio.get(tc.getArrAtri()));
-            tc.setSitio(entry.getKey());
-        }
-        //3.- Agrupar fragmentos no multimedia que esten presentes en el mismo sitio
+            //3.- Agrupar fragmentos no multimedia que esten presentes en el mismo sitio
 
-        ret.addAll(preEsquema);
-        System.out.println("::::::::::COSTO ACUMULATIVO: " + costoTotal);
+            ret.addAll(preEsquema);
+            ran.writeBytes("::::::::::COSTO ACUMULATIVO: " + costoTotal + "\n");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         return ret;
     }
 
@@ -1674,7 +1730,7 @@ public class VerticalBD {
         return ret;
     }
 
-    public void matrizAfinidad(ArrayList<Atributo> attOpe, String ip, double costoOperacion) {
+    public void initMatrizAfinidad(ArrayList<Atributo> attOpe) {
         //Agregar llave primaria a attOpe si no la tiene
         boolean llavePrimaria = false;
         for (Atributo it : attOpe) {
@@ -1706,30 +1762,27 @@ public class VerticalBD {
                         }
                     }
                     if (!todosenAttOpe) {
-                        System.out.println("No hay coincidencia en la linea " + control);
+                        //System.out.println("No hay coincidencia en la linea " + control);
                         aunpuedenestarTodos = false;
                     }
                 }
                 if (aunpuedenestarTodos) {
-                    System.out.println("Coincidencia en la linea " + control);
-                    if (atributosSitioCostos.get(clave).containsKey(ip)) {
+                    //System.out.println("Coincidencia en la linea " + control);
+                    /*if (atributosSitioCostos.get(clave).containsKey(ip)) {
                         atributosSitioCostos.get(clave).put(ip, atributosSitioCostos.get(clave).get(ip) + costoOperacion);
                     } else {
                         atributosSitioCostos.get(clave).put(ip, costoOperacion);
-                    }
+                    }*/
                     itemEncontrado = true;
                 }
             } else {
-                System.out.println("No hay coincidencia en la linea " + control);
+                //System.out.println("No hay coincidencia en la linea " + control);
             }
             control++;
         }
         if (!itemEncontrado) {
             //agregar esta combinación nueva
-            HashMap<String, Double> temp = new HashMap<>();
-            temp.put(ip, costoOperacion);
-            atributosSitioCostos.put(attOpe, temp);
-            System.out.println("Agregada");
+            atributosSitioCostos.put(attOpe, new HashMap<>());
         }
 
     }

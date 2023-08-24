@@ -7,15 +7,18 @@ package org.xamana.hMongo;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
@@ -77,7 +80,7 @@ public class HMongo {
                                 System.out.println(actual);
                                 System.out.println("SITIO: " + ipLinea);
                                 String where = this.where_statement(actual);
-
+                                System.out.println("WHERE: " + where);
                                 for (Atributo a : this.oBD.getTabla().getAtributos()) {
                                     if (where.contains(a.getNombre())) {
                                         Pattern pattern = Pattern.compile(a.getNombre());
@@ -87,7 +90,7 @@ public class HMongo {
                                             if (r.contains("$eq") || r.contains("$gt") || r.contains("$gte")
                                                     || r.contains("$in") || r.contains("$lt")
                                                     || r.contains("$lte") || r.contains("$ne")
-                                                    || r.contains("$nin")) {
+                                                    || r.contains("$nin") || r.contains("$oid")) {
                                                 ArrayList<String> item = new ArrayList<>();
                                                 item.add("" + ValorAsignadoOperacion);
                                                 item.add(ipLinea);
@@ -213,11 +216,13 @@ public class HMongo {
                 this.esquema.add(f);
             }
         }
-        
+
         //traslape, filtrado y fragmento sin predicado
-        this.traslape();
+        this.traslapeV2(0);
+        //this.traslape();
         this.nombrar();
         this.setEsquema(this.filtrado());
+        this.traslapeV2(1);
         System.out.println("ESQUEMA HORIZONTAL");
         this.esquema.forEach(x -> System.out.println(x.getPredicate() + " " + x.getPredicadoTraslape()));
     }
@@ -392,6 +397,81 @@ public class HMongo {
             fsp.setPredicadoTraslape(negado);
             fsp.setTuples((long) tuplas);
             this.getEsquema().add(fsp);
+        }
+
+    }
+
+    private void traslapeV2(int modo) {//0 no incluir sin predicado 1 incluirlo
+        Collections.sort(this.esquema, (Fragment f1, Fragment f2) -> new Double(f2.getPerformance()).compareTo(new Double(f1.getPerformance())));
+        //producir predicados con traslape
+        String negado = "";
+        for (Fragment f : this.esquema) {
+            
+            if (f.getPredicate().contains(":")) {
+                String[] camposValores = f.getPredicate().substring(1, f.getPredicate().length() - 1).split(",");
+                if (negado.isEmpty()) {
+                    String valorFuera = "";
+                    for (String campoValorDentro : camposValores) {
+                        String campo = campoValorDentro.substring(0, campoValorDentro.indexOf(":"));
+                        String valor = campoValorDentro.substring(campoValorDentro.indexOf(":") + 1);
+                        if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                                && !valor.contains("$in") && !valor.contains("$lt")
+                                && !valor.contains("$lte") && !valor.contains("$ne")
+                                && !valor.contains("$nin")) {
+                            valorFuera += campo + ":{$eq:" + valor + "},";
+                        } else {
+                            valorFuera += campo + ":" + valor + ",";
+                        }
+                    }
+                    valorFuera = valorFuera.substring(0, valorFuera.length() - 1);
+                    f.setPredicadoTraslape("{" + valorFuera + "}");
+                } else {
+                    f.setPredicadoTraslape(negado + f.getPredicate());
+                }
+                String valorFuera = "";
+                for (String campoValorDentro : camposValores) {
+                    String campo = campoValorDentro.substring(0, campoValorDentro.indexOf(":"));
+                    String valor = campoValorDentro.substring(campoValorDentro.indexOf(":") + 1);
+                    if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                            && !valor.contains("$in") && !valor.contains("$lt")
+                            && !valor.contains("$lte") && !valor.contains("$ne")
+                            && !valor.contains("$nin")) {
+                        valorFuera += "{" + campo + ":{$not:{$eq:" + valor + "}}},";
+                    } else {
+                        valorFuera += "{" + campo + ":{$not:" + valor + "}},";
+                    }
+                }
+                valorFuera = valorFuera.substring(0, valorFuera.length() - 1);
+                negado = "{$or:[" + valorFuera + "]}," + negado;
+            }
+        }
+        for (Fragment f2 : this.esquema) {
+            if (f2.getPredicadoTraslape() != null) {
+                if (f2.getPredicadoTraslape().length() >= 1 && f2.getPredicadoTraslape().charAt(f2.getPredicadoTraslape().length() - 1) == ',') {
+                    f2.setPredicadoTraslape(f2.getPredicadoTraslape().substring(0, f2.getPredicadoTraslape().length() - 1));
+                    f2.setTuples((long) this.nTuplas(f2.getPredicadoTraslape()));
+                }
+                f2.setPredicadoTraslape("{$and:[" + f2.getPredicadoTraslape() + "]}");
+                f2.setTuples((long) this.nTuplas(f2.getPredicadoTraslape()));
+            }
+        }
+        if (negado.length() >= 1 && negado.charAt(negado.length() - 1) == ',') {
+            negado = negado.substring(0, negado.length() - 1);
+        }
+        //frag Sin predicado
+        if (modo == 1) {
+            String and = "{$and:[" + negado + "]}";
+            double tuplas = this.nTuplas(and);
+            if (tuplas > 0) {
+                Fragment fsp = new Fragment();
+                fsp.setName("Sin predicado");
+                fsp.setPerformance(0);
+                fsp.setPredicate(negado);
+                fsp.setPredicadoTraslape(and);
+                fsp.setTuples((long) tuplas);
+                fsp.setSite(this.oBD.getDirbd());
+                this.getEsquema().add(fsp);
+            }
         }
 
     }

@@ -504,7 +504,7 @@ public class HybridDesign {
                                             if (fragmento.getPredicado().toLowerCase().contains("predicate") || fragmento.getPredicado().toLowerCase().contains("predicado")) {
                                                 String predicadoFragmento = "";
                                                 for (HybridFragment hf2 : this.getFragments()) {
-                                                    if (!hf2.getPredicado().contains("predicate") && !hf2.getPredicado().contains("predicado")) {
+                                                    if (!hf2.getNombre().contains("predicate") && !hf2.getNombre().contains("predicado")) {
                                                         String campo = hf2.getPredicado().substring(1, hf2.getPredicado().indexOf(":"));
                                                         String valor = hf2.getPredicado().substring(hf2.getPredicado().indexOf(":") + 1, hf2.getPredicado().length() - 1);
                                                         predicadoFragmento = "{" + campo + ":{$not:" + valor + "}}," + predicadoFragmento;
@@ -1341,8 +1341,10 @@ public class HybridDesign {
     private void hybridFragmentationMongoDB(int opc) {
         try {
             //creación de tablas
-            this.progress1=1;
+            this.progress1 = 1;
             int percent = 100 / this.fragments.size();
+            AccesoDatos accXamana = new AccesoDatos();
+            double cDesempenioTablaOriginal = (opc == 1) ? this.VHCost : this.HVCost;
             for (HybridFragment frag : this.fragments) {
                 this.progress1 += percent;
                 String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
@@ -1370,15 +1372,11 @@ public class HybridDesign {
 
                 }
 
-                double cDesempenioTablaOriginal = (opc == 1) ? this.VHCost : this.HVCost;
-                
                 //Insertar a XAMANA
                 //SITIO
                 String id_sitio = "";
                 String idFragmento = "";
                 String sql;
-                AccesoDatos accXamana = new AccesoDatos();
-
                 if (accXamana.conectar()) {
                     sql = "insert into Sitio (direccion) "
                             + "select * from (select '" + sitio + "' as direccion ) as tmp "
@@ -1399,16 +1397,21 @@ public class HybridDesign {
                                     + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
                                     + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
                         }
-                        //Desempenio de tabla original
-                        accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.oBD.getTabla().getIdTabla());
+
                     }
                 }
-                this.progress1=this.getProgress1() + percent;
+                this.progress1 = this.getProgress1() + percent;
             }
+            //Atributo pk de tabla original
+            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                    + "values ('" + this.oBD.getTabla().getAtributoLlave().getTipo() + "', " + this.oBD.getTabla().getAtributoLlave().getTamanio() + ", '" + this.oBD.getTabla().getAtributoLlave().getNombre() + "', null, 0, 0, 1, "
+                    + this.oBD.getTabla().getIdTabla()+")");
+            //Desempenio de tabla original
+            accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.oBD.getTabla().getIdTabla());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        this.progress1=100;
+        this.progress1 = 100;
         this.oBD.setProgress1(100);
     }
 

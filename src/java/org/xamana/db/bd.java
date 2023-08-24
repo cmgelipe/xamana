@@ -1382,7 +1382,7 @@ public class bd implements Serializable {
         this.NombreIp = NombreIp;
     }
 
-    public void crearEquemaVertical(UploadedFiles files) {
+    public void crearEquemaVertical(UploadedFiles files, String rutaLogXAMANA) {
         VerticalBD a = new VerticalBD(this, files);
         ArrayList<TablaCosto> juntos = new ArrayList();
         try {
@@ -1396,7 +1396,7 @@ public class bd implements Serializable {
                 juntos = a.costoxSitioPostgres(juntos);
             } else if (this.getTipoBD().compareTo("d") == 0) {
                 //a.esquemaVerticalMongo();
-                juntos = a.costoxSitioMongoV3(juntos);
+                juntos = a.costoxSitioMongoV3(juntos, rutaLogXAMANA);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1409,7 +1409,7 @@ public class bd implements Serializable {
     }
 
     //PIPE  
-    public ArrayList<TablaCosto> esquemaVerticalCBIR(ArrayList<String> attM, UploadedFiles files) {
+    public ArrayList<TablaCosto> esquemaVerticalCBIR(ArrayList<String> attM, UploadedFiles files,String rutaLog) {
         VerticalBD a = new VerticalBD(this, files, attM);
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
@@ -1419,7 +1419,7 @@ public class bd implements Serializable {
         }else if(this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0){
             juntos = a.costoxSitioPostgres(juntos);
         }else{
-            juntos = a.costoxSitioMongoV3(juntos);
+            juntos = a.costoxSitioMongoV3(juntos,rutaLog);
         }
         juntos = a.nombrar(juntos);
         a.setEsquemaVertical(juntos);
@@ -1907,7 +1907,7 @@ public class bd implements Serializable {
         this.esquemaVertical = esquemaVertical;
     }
 
-    public void crearEsquemaHybrid(UploadedFiles files) {
+    public void crearEsquemaHybrid(UploadedFiles files, String rutaContexto) {
         // usar la fragmentación verttical para obtener su esquema
         //usar la fragmentación horizontal para obtener su esquema
         //mezclar esquemas
@@ -1915,7 +1915,7 @@ public class bd implements Serializable {
         //elegir el mejor
         try {
             //vertical
-            crearEquemaVertical(files);
+            crearEquemaVertical(files,rutaContexto);
             setHD(new HybridDesign(this));
             if (this.getTipoBD().compareTo("d") != 0) {
                 //horizontal
@@ -1965,7 +1965,7 @@ public class bd implements Serializable {
         }
     }
 
-    public void crearEsquemaHybridCBIR(ArrayList<String> att, UploadedFiles files) {
+    public void crearEsquemaHybridCBIR(ArrayList<String> att, UploadedFiles files,String rutaLog) {
         // usar la fragmentación verttical para obtener su esquema
         //usar la fragmentación horizontal para obtener su esquema
         //mezclar esquemas
@@ -1973,7 +1973,7 @@ public class bd implements Serializable {
         //elegir el mejor
         try {
             //vertical
-            esquemaVerticalCBIR(att, files);
+            esquemaVerticalCBIR(att, files,rutaLog);
             //horizontal
             valoresDistintosColMultimedia(files);
 
