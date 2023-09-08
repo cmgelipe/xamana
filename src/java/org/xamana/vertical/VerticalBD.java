@@ -901,10 +901,10 @@ public class VerticalBD {
                                         sitios.add(ipLinea);
                                     }
                                 } else {
-                                    System.out.println("algo pasa");
+                                    System.out.println("algo pasa 1");
                                 }
                             } else {
-                                System.out.println("algo pasa");
+                                System.out.println("algo pasa 2");
                             }
                             contador++;
                         }
@@ -922,10 +922,10 @@ public class VerticalBD {
             //de atributos por sitio que tengan valor mayor a 0 en cada uno de sus atributos en cada sitio,
             // colocar en 0 si uno de los atributos del conjunto no se ocupa en el sitio en turno
             Iterator<ArrayList<Atributo>> llaves = this.atributosSitioCostos.keySet().iterator();
-            double sumaSitio=0.0;
             while (llaves.hasNext()) {
                 ArrayList<Atributo> llave = llaves.next();
                 for (String s : sitios) {
+                    double sumaSitio=0.0;
                     //averiguar si comparten sitio
                     boolean comparten=true;
                     for (Atributo a : llave) {
@@ -951,7 +951,7 @@ public class VerticalBD {
                 }
 
             }
-
+            
             //1.- ELIMINAR CONJUNTOS MULTIMEDIA, TODO AQUELLO QUE TENGA ATRIBUTOS MULTIMEDIA
             //1.1.- Eliminar el conjunto con la llave primaria sola, si es que es existe
             //LOS COSTOS RELACIONADOS A LOS CONJUNTOS ELIMINADOS NO SON RELEVANTES, YA QUE NINGUN
@@ -981,6 +981,7 @@ public class VerticalBD {
             //2.- SUMAR COSTOS DE CONJUNTOS EN CADA SITIO (UN COSTO POR CONJUNTO)
             HashMap<ArrayList<Atributo>, Double> atributosSuma = new HashMap<>();
             for (ArrayList<Atributo> arr : this.atributosSitioCostos.keySet()) {
+                
                 Double sum = 0.0;
                 for (String ips : this.atributosSitioCostos.get(arr).keySet()) {
                     sum += this.atributosSitioCostos.get(arr).get(ips);
@@ -1016,6 +1017,7 @@ public class VerticalBD {
                 }
             }
 
+            
             //5.- AGREGAR ATRIBUTOS FALTANTES (ATRIBUTOS SIN CONJUNTOS NI COSTO) A SITIO ORIGINAL
             //no agregar atts multimedia
             ArrayList<Atributo> faltantes = new ArrayList<>();
