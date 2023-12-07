@@ -10,6 +10,7 @@ package org.xamana.hybrid;
  */
 public class PredicadoCosto {
     private String predicado="";
+    private String predicadoTraslape="";
     private Double costo;
     private String negado;
 
@@ -53,5 +54,19 @@ public class PredicadoCosto {
      */
     public void setNegado(String negado) {
         this.negado = negado;
+    }
+
+    /**
+     * @return the predicadoTraslape
+     */
+    public String getPredicadoTraslape() {
+        return predicadoTraslape;
+    }
+
+    /**
+     * @param predicadoTraslape the predicadoTraslape to set
+     */
+    public void setPredicadoTraslape(String predicadoTraslape) {
+        this.predicadoTraslape = predicadoTraslape;
     }
 }

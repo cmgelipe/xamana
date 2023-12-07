@@ -13,12 +13,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.primefaces.model.file.UploadedFile;
@@ -94,7 +92,9 @@ public class HMongo {
                                                 ArrayList<String> item = new ArrayList<>();
                                                 item.add("" + ValorAsignadoOperacion);
                                                 item.add(ipLinea);
-                                                String p = "{\"" + r + "}}";
+                                                String p = "{\"" + r;
+                                                Long nLlaves = p.chars().filter(x -> x == '{').count();
+                                                p = p + (new String(new char[nLlaves.intValue()]).replace("\0", "}"));
                                                 item.add(p);
                                                 double tuplas = this.nTuplas(p);
                                                 item.add("" + tuplas);
@@ -150,6 +150,16 @@ public class HMongo {
             }
         }
         HashMap<String, Double> atributoValor = new HashMap<>();
+        
+        //IMP predicadoCosto
+        for (String clave : predicadoCosto.keySet()) {
+            String i=clave+"\t";
+            for(String sitio :predicadoCosto.get(clave).getCostoSitio().keySet()){
+                i += sitio+"\t"+predicadoCosto.get(clave).getCostoSitio().get(sitio);
+            }
+            System.out.println(i);
+        }
+        
         //ALP
         if (!predicadoCosto.isEmpty()) {
 
@@ -216,12 +226,15 @@ public class HMongo {
                 this.esquema.add(f);
             }
         }
-
+        System.out.println("TAMAÑOS");
+        System.out.println("Esquema: " + this.esquema.size());
+        this.setEsquema(this.filtrado(0));
+        System.out.println("Esquema despues del filtrado: " + this.esquema.size());
         //traslape, filtrado y fragmento sin predicado
         this.traslapeV2(0);
         //this.traslape();
         this.nombrar();
-        this.setEsquema(this.filtrado());
+        this.setEsquema(this.filtrado(1));
         this.traslapeV2(1);
         System.out.println("ESQUEMA HORIZONTAL");
         this.esquema.forEach(x -> System.out.println(x.getPredicate() + " " + x.getPredicadoTraslape()));
@@ -301,7 +314,7 @@ public class HMongo {
             //mongo
             if (this.oBD.getAccexternomongo().conectar()) {
                 MongoCollection<Document> doc = this.oBD.getAccexternomongo().getMongoClient().getDatabase(this.oBD.getNombd()).getCollection(this.oBD.getTabla().getNombre());
-                Document d = Document.parse((predicado.isEmpty()) ? "{}" : predicado);
+                Document d = Document.parse((this.oBD.isNullorEmpty(predicado)) ? "{}" : predicado);
                 count1 = doc.countDocuments(d);
                 this.oBD.getAccexternomongo().getMongoClient().close();
             }
@@ -331,13 +344,20 @@ public class HMongo {
         }
     }
 
-    private List<Fragment> filtrado() {
+    private List<Fragment> filtrado(int modo) {//0 predicado 1 predicadotraslape
         ArrayList<Fragment> arr = new ArrayList<>();
         //eliminar fragmentos que no contienen tuplas
         for (Fragment f : this.esquema) {
-            String predicado = f.getPredicadoTraslape();
-            if (this.nTuplas(predicado) > 0) {
-                arr.add(f);
+            String predicado = "";
+            if (modo == 0) {
+                predicado = f.getPredicate();
+            } else if (modo == 1) {
+                predicado = f.getPredicadoTraslape();
+            }
+            if (!this.oBD.isNullorEmpty(predicado)) {
+                if (this.nTuplas(predicado) > 0) {
+                    arr.add(f);
+                }
             }
         }
         return arr;
@@ -406,8 +426,8 @@ public class HMongo {
         //producir predicados con traslape
         String negado = "";
         for (Fragment f : this.esquema) {
-            
             if (f.getPredicate().contains(":")) {
+
                 String[] camposValores = f.getPredicate().substring(1, f.getPredicate().length() - 1).split(",");
                 if (negado.isEmpty()) {
                     String valorFuera = "";
@@ -426,6 +446,11 @@ public class HMongo {
                     valorFuera = valorFuera.substring(0, valorFuera.length() - 1);
                     f.setPredicadoTraslape("{" + valorFuera + "}");
                 } else {
+                    //corrección de llaves
+                    f.setPredicate(f.getPredicate().replace("}", ""));
+                    Long nLlaves = f.getPredicate().chars().filter(x -> x == '{').count();
+                    f.setPredicate(f.getPredicate() + (new String(new char[nLlaves.intValue()]).replace("\0", "}")));
+
                     f.setPredicadoTraslape(negado + f.getPredicate());
                 }
                 String valorFuera = "";
@@ -436,9 +461,23 @@ public class HMongo {
                             && !valor.contains("$in") && !valor.contains("$lt")
                             && !valor.contains("$lte") && !valor.contains("$ne")
                             && !valor.contains("$nin")) {
-                        valorFuera += "{" + campo + ":{$not:{$eq:" + valor + "}}},";
+                        String temp = "{" + campo + ":{$not:{$eq:" + valor;
+
+                        //corrección de llaves
+                        temp = temp.replace("}", "");
+                        Long nLlaves = temp.chars().filter(x -> x == '{').count();
+                        temp = (temp + (new String(new char[nLlaves.intValue()]).replace("\0", "}"))) + ",";
+
+                        valorFuera += temp;
                     } else {
-                        valorFuera += "{" + campo + ":{$not:" + valor + "}},";
+                        String temp = "{" + campo + ":{$not:" + valor;
+
+                        //corrección de llaves
+                        temp = temp.replace("}", "");
+                        Long nLlaves = temp.chars().filter(x -> x == '{').count();
+                        temp = (temp + (new String(new char[nLlaves.intValue()]).replace("\0", "}"))) + ",";
+
+                        valorFuera += temp;
                     }
                 }
                 valorFuera = valorFuera.substring(0, valorFuera.length() - 1);

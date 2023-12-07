@@ -121,7 +121,7 @@ public class BDJB implements Serializable {
                 }
                 this.dcolumna = true;
             } else if (this.obj.getTabla().isCBIR()
-                    && this.obj.getTabla().getTipoFragment().compareTo("b") == 0) {
+                    && this.obj.getTabla().getTipoFragment().compareTo("b") == 0){
                 if (this.obj.getTipoBD().compareTo("a") == 0) {
                     atributos = this.obj.listaAtributosMySQL();
                     this.dcolumnas = true;
@@ -131,7 +131,20 @@ public class BDJB implements Serializable {
                 } else if (this.obj.getTipoBD().compareTo("d") == 0) {
                     this.dcolumnas = true;
                 }
-            } else {
+            } else if(this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().compareTo("c") == 0){
+                 if (this.obj.getTipoBD().compareTo("a") == 0) {
+                    atributos = this.obj.listaAtributosMySQL();
+                    this.dcolumnas = true;
+                    this.dcolumna = true;
+                } else if (this.obj.getTipoBD().compareTo("b") == 0 || this.obj.getTipoBD().compareTo("c") == 0) {
+                    atributos = this.obj.listaAtributosPostgreSQL();
+                    this.dcolumnas = true;
+                    this.dcolumna = true;
+                } else if (this.obj.getTipoBD().compareTo("d") == 0) {
+                    this.dcolumnas = true;
+                    this.dcolumna = true;
+                }   
+            }else{
                 this.dcolumna = false;
                 this.dcolumnas = false;
             }
@@ -313,9 +326,10 @@ public class BDJB implements Serializable {
             this.obj.crearEsquemaHybrid(this.files,ruta);
             tipoEsquema = "esquemaMixto.xhtml";
         } else if (this.obj.getTabla().isCBIR() && this.obj.getTabla().getTipoFragment().equals("c")) {
+            //híbrida cbir
             String ruta = ((ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext()).getRealPath("/");
             this.obj.crearEsquemaHybridCBIR(getAttsMultimediaDescriptor(), this.files,ruta);
-            tipoEsquema = "esquemaHybrid.xhtml";
+            tipoEsquema = "esquemaMixto.xhtml";
         }
         return tipoEsquema;
     }
@@ -528,6 +542,9 @@ public class BDJB implements Serializable {
             }
 
         } else if (this.obj.getTabla().getTipoFragment().compareTo("c") == 0 && !this.obj.getTabla().isCBIR()) {
+            this.obj.getHD().hybridFragmentation();
+            this.setBToken(true);
+        }else if(this.obj.getTabla().getTipoFragment().compareTo("c") == 0 && this.obj.getTabla().isCBIR()){
             this.obj.getHD().hybridFragmentation();
             this.setBToken(true);
         }
@@ -1194,7 +1211,7 @@ public class BDJB implements Serializable {
     public void onTipoFragmentchange() {
         try {
             if (this.obj.getTipoBD().compareTo("d") == 0 && (this.getObj().getTabla().getTipoFragment().compareTo("a") != 0)) {
-                this.obj.listaAtributosMongoDB();
+                this.atributos=this.obj.listaAtributosMongoDB();
                 this.dtamanios = true;
             } else if (this.obj.getTipoBD().compareTo("d") == 0 && this.getObj().getTabla().getTipoFragment().compareTo("a") == 0) {
                 this.obj.listaAtributosMongoDB();

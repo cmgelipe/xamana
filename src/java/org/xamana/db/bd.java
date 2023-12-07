@@ -60,7 +60,9 @@ public class bd implements Serializable {
     private ArrayList<HashMap<String, Double>> costoAtributoxSitio;
     private ArrayList<String> sitios;
     private ArrayList<TablaCosto> esquemaVertical;
+    private ArrayList<esquemaHorMultimedia> esquemaHorizontalCBIR;
     private HybridDesign HD;
+    private HybridCBIRDesign HDC;
     private String sentencia = "";
 
     public boolean conexionexterna() {
@@ -261,6 +263,7 @@ public class bd implements Serializable {
     }
 
     public ArrayList<esquemaHorMultimedia> valoresDistintosColMultimedia(UploadedFiles files) throws Exception {
+        System.out.println("HORIZONTAL CBIR");
         ArrayList<esquemaHorMultimedia> res = null;
         ArrayList arr = null;
         String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
@@ -283,6 +286,7 @@ public class bd implements Serializable {
                 MongoCollection<Document> colec = db.getCollection(this.tabla.getNombre());
                 Bson group = group("$" + nombreColumna, sum("num", 1L));
                 List<Document> r = colec.aggregate(Arrays.asList(group)).into(new ArrayList<>());
+                this.getAccexternomongo().getMongoClient().close();
                 if (!r.isEmpty()) {
                     res = new ArrayList<>();
                     int t = 0;
@@ -646,6 +650,7 @@ public class bd implements Serializable {
         double op = 0;
         double des = 0;
         setNombreIp(new HashMap<>());
+
         for (UploadedFile f : files.getFiles()) {
             if (f != null && !"".equals(f.getFileName())) {
                 try ( BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(f.getInputStream(), "UTF-8"))) {
@@ -950,14 +955,20 @@ public class bd implements Serializable {
                                         if (filter.toLowerCase().compareTo("{}") == 0) {
                                             perteneceConjunto = true;
                                         } else {
-                                            if (this.accexternomongo.conectar()) {
-                                                MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
-                                                MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
-                                                String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
-                                                Document where = Document.parse(filter);
-                                                long coincidencias = doc.countDocuments(and((where), eq(nombreColumna, conjunto)));
-
-                                                perteneceConjunto = (coincidencias > 0) ? true : false;
+                                            if (this.conexionexterna()) {
+                                                try {
+                                                    MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
+                                                    MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
+                                                    String nombreColumna = this.getTabla().getAtributoMultimedia().split(":")[0];
+                                                    Document where = Document.parse(filter);
+                                                    //System.out.println("Predicado: "+filter+" nombreColumna: "+nombreColumna+" conjunto: "+conjunto);
+                                                    long coincidencias = doc.countDocuments(and((where), eq(nombreColumna, conjunto)));
+                                                    this.getAccexternomongo().getMongoClient().close();
+                                                    perteneceConjunto = (coincidencias > 0) ? true : false;
+                                                } catch (Exception e) {
+                                                    //e.printStackTrace();
+                                                    System.out.println("Error: " + actual);
+                                                }
                                             }
                                         }
                                         if (perteneceConjunto) {
@@ -979,23 +990,28 @@ public class bd implements Serializable {
                                                     if (!this.isNullorEmpty(ns)) {
                                                         getNombreIp().put(ipLinea, ipLinea);
                                                         if (this.dirbd.compareTo(ipLinea) == 0) {
-                                                            System.out.println(ValorAsignadoOperacion + " local " + conjunto);
+                                                            //System.out.println(ValorAsignadoOperacion + " local " + conjunto);
                                                             des = des + ValorAsignadoOperacion;
                                                         } else {
                                                             long ntuplas = 1;
                                                             if (j3.has("find")) {
                                                                 ntuplas = Long.parseLong(j2.get("nreturned").toString());
                                                             } else if (j3.has("delete") || j3.has("update")) {
-                                                                if (this.accexternomongo.conectar()) {
-                                                                    MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
-                                                                    MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
-                                                                    Document where = Document.parse(filter);
-                                                                    ntuplas = doc.countDocuments(where);
+                                                                if (this.conexionexterna()) {
+                                                                    try {
+                                                                        MongoDatabase db = this.getAccexternomongo().getMongoClient().getDatabase(nombd);
+                                                                        MongoCollection<Document> doc = db.getCollection(this.getTabla().getNombre());
+                                                                        Document where = Document.parse(filter);
+                                                                        ntuplas = doc.countDocuments(where);
+                                                                    } catch (Exception e) {
+                                                                        System.out.println("Error: " + actual);
+                                                                    }
+                                                                    this.accexternomongo.getMongoClient().close();
                                                                 }
                                                             } else if (j3.has("insert")) {
                                                                 ntuplas = Long.parseLong(j2.get("ninserted").toString());
                                                             }
-                                                            System.out.println(ValorAsignadoOperacion + " " + ntuplas + " remoto " + conjunto);
+                                                            //System.out.println(ValorAsignadoOperacion + " " + ntuplas + " remoto " + conjunto);
                                                             des = des + (ValorAsignadoOperacion * 2) * ntuplas;
                                                         }
                                                     } else {
@@ -1006,13 +1022,16 @@ public class bd implements Serializable {
                                                 }
 
                                             } catch (JSONException ex) {
+                                                System.out.println("Error 1 en: " + actual + "\n" + filter);
                                                 ex.printStackTrace();
+
                                             }
                                         }
                                     }
 
                                 } catch (JSONException ex) {
                                     ex.printStackTrace();
+                                    System.out.println("Error 2 en: " + actual + "\n");
                                 }
                             }
                         }
@@ -1409,20 +1428,23 @@ public class bd implements Serializable {
     }
 
     //PIPE  
-    public ArrayList<TablaCosto> esquemaVerticalCBIR(ArrayList<String> attM, UploadedFiles files,String rutaLog) {
+    public ArrayList<TablaCosto> esquemaVerticalCBIR(ArrayList<String> attM, UploadedFiles files, String rutaLog) {
         VerticalBD a = new VerticalBD(this, files, attM);
         ArrayList<TablaCosto> juntos = new ArrayList();
         juntos.addAll(a.obtenerFragmentosMultimedia());
         //juntos.add(a.obtenerOtroFragmento()); //OTROS ATRIBUTOS NORMALES VAN EN OTRO FRAGMENTO
-        if(this.getTipoBD().compareTo("a") == 0){
+        if (this.getTipoBD().compareTo("a") == 0) {
             juntos = a.costoxSitioMySQL(juntos);
-        }else if(this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0){
+        } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
             juntos = a.costoxSitioPostgres(juntos);
-        }else{
-            juntos = a.costoxSitioMongoV3(juntos,rutaLog);
+        } else {
+            juntos = a.costoxSitioMongoV3(juntos, rutaLog);
         }
         juntos = a.nombrar(juntos);
         a.setEsquemaVertical(juntos);
+        this.setCostoAtributoxSitio(a.getCostoAtributoxSitio());
+        this.setSitios(a.getSitios());
+        this.setEsquemaVertical(a.getEsquemaVertical());
         //System.out.println("<<<<<COSTO DE ESQUEMA TOTAL: " + a.costoEsquemaVerticalMongoDB() + ">>>>>");
         return juntos;
     }
@@ -1915,7 +1937,7 @@ public class bd implements Serializable {
         //elegir el mejor
         try {
             //vertical
-            crearEquemaVertical(files,rutaContexto);
+            crearEquemaVertical(files, rutaContexto);
             setHD(new HybridDesign(this));
             if (this.getTipoBD().compareTo("d") != 0) {
                 //horizontal
@@ -1947,7 +1969,7 @@ public class bd implements Serializable {
                 //COSTO SIN CONTEMPLAR TRASLAPE
                 getHD().costsMongoDB(files);
                 int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
-                this.HD.hybridOverlapMongoDB(opc);
+                this.HD.hybridOverlapMongoDBv2(opc);
                 //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsMongoDB(files);
             }
@@ -1965,18 +1987,54 @@ public class bd implements Serializable {
         }
     }
 
-    public void crearEsquemaHybridCBIR(ArrayList<String> att, UploadedFiles files,String rutaLog) {
+    public void crearEsquemaHybridCBIR(ArrayList<String> att, UploadedFiles files, String rutaLog) {
         // usar la fragmentación verttical para obtener su esquema
         //usar la fragmentación horizontal para obtener su esquema
         //mezclar esquemas
         //comparar esquemas
         //elegir el mejor
         try {
+            setHD(new HybridDesign(this));
+            setHDC(new HybridCBIRDesign(this));
             //vertical
-            esquemaVerticalCBIR(att, files,rutaLog);
+            esquemaVerticalCBIR(att, files, rutaLog);
             //horizontal
-            valoresDistintosColMultimedia(files);
+            this.setEsquemaHorizontalCBIR(valoresDistintosColMultimedia(files));
+            this.getHDC().mix(esquemaHorizontalCBIR, esquemaVertical);
 
+            if (this.getTipoBD().compareTo("a") == 0) {
+                this.getHD().setFragments(getHDC().adaptarPredicadosRelacional());
+                //COSTO SIN CONTEMPLAR TRASLAPE
+                getHD().costsMySQL(files);
+                int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
+                this.HD.hybridOverlapRelational(opc);
+                //COSTO CONTEMPLANDO TRASLAPE
+                getHD().costsMySQL(files);
+            } else if (this.getTipoBD().compareTo("b") == 0 || this.getTipoBD().compareTo("c") == 0) {
+                this.getHD().setFragments(getHDC().adaptarPredicadosRelacional());
+                //COSTO SIN CONTEMPLAR TRASLAPE
+                getHD().costsPostgreSQL(files);
+                int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
+                this.HD.hybridOverlapRelational(opc);
+                //COSTO CONTEMPLANDO TRASLAPE
+                getHD().costsPostgreSQL(files);
+            } else if (this.getTipoBD().compareTo("d") == 0) {
+                this.getHD().setFragments(getHDC().adaptarPredicadosMongo());
+                //COSTO SIN CONTEMPLAR TRASLAPE
+                getHD().costsMongoDB(files);
+                int opc = (this.getHD().getHVCost() > this.getHD().getVHCost()) ? 1 : 2;
+                this.HD.hybridOverlapMongoDB(opc);
+                //COSTO CONTEMPLANDO TRASLAPE
+                getHD().costsMongoDB(files);
+            }
+            this.HD.nombrar();
+            if (getHD().getHVCost() > getHD().getVHCost()) {
+                setSentencia("El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.");
+            } else if (getHD().getHVCost() < getHD().getVHCost()) {
+                setSentencia("El esquema horizontal-vertical respetando asignaciones horizontales es menos costoso y este será aplicado.");
+            } else {
+                setSentencia("Ambos esquemas poseen el mismo costo, se aplicará el esquema vertical-horizontal");
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -2014,11 +2072,39 @@ public class bd implements Serializable {
     public void setSentencia(String sentencia) {
         this.sentencia = sentencia;
     }
-    
+
     public ArrayList<TablaCosto> nombrarFaltantes(ArrayList<TablaCosto> ori) {
         for (int i = 0; i < ori.size(); i++) {
             ori.get(i).setNombre(this.getTabla().getNombre() + "_" + (i + 1));
         }
         return ori;
+    }
+
+    /**
+     * @return the esquemaHorizontalCBIR
+     */
+    public ArrayList<esquemaHorMultimedia> getEsquemaHorizontalCBIR() {
+        return esquemaHorizontalCBIR;
+    }
+
+    /**
+     * @param esquemaHorizontalCBIR the esquemaHorizontalCBIR to set
+     */
+    public void setEsquemaHorizontalCBIR(ArrayList<esquemaHorMultimedia> esquemaHorizontalCBIR) {
+        this.esquemaHorizontalCBIR = esquemaHorizontalCBIR;
+    }
+
+    /**
+     * @return the HDC
+     */
+    public HybridCBIRDesign getHDC() {
+        return HDC;
+    }
+
+    /**
+     * @param HDC the HDC to set
+     */
+    public void setHDC(HybridCBIRDesign HDC) {
+        this.HDC = HDC;
     }
 }

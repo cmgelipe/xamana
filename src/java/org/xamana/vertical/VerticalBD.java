@@ -79,19 +79,6 @@ public class VerticalBD {
             listaAtr.add(this.oBD.getTabla().getAtributos().get(this.oBD.getTabla().buscaIndiceAttxNombre(atributos[1].split(":")[0])));
             tabla.setArrAtri(listaAtr);
             tabla.setMultimedia(true);
-            //¿A dónde se debe asignar?
-            //¿Cúal es el costo total?
-            //Primera posición sitio, segunda costo
-            /*ArrayList<String> sitioCosto = new ArrayList<>();
-            if (this.oBD.getTipoBD().compareTo("a") == 0) {
-                sitioCosto = costoxSitioMySQL(listaAtr);
-            } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
-                sitioCosto = costoxSitioPostgres(listaAtr);
-            } else {
-                sitioCosto = costoxSitioMongo(listaAtr);
-            }
-            tabla.setSitio(sitioCosto.get(0));
-            tabla.setCosto(Double.parseDouble(sitioCosto.get(1)));*/
             arr.add(tabla);
         }
         return arr;
@@ -829,7 +816,7 @@ public class VerticalBD {
         int contador = 0;
         double costoTotal = 0.0;
         ArrayList<String> sitios = new ArrayList<>();
-        System.out.println("-----------COSTOS PIPE-------------");
+        System.out.println("-----------COSTOS PIPE MONGO VERTICAL-------------");
         try {
             RandomAccessFile ran = new RandomAccessFile(rutaLogXAMANA + "/estatus.log", "rw");
             for (UploadedFile f : this.files.getFiles()) {
@@ -880,7 +867,8 @@ public class VerticalBD {
                                     for (int o = 0; o < this.oBD.getTabla().getAtributos().size(); o++) {
                                         if (actual.toLowerCase().contains(this.oBD.getTabla().getAtributos().get(o).getNombre().toLowerCase())) {
                                             desordenados.add(this.oBD.getTabla().getAtributos().get(o));
-                                            ran.writeBytes("\tTamaño de atributo " + this.oBD.getTabla().getAtributos().get(o).getNombre() + ": " + Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio()) + "\n");
+                                            ran.writeBytes("\tAtributo " + this.oBD.getTabla().getAtributos().get(o).getNombre() + "\n");
+                                            ran.writeBytes("\tTamaño " + Double.parseDouble(this.oBD.getTabla().getAtributos().get(o).getTamanio()) + "\n");
                                             double costoOperacion = 0.0;
                                             if (this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().containsKey(ipLinea)) {
                                                 costoOperacion = this.oBD.getTabla().getAtributos().get(o).getCostoAtributoxSitio().get(ipLinea);

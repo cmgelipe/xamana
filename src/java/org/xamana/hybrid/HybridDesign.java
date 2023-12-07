@@ -10,6 +10,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Projections;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,7 +37,7 @@ import org.xamana.verticalCBIR.model.TablaCosto;
  *
  * @author pipe
  */
-public class HybridDesign {
+public class HybridDesign implements Serializable {
 
     private double HVCost;
     private double VHCost;
@@ -217,7 +218,13 @@ public class HybridDesign {
 
                             //¿se requieren sitios remotos? R: de la misma manera que en la vertical
                             System.out.println("VAO para horizontal V: " + ValorAsignadoOperacion);
-                            double costohorizontalh = nTuplas * ValorAsignadoOperacion; //VAO ya contiene si es remota o local
+                            double costohorizontalh = 0.0;
+                            if (this.oBD.isHybridCBIR()) {
+                                costohorizontalh = ValorAsignadoOperacion; //VAO ya contiene si es remota o local
+                            } else {
+                                costohorizontalh = nTuplas * ValorAsignadoOperacion; //VAO ya contiene si es remota o local
+                            }
+
                             ValorAsignadoOperacion = this.VAO(actual);
                             siHay = false;
                             for (HybridFragment fragmento : fResuelvenPredicados) {
@@ -228,7 +235,12 @@ public class HybridDesign {
                             if (siHay) {
                                 ValorAsignadoOperacion = ValorAsignadoOperacion * 2;
                             }
-                            double costohorizontalv = nTuplas * ValorAsignadoOperacion;
+                            double costohorizontalv = 0.0;
+                            if (this.oBD.isHybridCBIR()) {
+                                costohorizontalv = ValorAsignadoOperacion; //VAO ya contiene si es remota o local
+                            } else {
+                                costohorizontalv = nTuplas * ValorAsignadoOperacion; //VAO ya contiene si es remota o local
+                            }
 
                             System.out.println("Costo remoto horizontal v: " + costohorizontalv);
                             System.out.println("Costo remoto horizontal h: " + costohorizontalh);
@@ -678,7 +690,7 @@ public class HybridDesign {
 
     private ArrayList<String> predicado(String q) {
         ArrayList<String> ret = new ArrayList<>();
-        if (this.oBD.getTipoBD().compareTo("a") == 0) {
+        if (this.oBD.getTipoBD().compareTo("a") == 0 || this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
             if (q.toUpperCase().contains("INSERT ") && !q.toUpperCase().contains(" SET ")) {
                 boolean existeOrden = false;
                 for (int i = 0; i < this.oBD.getTabla().getAtributos().size(); i++) {
@@ -744,10 +756,6 @@ public class HybridDesign {
                     }
                 }
             }
-        } else if (this.oBD.getTipoBD().compareTo("b") == 0 || this.oBD.getTipoBD().compareTo("c") == 0) {
-
-        } else if (this.oBD.getTipoBD().compareTo("d") == 0) {
-
         }
         return ret;
     }
@@ -1024,6 +1032,7 @@ public class HybridDesign {
     private void hybridFragmentationMySQL(int opc) {
         //creación de tablas
         int percent = 100 / this.fragments.size();
+        double cDesempenioTablaOriginal = (opc == 1) ? this.VHCost : this.HVCost;
         for (HybridFragment frag : this.fragments) {
             String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
             double costo = (opc == 1) ? frag.getCostoDesV() : frag.getCostoDesH();
@@ -1120,13 +1129,21 @@ public class HybridDesign {
                     }
                     if (!this.oBD.isNullorEmpty(idFragmento)) {
                         for (Atributo a : frag.getAtts()) {
-                            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla,descriptor_Visual) "
                                     + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
                                     + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
-                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
+                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null,"
+                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoMultimedia().split(":")[0]) == 0 ? 1 : 0) + ")");
                         }
 
                     }
+                    //Atributo pk de tabla original
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                            + "values ('" + this.oBD.getTabla().getAtributoLlave().getTipo() + "', " + this.oBD.getTabla().getAtributoLlave().getTamanio() + ", '" + this.oBD.getTabla().getAtributoLlave().getNombre() + "', null, 0, 0, 1, "
+                            + this.oBD.getTabla().getIdTabla() + ")");
+                    //Desempenio de tabla original
+                    accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.oBD.getTabla().getIdTabla());
+                    accXamana.desconectar();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1225,6 +1242,7 @@ public class HybridDesign {
     private void hybridFragmentationPostgreSQL(int opc) {
         //creación de tablas
         int percent = 100 / this.fragments.size();
+        double cDesempenioTablaOriginal = (opc == 1) ? this.VHCost : this.HVCost;
         for (HybridFragment frag : this.fragments) {
             String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
             double costo = (opc == 1) ? frag.getCostoDesV() : frag.getCostoDesH();
@@ -1321,13 +1339,28 @@ public class HybridDesign {
                     }
                     if (!this.oBD.isNullorEmpty(idFragmento)) {
                         for (Atributo a : frag.getAtts()) {
-                            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
-                                    + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
-                                    + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
-                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
+                            if (a.getNombre().compareTo(this.oBD.getTabla().getAtributoMultimedia().split(":")[0]) == 0) {
+                                accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla,descriptor_Visual) "
+                                        + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
+                                        + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                        + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null,1)");
+                            } else {
+                                accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla,descriptor_Visual) "
+                                        + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
+                                        + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                        + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null,0)");
+                            }
+
                         }
 
                     }
+                    //Atributo pk de tabla original
+                    accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
+                            + "values ('" + this.oBD.getTabla().getAtributoLlave().getTipo() + "', " + this.oBD.getTabla().getAtributoLlave().getTamanio() + ", '" + this.oBD.getTabla().getAtributoLlave().getNombre() + "', null, 0, 0, 1, "
+                            + this.oBD.getTabla().getIdTabla() + ")");
+                    //Desempenio de tabla original
+                    accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.oBD.getTabla().getIdTabla());
+                    accXamana.desconectar();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1392,10 +1425,17 @@ public class HybridDesign {
                     idFragmento = "" + ((ArrayList) accXamana.ejecutarConsulta("Select LAST_INSERT_ID()").get(0)).get(0);
                     if (!this.isNullorEmpty(idFragmento)) {
                         for (Atributo a : frag.getAtts()) {
-                            accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
-                                    + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
-                                    + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
-                                    + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null)");
+                            if (a.getNombre().compareTo(this.oBD.getTabla().getAtributoMultimedia().split(":")[0]) == 0) {
+                                accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla,descriptor_Visual) "
+                                        + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
+                                        + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                        + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null,1)");
+                            } else {
+                                accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla,descriptor_Visual) "
+                                        + "values ('" + a.getTipo() + "', " + a.getTamanio() + ", '" + a.getNombre() + "', " + idFragmento + ", "
+                                        + (a.isDescriptor() ? 1 : 0) + ", " + (a.isMultimedia() ? 1 : 0) + ", "
+                                        + (a.getNombre().compareTo(this.oBD.getTabla().getAtributoLlave().getNombre()) == 0 ? 1 : 0) + ", null,0)");
+                            }
                         }
 
                     }
@@ -1405,7 +1445,7 @@ public class HybridDesign {
             //Atributo pk de tabla original
             accXamana.ejecutarComando("insert into Atributo (tipo,size,nom,id_fragmento,descriptor,multimedia,pk,id_tabla) "
                     + "values ('" + this.oBD.getTabla().getAtributoLlave().getTipo() + "', " + this.oBD.getTabla().getAtributoLlave().getTamanio() + ", '" + this.oBD.getTabla().getAtributoLlave().getNombre() + "', null, 0, 0, 1, "
-                    + this.oBD.getTabla().getIdTabla()+")");
+                    + this.oBD.getTabla().getIdTabla() + ")");
             //Desempenio de tabla original
             accXamana.ejecutarComando("update Tabla set ndesempenio=" + cDesempenioTablaOriginal + " where id_tabla=" + this.oBD.getTabla().getIdTabla());
         } catch (Exception e) {
@@ -1553,9 +1593,132 @@ public class HybridDesign {
         this.getFragments().forEach(x -> System.out.println(x.getPredicado()));
     }
 
+    public void hybridOverlapMongoDBv2(int opc) {
+        ArrayList<String> predicados = new ArrayList<>();//predicados sin repetir (estan repetidos en el esquema híbrido)
+        for (HybridFragment f : this.fragments) {
+            if (!predicados.contains(f.getPredicado())) {
+                predicados.add(f.getPredicado());
+            }
+        }
+        ArrayList<PredicadoCosto> predicadoCosto = new ArrayList<>();
+        for (String item : predicados) {
+            int ocurrencias = 0;
+            double costo = 0;
+            for (HybridFragment f : this.fragments) {
+                if (f.getPredicado().compareTo(item) == 0) {
+                    ocurrencias++;
+                    costo = (opc == 1) ? costo + f.getCostoDesV() : costo + f.getCostoDesH();
+                }
+            }
+            PredicadoCosto p = new PredicadoCosto();
+            p.setPredicado(item);
+            p.setCosto(costo / ocurrencias);
+            predicadoCosto.add(p);
+        }
+        Collections.sort(predicadoCosto, (PredicadoCosto a, PredicadoCosto b) -> new Double(b.getCosto()).compareTo(new Double(a.getCosto())));
+        ArrayList<HybridFragment> ordenados = new ArrayList<>();
+        for (PredicadoCosto item : predicadoCosto) {
+            for (HybridFragment hf : this.getFragments()) {
+                if (hf.getPredicado().compareTo(item.getPredicado()) == 0) {
+                    ordenados.add(hf);
+                }
+            }
+        }
+        this.setFragments(ordenados);
+        String negado = "";
+        ArrayList<PredicadoCosto> aux = predicadoCosto;
+        for (PredicadoCosto item : predicadoCosto) {
+            if (item.getPredicado().contains(":")) {
+                String[] camposValores = item.getPredicado().substring(1, item.getPredicado().length() - 1).split(",");
+                if (negado.isEmpty()) {
+                    String valorFuera = "";
+                    for (String campoValorDentro : camposValores) {
+                        String campo = campoValorDentro.substring(0, campoValorDentro.indexOf(":"));
+                        String valor = campoValorDentro.substring(campoValorDentro.indexOf(":") + 1);
+                        if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                                && !valor.contains("$in") && !valor.contains("$lt")
+                                && !valor.contains("$lte") && !valor.contains("$ne")
+                                && !valor.contains("$nin")) {
+                            valorFuera += campo + ":{$eq:" + valor + "},";
+                        } else {
+                            valorFuera += campo + ":" + valor + ",";
+                        }
+                    }
+                    valorFuera = valorFuera.substring(0, valorFuera.length() - 1);
+                    item.setPredicadoTraslape("{" + valorFuera + "}");
+                } else {
+                    //corrección de llaves
+                    item.setPredicado(item.getPredicado().replace("}", ""));
+                    Long nLlaves = item.getPredicado().chars().filter(x -> x == '{').count();
+                    item.setPredicado(item.getPredicado() + (new String(new char[nLlaves.intValue()]).replace("\0", "}")));
+                    item.setPredicadoTraslape(negado + item.getPredicado());
+                }
+                String valorFuera = "";
+                for (String campoValorDentro : camposValores) {
+                    String campo = campoValorDentro.substring(0, campoValorDentro.indexOf(":"));
+                    String valor = campoValorDentro.substring(campoValorDentro.indexOf(":") + 1);
+                    if (!valor.contains("$eq") && !valor.contains("$gt") && !valor.contains("$gte")
+                            && !valor.contains("$in") && !valor.contains("$lt")
+                            && !valor.contains("$lte") && !valor.contains("$ne")
+                            && !valor.contains("$nin")) {
+                        String temp = "{" + campo + ":{$not:{$eq:" + valor;
+
+                        //corrección de llaves
+                        temp = temp.replace("}", "");
+                        Long nLlaves = temp.chars().filter(x -> x == '{').count();
+                        temp = (temp + (new String(new char[nLlaves.intValue()]).replace("\0", "}"))) + ",";
+
+                        valorFuera += temp;
+                    } else {
+                        String temp = "{" + campo + ":{$not:" + valor;
+
+                        //corrección de llaves
+                        temp = temp.replace("}", "");
+                        Long nLlaves = temp.chars().filter(x -> x == '{').count();
+                        temp = (temp + (new String(new char[nLlaves.intValue()]).replace("\0", "}"))) + ",";
+
+                        valorFuera += temp;
+                    }
+                }
+                valorFuera = valorFuera.substring(0, valorFuera.length() - 1);
+                negado = "{$or:[" + valorFuera + "]}," + negado;
+            }
+        }
+        for (PredicadoCosto f2 : predicadoCosto) {
+            if (f2.getPredicadoTraslape() != null) {
+                if (f2.getPredicadoTraslape().length() >= 1 && f2.getPredicadoTraslape().charAt(f2.getPredicadoTraslape().length() - 1) == ',') {
+                    f2.setPredicadoTraslape(f2.getPredicadoTraslape().substring(0, f2.getPredicadoTraslape().length() - 1));
+                }
+                f2.setPredicadoTraslape("{\"$and\":[" + f2.getPredicadoTraslape() + "]}");
+            }
+        }
+        if (negado.length() >= 1 && negado.charAt(negado.length() - 1) == ',') {
+            negado = negado.substring(0, negado.length() - 1);
+        }
+        String and = "{\"$and\":[" + negado + "]}";
+        //agregar el traslape al esquema
+        for (int i = 0; i < aux.size(); i++) {
+            for (HybridFragment f : this.getFragments()) {
+                if (aux.get(i).getPredicado().compareTo(f.getPredicado()) == 0) {
+                    f.setPredicado(predicadoCosto.get(i).getPredicadoTraslape());
+                }
+            }
+        }
+        HybridFragment newFragment = new HybridFragment();
+        newFragment.setNombre("temp");
+        newFragment.setAtts(this.oBD.getTabla().getAtributos());
+        newFragment.setCostoDesH(0.0);
+        newFragment.setCostoDesV(0.0);
+        newFragment.setMultimedia(false);
+        newFragment.setSitiov(this.oBD.getDirbd());
+        newFragment.setSitioh(this.oBD.getDirbd());
+        newFragment.setPredicado(and);
+        this.getFragments().add(newFragment);
+    }
+
     public void nombrar() {
         for (int i = 0; i < this.getFragments().size(); i++) {
-            this.getFragments().get(i).setNombre(this.oBD.getTabla().getNombre() + "_f" + i);
+            this.getFragments().get(i).setNombre(this.oBD.getTabla().getNombre() + "_f" + (i + 1));
         }
     }
 
