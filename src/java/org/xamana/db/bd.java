@@ -1950,7 +1950,7 @@ public class bd implements Serializable {
                 getHD().mixMongo(horizontal.getEsquema(), this.esquemaVertical);
 
             }
-
+            
             if (this.getTipoBD().compareTo("a") == 0) {
                 //COSTO SIN CONTEMPLAR TRASLAPE
                 getHD().costsMySQL(files);
@@ -1973,6 +1973,7 @@ public class bd implements Serializable {
                 //COSTO CONTEMPLANDO TRASLAPE
                 getHD().costsMongoDB(files);
             }
+            this.getTabla().setAtributoMultimedia("");
             this.HD.nombrar();
             if (getHD().getHVCost() > getHD().getVHCost()) {
                 setSentencia("El esquema vertical-horizontal respetando asignaciones verticales es menos costoso y este será aplicado.");
