@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.0.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 28-08-2021 a las 18:41:10
--- Versión del servidor: 10.4.13-MariaDB
--- Versión de PHP: 7.2.32
+-- Tiempo de generación: 07-03-2025 a las 19:24:16
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -32,8 +32,11 @@ CREATE TABLE `atributo` (
   `tipo` varchar(255) NOT NULL,
   `size` int(10) NOT NULL,
   `nom` varchar(255) NOT NULL,
-  `id_fragmento` bigint(10) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `id_fragmento` bigint(10) DEFAULT NULL,
+  `descriptor` tinyint(1) DEFAULT NULL,
+  `multimedia` tinyint(1) DEFAULT NULL,
+  `id_tabla` bigint(10) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -44,7 +47,7 @@ CREATE TABLE `atributo` (
 CREATE TABLE `atributo_crud` (
   `id_atributo` bigint(10) NOT NULL,
   `id_CRUD` bigint(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -60,7 +63,7 @@ CREATE TABLE `bd` (
   `gestor` varchar(255) NOT NULL,
   `usr` varchar(255) DEFAULT NULL,
   `psw` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `bd`
@@ -105,7 +108,7 @@ CREATE TABLE `crud` (
   `tipo` smallint(2) NOT NULL,
   `b_basado_en_contenido` smallint(2) NOT NULL,
   `id_sitio` bigint(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -120,68 +123,68 @@ CREATE TABLE `fragmento` (
   `id_sitio` bigint(10) NOT NULL,
   `noperaciones` decimal(10,2) DEFAULT NULL,
   `ndesempenio` decimal(10,2) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `fragmento`
 --
 
 INSERT INTO `fragmento` (`id_fragmento`, `nombre`, `id_tabla`, `id_sitio`, `noperaciones`, `ndesempenio`) VALUES
-(31, 'tabla1_f1', 3, 9, '850.00', NULL),
-(32, 'tabla1_f2', 3, 9, '200.00', NULL),
-(33, 'tabla1_f3', 3, 9, '200.00', NULL),
-(39, 'tabla1_f2_1', 3, 9, '100.00', NULL),
-(40, 'tabla1_f2_2', 3, 9, '100.00', NULL),
-(41, 'tabla1_f3_1', 3, 9, '100.00', NULL),
-(42, 'tabla1_f1', 7, 11, '0.00', NULL),
-(43, 'tabla1_f2', 7, 11, '0.00', NULL),
-(44, 'tabla1_f3', 7, 11, '0.00', NULL),
-(45, 'tabla1_f1', 8, 12, '24.00', NULL),
-(46, 'tabla1_f2', 8, 12, '24.00', NULL),
-(47, 'tabla1_f3', 8, 12, '12.00', NULL),
-(48, 'tabla1_f1', 9, 13, '24.00', NULL),
-(49, 'tabla1_f2', 9, 13, '24.00', NULL),
-(50, 'tabla1_f3', 9, 13, '12.00', NULL),
-(51, 'tabla1_f1', 17, 19, '1.00', NULL),
-(52, 'tabla1_f2', 17, 19, '1.00', NULL),
-(53, 'tabla1_f3', 17, 19, '1.00', NULL),
-(54, 'tabla1_f1', 18, 20, '1.00', NULL),
-(55, 'tabla1_f2', 18, 20, '1.00', NULL),
-(56, 'tabla1_f3', 18, 20, '1.00', NULL),
-(57, 'tabla1_f1', 19, 22, '1.00', NULL),
-(58, 'tabla1_f2', 19, 22, '1.00', NULL),
-(59, 'tabla1_f3', 19, 22, '0.00', NULL),
-(60, 'tabla1_f1', 21, 24, '1.00', '1.00'),
-(61, 'tabla1_f2', 21, 24, '1.00', '1.00'),
-(62, 'tabla1_f3', 21, 24, '0.00', '0.00'),
-(63, 'tabla1_f1', 23, 26, '0.72', '0.88'),
-(64, 'tabla1_f2', 23, 26, '0.72', '0.88'),
-(65, 'tabla1_f3', 23, 26, '0.36', '0.44'),
-(66, 'tabla1_f1_2', 18, 28, '0.50', NULL),
-(67, 'tabla1_f1_2', 18, 28, '0.50', NULL),
-(68, 'tabla1_f1_2', 18, 28, '0.50', NULL),
-(69, 'tabla1_f1_2', 18, 28, '0.50', NULL),
-(70, 'tabla1_f1_2', 18, 28, '0.50', NULL),
-(71, 'tabla1_f1_2', 18, 28, '0.50', NULL),
-(72, 'tabla1_f1_2', 18, 28, '0.50', NULL),
-(73, 'tabla1_f1', 24, 30, '0.48', '0.88'),
-(74, 'tabla1_f2', 24, 30, '0.48', '0.88'),
-(75, 'tabla1_f3', 24, 30, '0.24', '0.44'),
-(76, 'tabla1_f1_2', 24, 28, '50.00', '200.00'),
-(77, 'tabla1_f1_2_1', 24, 28, '100.00', '300.00'),
-(78, 'tabla1_f1', 25, 31, '0.48', '2.40'),
-(79, 'tabla1_f2', 25, 31, '0.48', '2.40'),
-(80, 'tabla1_f3', 25, 31, '0.24', '1.20'),
-(81, 'tabla1_f1_2', 25, 28, '0.24', NULL),
-(82, 'tabla1_f1', 26, 32, '0.48', '0.88'),
-(83, 'tabla1_f2', 26, 32, '0.48', '0.88'),
-(84, 'tabla1_f3', 26, 32, '0.24', '0.44'),
-(85, 'tabla1_f1_2', 26, 28, '5.00', '20.00'),
-(86, 'tabla1_f1_2_1', 26, 28, '10.00', '35.00'),
-(87, 'tabla1_f1', 27, 33, '0.48', '2.40'),
-(88, 'tabla1_f2', 27, 33, '0.48', '2.40'),
-(89, 'tabla1_f3', 27, 33, '0.24', '1.20'),
-(90, 'tabla1_f1_2', 27, 28, '0.24', NULL);
+(31, 'tabla1_f1', 3, 9, 850.00, NULL),
+(32, 'tabla1_f2', 3, 9, 200.00, NULL),
+(33, 'tabla1_f3', 3, 9, 200.00, NULL),
+(39, 'tabla1_f2_1', 3, 9, 100.00, NULL),
+(40, 'tabla1_f2_2', 3, 9, 100.00, NULL),
+(41, 'tabla1_f3_1', 3, 9, 100.00, NULL),
+(42, 'tabla1_f1', 7, 11, 0.00, NULL),
+(43, 'tabla1_f2', 7, 11, 0.00, NULL),
+(44, 'tabla1_f3', 7, 11, 0.00, NULL),
+(45, 'tabla1_f1', 8, 12, 24.00, NULL),
+(46, 'tabla1_f2', 8, 12, 24.00, NULL),
+(47, 'tabla1_f3', 8, 12, 12.00, NULL),
+(48, 'tabla1_f1', 9, 13, 24.00, NULL),
+(49, 'tabla1_f2', 9, 13, 24.00, NULL),
+(50, 'tabla1_f3', 9, 13, 12.00, NULL),
+(51, 'tabla1_f1', 17, 19, 1.00, NULL),
+(52, 'tabla1_f2', 17, 19, 1.00, NULL),
+(53, 'tabla1_f3', 17, 19, 1.00, NULL),
+(54, 'tabla1_f1', 18, 20, 1.00, NULL),
+(55, 'tabla1_f2', 18, 20, 1.00, NULL),
+(56, 'tabla1_f3', 18, 20, 1.00, NULL),
+(57, 'tabla1_f1', 19, 22, 1.00, NULL),
+(58, 'tabla1_f2', 19, 22, 1.00, NULL),
+(59, 'tabla1_f3', 19, 22, 0.00, NULL),
+(60, 'tabla1_f1', 21, 24, 1.00, 1.00),
+(61, 'tabla1_f2', 21, 24, 1.00, 1.00),
+(62, 'tabla1_f3', 21, 24, 0.00, 0.00),
+(63, 'tabla1_f1', 23, 26, 0.72, 0.88),
+(64, 'tabla1_f2', 23, 26, 0.72, 0.88),
+(65, 'tabla1_f3', 23, 26, 0.36, 0.44),
+(66, 'tabla1_f1_2', 18, 28, 0.50, NULL),
+(67, 'tabla1_f1_2', 18, 28, 0.50, NULL),
+(68, 'tabla1_f1_2', 18, 28, 0.50, NULL),
+(69, 'tabla1_f1_2', 18, 28, 0.50, NULL),
+(70, 'tabla1_f1_2', 18, 28, 0.50, NULL),
+(71, 'tabla1_f1_2', 18, 28, 0.50, NULL),
+(72, 'tabla1_f1_2', 18, 28, 0.50, NULL),
+(73, 'tabla1_f1', 24, 30, 0.48, 0.88),
+(74, 'tabla1_f2', 24, 30, 0.48, 0.88),
+(75, 'tabla1_f3', 24, 30, 0.24, 0.44),
+(76, 'tabla1_f1_2', 24, 28, 50.00, 200.00),
+(77, 'tabla1_f1_2_1', 24, 28, 100.00, 300.00),
+(78, 'tabla1_f1', 25, 31, 0.48, 2.40),
+(79, 'tabla1_f2', 25, 31, 0.48, 2.40),
+(80, 'tabla1_f3', 25, 31, 0.24, 1.20),
+(81, 'tabla1_f1_2', 25, 28, 0.24, NULL),
+(82, 'tabla1_f1', 26, 32, 0.48, 0.88),
+(83, 'tabla1_f2', 26, 32, 0.48, 0.88),
+(84, 'tabla1_f3', 26, 32, 0.24, 0.44),
+(85, 'tabla1_f1_2', 26, 28, 5.00, 20.00),
+(86, 'tabla1_f1_2_1', 26, 28, 10.00, 35.00),
+(87, 'tabla1_f1', 27, 33, 0.48, 2.40),
+(88, 'tabla1_f2', 27, 33, 0.48, 2.40),
+(89, 'tabla1_f3', 27, 33, 0.24, 1.20),
+(90, 'tabla1_f1_2', 27, 28, 0.24, NULL);
 
 -- --------------------------------------------------------
 
@@ -192,7 +195,7 @@ INSERT INTO `fragmento` (`id_fragmento`, `nombre`, `id_tabla`, `id_sitio`, `nope
 CREATE TABLE `fragmento_predicado` (
   `id_fragmento` bigint(10) NOT NULL,
   `id_predicado` bigint(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -205,7 +208,7 @@ CREATE TABLE `predicado` (
   `frecuencia` int(10) NOT NULL,
   `descripcion` varchar(255) NOT NULL,
   `nTuplas` int(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -216,7 +219,7 @@ CREATE TABLE `predicado` (
 CREATE TABLE `predicado_crud` (
   `id_predicado` bigint(10) NOT NULL,
   `id_CRUD` bigint(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -227,7 +230,7 @@ CREATE TABLE `predicado_crud` (
 CREATE TABLE `sitio` (
   `id_sitio` bigint(10) NOT NULL,
   `direccion` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `sitio`
@@ -273,7 +276,7 @@ CREATE TABLE `tabla` (
   `umbral_des` int(10) NOT NULL,
   `tipo_frag` varchar(2) NOT NULL,
   `id_BD` bigint(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `tabla`
@@ -316,7 +319,7 @@ CREATE TABLE `tupla` (
   `id_local` bigint(10) NOT NULL,
   `id_remoto` varchar(255) NOT NULL,
   `id_fragmento` bigint(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `tupla`
@@ -400,7 +403,7 @@ CREATE TABLE `tupla_sitio` (
   `id_sitio` bigint(10) NOT NULL,
   `freq_acceso` int(10) NOT NULL,
   `desempenio` int(10) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `tupla_sitio`
@@ -433,7 +436,8 @@ INSERT INTO `tupla_sitio` (`id_local`, `id_sitio`, `freq_acceso`, `desempenio`) 
 --
 ALTER TABLE `atributo`
   ADD PRIMARY KEY (`id_atributo`),
-  ADD KEY `FKAtributo35522` (`id_fragmento`);
+  ADD KEY `FKAtributo35522` (`id_fragmento`),
+  ADD KEY `id_tabla` (`id_tabla`);
 
 --
 -- Indices de la tabla `atributo_crud`
@@ -570,7 +574,8 @@ ALTER TABLE `tupla`
 -- Filtros para la tabla `atributo`
 --
 ALTER TABLE `atributo`
-  ADD CONSTRAINT `FKAtributo35522` FOREIGN KEY (`id_fragmento`) REFERENCES `fragmento` (`id_fragmento`);
+  ADD CONSTRAINT `FKAtributo35522` FOREIGN KEY (`id_fragmento`) REFERENCES `fragmento` (`id_fragmento`),
+  ADD CONSTRAINT `atributo_ibfk_1` FOREIGN KEY (`id_tabla`) REFERENCES `tabla` (`id_tabla`);
 
 --
 -- Filtros para la tabla `atributo_crud`
