@@ -67,16 +67,16 @@
                     </p:selectOneMenu>         
                 </p:panelGrid>
                 <p:commandButton value="Test connection" action="#{bd.probarConexion()}" update="f2:dl2 f2:d1 f2:dl3 f2:mensajes"/>
-                <p:commandButton value="Cancel"  action="#{bd.cancelarConf()}" update="f2:d1"/>
+                <p:commandButton value="Cancel"  action="#{bd.cancelarConf()}" process="@this" update="f2:d1"/>
             </p:dialog>
             <p:dialog id="dl2" header="Information" visible="#{bd.bbotonfragmentar}" modal="true">
                 <h:outputText value="The connection was successful, now you will configure" /><br />
                 <h:outputText value="details to carry out fragmentation." /><br /><br />
-                <p:commandButton ajax="false" value="Configure fragmentation" action="#{bd.configurarFragmentacion()}" update="f2:dl2" />
+                <p:commandButton ajax="false" value="Configure fragmentation" action="#{bd.configurarFragmentacion()}" process="@this" update="f2:dl2" />
             </p:dialog>
             <p:dialog id="dl3" header="Information" visible="#{bd.bdatosincorrectos}" modal="true">
                 <h:outputText value="The connection was not successful. Check your details."/><br /><br />
-                <p:commandButton value="Take a look" action="#{bd.revisarDatos()}" update="f2:dl3" />
+                <p:commandButton value="Take a look" action="#{bd.revisarDatos()}" process="@this" update="f2:dl3" />
             </p:dialog>
             <p:ajaxStatus onstart="PF('statusDialog').show()" onerror="PF('statusDialog').hide()" onsuccess="PF('statusDialog').hide()"/>
 

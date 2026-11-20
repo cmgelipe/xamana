@@ -3,17 +3,20 @@ package org.xamana.dbJB;
 import java.io.Serializable;
 import java.util.ArrayList;
 import jakarta.faces.application.FacesMessage;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.FacesContext;
-import jakarta.faces.model.SelectItem;
 import org.xamana.db.Sitio;
 import org.xamana.db.SitioDAO;
 
 /**
  * Bean JSF para la pantalla de configuración de sitios: registrar, editar
- * y eliminar la línea de conexión (puerto, base de datos, gestor, usuario y
+ * y eliminar la línea de conexión (puerto, base de datos, usuario y
  * contraseña) de cada sitio remoto, en vez de reutilizar la del sitio local.
+ * El gestor (DBMS) de un sitio remoto nunca se elige: siempre es el mismo
+ * gestor configurado para el sitio local, porque la fragmentación distribuida
+ * de esta aplicación no mezcla motores distintos entre sitios.
  *
  * @author pipe
  */
@@ -21,19 +24,25 @@ import org.xamana.db.SitioDAO;
 @SessionScoped
 public class SitioJB implements Serializable {
 
+    @Inject
+    private BDJB bd;
+
     private final SitioDAO dao = new SitioDAO();
     private ArrayList<Sitio> sitios = new ArrayList<>();
     private Sitio sitioEdicion = new Sitio();
     private boolean dsitio = false;
+    private boolean dsitioForm = false;
+    private boolean edicion = false;
 
     public void abrirRegistro() {
         cargarSitios();
-        this.sitioEdicion = new Sitio();
+        this.dsitioForm = false;
         this.dsitio = true;
     }
 
     public void cerrarRegistro() {
         this.dsitio = false;
+        this.dsitioForm = false;
     }
 
     public void cargarSitios() {
@@ -50,20 +59,30 @@ public class SitioJB implements Serializable {
         copia.setDireccion(s.getDireccion());
         copia.setPuerto(s.getPuerto());
         copia.setBasedatos(s.getBasedatos());
-        copia.setGestor(s.getGestor());
+        copia.setGestor(getGestorLocal());
         copia.setUsuario(s.getUsuario());
         copia.setPassword(s.getPassword());
         this.sitioEdicion = copia;
+        this.edicion = true;
+        this.dsitioForm = true;
     }
 
     public void nuevo() {
         this.sitioEdicion = new Sitio();
+        this.sitioEdicion.setGestor(getGestorLocal());
+        this.edicion = false;
+        this.dsitioForm = true;
+    }
+
+    public void cerrarFormulario() {
+        this.dsitioForm = false;
     }
 
     public void guardar() {
+        sitioEdicion.setGestor(getGestorLocal());
         if (isNullOrEmpty(sitioEdicion.getDireccion()) || isNullOrEmpty(sitioEdicion.getPuerto())
-                || isNullOrEmpty(sitioEdicion.getBasedatos()) || isNullOrEmpty(sitioEdicion.getGestor())) {
-            agregarMensaje(FacesMessage.SEVERITY_WARN, "Sitios", "Dirección, puerto, base de datos y gestor son obligatorios");
+                || isNullOrEmpty(sitioEdicion.getBasedatos())) {
+            agregarMensaje(FacesMessage.SEVERITY_WARN, "Sitios", "Dirección, puerto y base de datos son obligatorios");
             return;
         }
         try {
@@ -116,12 +135,40 @@ public class SitioJB implements Serializable {
         this.dsitio = dsitio;
     }
 
-    public ArrayList<SelectItem> getGestores() {
-        ArrayList<SelectItem> items = new ArrayList<>();
-        items.add(new SelectItem("a", "MySQL"));
-        items.add(new SelectItem("b", "Postgres-XL"));
-        items.add(new SelectItem("c", "PostgreSQL"));
-        items.add(new SelectItem("d", "MongoDB"));
-        return items;
+    public boolean isDsitioForm() {
+        return dsitioForm;
+    }
+
+    public void setDsitioForm(boolean dsitioForm) {
+        this.dsitioForm = dsitioForm;
+    }
+
+    public String getFormHeader() {
+        return edicion ? "Edit site" : "New site";
+    }
+
+    /**
+     * El DBMS de un sitio remoto siempre es el mismo gestor configurado
+     * para el sitio local: la fragmentación distribuida no mezcla motores
+     * distintos entre sitios.
+     */
+    public String getGestorLocal() {
+        String tipo = bd.getObj().getTipoBD();
+        return tipo == null ? "" : tipo;
+    }
+
+    public String getGestorLocalLabel() {
+        switch (getGestorLocal()) {
+            case "a":
+                return "MySQL";
+            case "b":
+                return "Postgres-XL";
+            case "c":
+                return "PostgreSQL";
+            case "d":
+                return "MongoDB";
+            default:
+                return "";
+        }
     }
 }

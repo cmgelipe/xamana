@@ -28,6 +28,11 @@ header{
 	text-shadow:none;
 }
 
+.grid-config .ui-panelgrid-cell{
+    background: transparent !important;
+    border: none !important;
+}
+
 .mitabla{
     display: none;
 }

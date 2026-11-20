@@ -27,10 +27,9 @@ and open the template in the editor.
                 <text>Configuration</text>
                 <!--<p:commandButton action="#{bd.confNuevoFrag()}" style="width: 20%; position: absolute; left: 15px; top: 22px; font-size: 17px;" value="Agregar nuevos fragmentos" />
                 <p:commandButton style="width: 20%; position: absolute; right: 15px; top:22px; font-size: 17px;" value="Eliminar fragmentos" />-->
-                <p:commandButton value="Site registry" action="#{sitioBean.abrirRegistro()}" update="f3:dlSitios" style="width: 20%; position: absolute; right: 15px; top: 22px; font-size: 17px;" />
             </header>
             <div style="text-align: center">
-                <p:panelGrid  columns="2" style="margin: 0 auto; border: none">
+                <p:panelGrid id="gridPrincipal" columns="2" styleClass="grid-config" style="margin: 0 auto; width: 50%">
                     <p:outputLabel value="Fragmentation type" />
                     <p:selectOneMenu value="#{bd.obj.tabla.tipoFragment}">
                         <p:ajax update="f3:sino" />
@@ -57,16 +56,19 @@ and open the template in the editor.
                     <h:inputHidden id="s2" value="#{bd.obj.tabla.umbralCO}" />
                     <p:slider for="s2" display="output2" style="width: 200px" displayTemplate="{value}%" minValue="0.0" maxValue="100.0" step="0.1"/>
 
+                    <p:outputLabel value="Sites" />
+                    <p:commandButton value="Site registry" action="#{sitioBean.abrirRegistro()}" process="@this" update="f3:dlSitios" />
+
                 </p:panelGrid>
                 <br />
-                <p:commandButton ajax="false" value="Generate schema" action="#{bd.btnesquema()}" />
+                <p:commandButton ajax="false" value="Generate schema" action="#{bd.btnesquema()}" process="@this f3:gridPrincipal" />
             </div>
             <p:dialog id="dl4" header="Multimedia attribute details" modal="true" visible="#{bd.dcolumna}">
                 <p:outputLabel value="Descriptor attribute (table, chair, building, etc.)" /><br />
                 <p:selectOneMenu id="atb" value="#{bd.obj.tabla.atributoMultimedia}">
                     <f:selectItems value="#{bd.atributos}" />
                 </p:selectOneMenu><br />
-                <p:commandButton value="Set" action="#{bd.esquemaCBIRHorizontal()}" update="f3:dl4"/>
+                <p:commandButton value="Set" action="#{bd.esquemaCBIRHorizontal()}" process="@this f3:atb" update="f3:dl4"/>
             </p:dialog>
             <p:dialog id="dl5" header="Multimedia attributes" modal="true" visible="#{bd.dcolumnas}">
                 <p:panelGrid>
@@ -97,14 +99,14 @@ and open the template in the editor.
                     <p:row>
                         <p:column></p:column>
                         <p:column>
-                            <p:commandButton id="s8" value="Add" action="#{bd.agregarAtts()}" update="f3:listaAtts f3:mensajes" />
+                            <p:commandButton id="s8" value="Add" action="#{bd.agregarAtts()}" process="@this f3:s5 f3:s4" update="f3:listaAtts f3:mensajes" />
                         </p:column>
                         <p:column>
-                            <p:commandButton id="s9" value="Delete" action="#{bd.eliminarAtts()}" update="f3:listaAtts" />
+                            <p:commandButton id="s9" value="Delete" action="#{bd.eliminarAtts()}" process="@this f3:listaAtts" update="f3:listaAtts" />
                         </p:column>
                     </p:row>
                 </p:panelGrid>
-                <p:commandButton value="Set" action="#{bd.esquemaCBIRVertical()}" update="f3:dl5 f3:mensajes"/>
+                <p:commandButton value="Set" action="#{bd.esquemaCBIRVertical()}" process="@this" update="f3:dl5 f3:mensajes"/>
             </p:dialog>
             <p:dialog width="50%" id="dtamanios" header="Size of attributes" modal="true" visible="#{bd.dtamanios}">
                 <h:outputText value="In MongoDB, no size limits are defined on data types, as long as each document does not exceed 16 MB (16 000 000 bytes).  Define the limits of each attribute."/>
@@ -119,10 +121,13 @@ and open the template in the editor.
                         <p:inputNumber value="#{y.tamanio}" />
                     </p:column>
                 </p:dataTable>
-                <p:commandButton value="Continue settings" action="#{bd.seleccionAtributos()}" update="f3:dtamanios f3:mensajes f3:dl5" />
-                <p:commandButton value="Cancel" action="#{bd.cancelarDTamanios()}" update="f3:dtamanios f3:sino" />
+                <p:commandButton value="Continue settings" action="#{bd.seleccionAtributos()}" process="@this f3:dtamanios" update="f3:dtamanios f3:mensajes f3:dl5" />
+                <p:commandButton value="Cancel" action="#{bd.cancelarDTamanios()}" process="@this" update="f3:dtamanios f3:sino" />
             </p:dialog>
-            <p:dialog width="60%" id="dlSitios" header="Site registry" modal="true" visible="#{sitioBean.dsitio}" onHide="#{sitioBean.cerrarRegistro()}">
+            <p:dialog width="60%" id="dlSitios" widgetVar="dlSitios" header="Site registry" modal="true" visible="#{sitioBean.dsitio}" onHide="#{sitioBean.cerrarRegistro()}">
+                <p:commandButton value="New site" action="#{sitioBean.nuevo()}" process="@this" update="f3:dlSitioForm" oncomplete="PF('dlSitioForm').show()" />
+                <p:commandButton value="Close" action="#{sitioBean.cerrarRegistro()}" process="@this" update="f3:dlSitios" />
+                <br /><br />
                 <p:dataTable value="#{sitioBean.sitios}" var="s" emptyMessage="No sites registered yet">
                     <p:column headerText="Address">
                         <h:outputText value="#{s.direccion}"/>
@@ -133,18 +138,16 @@ and open the template in the editor.
                     <p:column headerText="Database">
                         <h:outputText value="#{s.basedatos}"/>
                     </p:column>
-                    <p:column headerText="DBMS">
-                        <h:outputText value="#{s.gestor}"/>
-                    </p:column>
                     <p:column headerText="User">
                         <h:outputText value="#{s.usuario}"/>
                     </p:column>
                     <p:column headerText="Actions">
-                        <p:commandButton value="Edit" action="#{sitioBean.editar(s)}" update="f3:dlSitios" />
-                        <p:commandButton value="Delete" action="#{sitioBean.eliminar(s)}" update="f3:dlSitios" />
+                        <p:commandButton icon="pi pi-pencil" title="Edit" action="#{sitioBean.editar(s)}" process="@this" update="f3:dlSitioForm" oncomplete="PF('dlSitioForm').show()" />
+                        <p:commandButton icon="pi pi-trash" title="Delete" action="#{sitioBean.eliminar(s)}" process="@this" update="f3:dlSitios" oncomplete="PF('dlSitios').show()" />
                     </p:column>
                 </p:dataTable>
-                <br />
+            </p:dialog>
+            <p:dialog width="40%" id="dlSitioForm" widgetVar="dlSitioForm" header="#{sitioBean.formHeader}" modal="true" visible="#{sitioBean.dsitioForm}">
                 <p:panelGrid columns="2">
                     <p:outputLabel value="Address (IP/host)" />
                     <p:inputText value="#{sitioBean.sitioEdicion.direccion}" placeholder="#.#.#.#" required="true" />
@@ -153,18 +156,14 @@ and open the template in the editor.
                     <p:outputLabel value="Database name" />
                     <p:inputText value="#{sitioBean.sitioEdicion.basedatos}" required="true" />
                     <p:outputLabel value="DBMS" />
-                    <p:selectOneMenu value="#{sitioBean.sitioEdicion.gestor}">
-                        <f:selectItem itemLabel="Select a DBMS" itemValue="" noSelectionOption="true" />
-                        <f:selectItems value="#{sitioBean.gestores}" />
-                    </p:selectOneMenu>
+                    <h:outputText value="#{sitioBean.gestorLocalLabel}" title="El DBMS de los sitios remotos siempre es el mismo que el del sitio local" />
                     <p:outputLabel value="User" />
                     <p:inputText value="#{sitioBean.sitioEdicion.usuario}" title="Si no aplica autenticación en este sitio, deje este campo y el siguiente vacíos"/>
                     <p:outputLabel value="Password" />
                     <p:password value="#{sitioBean.sitioEdicion.password}" feedback="false" redisplay="true"/>
                 </p:panelGrid>
-                <p:commandButton value="Save site" action="#{sitioBean.guardar()}" update="f3:dlSitios f3:mensajes" />
-                <p:commandButton value="New" action="#{sitioBean.nuevo()}" update="f3:dlSitios" />
-                <p:commandButton value="Close" action="#{sitioBean.cerrarRegistro()}" update="f3:dlSitios" />
+                <p:commandButton value="Save site" action="#{sitioBean.guardar()}" process="@this f3:dlSitioForm" update="f3:dlSitioForm f3:dlSitios f3:mensajes" oncomplete="PF('dlSitioForm').show();PF('dlSitios').show();" />
+                <p:commandButton value="Close" action="#{sitioBean.cerrarFormulario()}" process="@this" update="f3:dlSitioForm" />
             </p:dialog>
             <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>
 
