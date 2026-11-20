@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core">
+    <h:head>
+        <title>Xamana</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <h:outputStylesheet name="style.css"/>
+        <script type="text/javascript">
+            //<![CDATA[
+            function start2() {
+                PF('statusDialog').show();
+            }
+
+            function stop2() {
+                PF('statusDialog').hide();
+            }
+            function start() {
+                PF('startButton1').disable();
+
+                window['progress'] = setInterval(function () {
+                    var pbClient = PF('pbClient'),
+                            oldValue = pbClient.getValue(),
+                            newValue = oldValue + 10;
+
+                    pbClient.setValue(pbClient.getValue() + 10);
+
+                    if (newValue === 100) {
+                        clearInterval(window['progress']);
+                    }
+
+
+                }, 1000);
+            }
+
+            function cancel() {
+                clearInterval(window['progress']);
+                PF('pbClient').setValue(0);
+                PF('startButton1').enable();
+            }
+            //]]>
+        </script>
+    </h:head>
+    <h:body style="background-color: #3f3f3f">
+        <header>
+            <text>Scheme</text>
+        </header>
+        <h:form id="f8">
+            <p:growl id="growl" showDetail="true"/>
+            <p:panelGrid>
+                <p:row>
+                    <p:column style="width: 10%; vertical-align: top">
+                        <p:dataTable value="#{bd.obj.tabla.atributos}" var="att">
+                            <p:column headerText="Atributos (seleccione para agregar)">
+                                <p:commandButton value="#{att.nombre}" ajax="true" disabled="#{att.pk}" action="#{bd.seleccionAtt(att)}" update="f8:d7 f8:growl" />
+                            </p:column>
+                        </p:dataTable> <br/>
+                        <p:commandButton value="Add fragment" action="#{bd.setDlgAgregarF(true)}" update="f8:dlgAgregarFragmento"/>
+                    </p:column>
+                    <p:column>
+                        <p:dataTable id="tprincipal" value="#{bd.obj.esquemaVertical}" var="t">
+                            <p:column headerText="Nombre de Frag.">
+                                <h:outputText value="#{t.nombre}" />
+                            </p:column>
+                            <p:column headerText="Sitio">
+                                <h:outputText value="#{t.sitio}" />
+                            </p:column>
+                            <p:column headerText="Atributos (selecciona para eliminar)">
+                                <p:dataTable id="mitabla" value="#{t.arrAtri}" var="u" styleClass="style">
+                                    <p:column headerText="Atributos de #{t.nombre}">
+                                        <p:commandButton value="#{u.nombre}" action="#{bd.onClose(u,t)}" disabled="#{u.pk}" ajax="true" update="mitabla f8:tprincipal f8:growl"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:column>
+                            <p:column headerText="Costo">
+                                <h:outputText value="#{t.costo}" />
+                            </p:column>
+                            <p:column>
+                                <p:commandButton value="Delete" style="background-color: brown" action="#{bd.eliminarFragmento(t)}" update="mitabla f8:tprincipal f8:growl f8:lstFrag" />
+                            </p:column>
+                        </p:dataTable>
+                    </p:column>
+                </p:row>
+            </p:panelGrid><br />
+            <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
+                <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
+                <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
+            </p:dialog>
+            <p:dialog id="dlgAgregarFragmento" visible="#{bd.dlgAgregarF}" header="New Fragment" closable="false">
+                <h:outputText value="Assign this new fragment to a site" /><br />
+                <p:inputText value="#{bd.sitioNuevoFragmento}" />
+                <p:commandButton value="Asign" action="#{bd.agregarFragmento()}" update="f8:tprincipal:mitabla f8:tprincipal f8:growl f8:dlgAgregarFragmento f8:lstFrag"/>
+            </p:dialog>
+            <p:dialog id="d7" visible="#{bd.visible}" header="Fragmento">
+                <h:outputText value="Select the fragment to which this attribute will be assigned." /><br />
+                <p:selectOneMenu id="lstFrag" value="#{bd.fragAgregar}">
+                    <f:selectItems value="#{bd.obj.esquemaVertical}" var="x" itemLabel="#{x.nombre}" itemValue="#{x.nombre}" />
+                </p:selectOneMenu><br /><br />
+                <p:commandButton value="Asign" action="#{bd.agregarAttAFragmento()}" update="f8:tprincipal:mitabla f8:tprincipal f8:growl f8:d7"/>
+                <p:commandButton value="Cancel" action="#{bd.setVisible(false)}" update="f8:d7"/>
+            </p:dialog>
+            <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
+                <p:ajax event="complete" listener="#{bd.onComplete}" update="f8:growl" oncomplete="PF('startButton2').enable()"/>
+            </p:progressBar>
+            <br/>
+            <br/>
+            <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable()" action="#{bd.fragEstatica()}" update="f8:growl f8:d6"/>
+
+        </h:form>
+    </h:body>
+</html>

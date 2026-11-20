@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core">
+    <h:head>
+        <title>Nuevo Fragmento</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <h:outputStylesheet name="style.css" />
+    </h:head>
+    <h:body>
+        <h:form id="f8">
+            <header>
+                <text>Nuevo Fragmento</text>
+            </header>
+            <div style="text-align: center">
+                <p:panelGrid  columns="2" style="margin: 0 auto; border: none">
+                    <p:outputLabel value="Tipo de fragmentación" />
+                    <p:selectOneMenu value="#{bd.obj.tabla.tipoFragment}">
+                        <p:ajax update="f8:sino" />
+                        <f:selectItem itemLabel="Selecciona una opción" noSelectionOption="true" />
+                        <f:selectItem itemLabel="Horizontal" itemValue="a" />
+                        <f:selectItem itemLabel="Vertical" itemValue="b" />
+                        <f:selectItem itemLabel="Híbrida" itemValue="c" />
+                    </p:selectOneMenu>
+                    <p:outputLabel value="CBIR" />
+                    <p:selectBooleanButton id="sino" value="#{bd.obj.tabla.CBIR}" onLabel="Si" offLabel="No" />
+                    <p:outputLabel value="Nombre de fragmento" />
+                    <p:inputText value="#{bd.nombreNuevoFrag}" />
+                </p:panelGrid>
+                <h:inputHidden value="#{bd.obj.passbd}" />
+                <p:commandButton ajax="false" value="Crear tuplas" action="#{bd.nuevasTuplas()}" />
+            </div>
+        </h:form>
+    </h:body>
+</html>

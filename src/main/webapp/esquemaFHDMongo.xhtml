@@ -1,0 +1,125 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core" 
+      xmlns:ui="jakarta.faces.facelets">
+    <h:head>
+        <title>Xamana</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <h:outputStylesheet name="jquery-ui.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.css"/>
+        <h:outputStylesheet name="jquery-ui.theme.min.css"/>
+        <h:outputStylesheet name="jquery-ui.min.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.css"/>
+        <h:outputStylesheet name="jquery-ui.structure.min.css"/>
+        <h:outputStylesheet name="style.css"/>
+        <script type="text/javascript">
+            //<![CDATA[
+            function start2() {
+                PF('statusDialog').show();
+            }
+
+            function stop2() {
+                PF('statusDialog').hide();
+            }
+            function start() {
+                PF('startButton1').disable();
+
+                window['progress'] = setInterval(function () {
+                    var pbClient = PF('pbClient'),
+                            oldValue = pbClient.getValue(),
+                            newValue = oldValue + 10;
+
+                    pbClient.setValue(pbClient.getValue() + 10);
+
+                    if (newValue === 100) {
+                        clearInterval(window['progress']);
+                    }
+
+
+                }, 1000);
+            }
+
+            function cancel() {
+                clearInterval(window['progress']);
+                PF('pbClient').setValue(0);
+                PF('startButton1').enable();
+            }
+            //]]>
+        </script>
+    </h:head>
+    <h:body style="background-color: #3f3f3f">
+        <header>
+            <text>Esquema</text>
+        </header>
+
+        <h:form id="dh2">
+
+            <p:growl id="growl" showDetail="true" sticky="true"  />
+            <p:tabView>
+                <p:tab title="MCRUD">
+                    <p:dataTable value="#{bd.horizontalMongo.MCRUD}" var="t">
+                        <p:column headerText="Predicado">
+                            <h:outputText value="#{t.get(2)}" />
+                        </p:column>
+                        <p:column headerText="Sitio">
+                            <h:outputText value="#{t.get(1)}" />
+                        </p:column>
+                        <p:column headerText="VAO">
+                            <h:outputText value="#{t.get(0)}" />
+                        </p:column>
+                        <p:column headerText="Tuplas">
+                            <h:outputText value="#{t.get(3)}" />
+                        </p:column>
+                        <p:column headerText="Costo">
+                            <h:outputText value="#{t.get(4)}" />
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab title="ALP">
+                    <p:dataTable value="#{bd.horizontalMongo.ALP}" var="t">
+                        <p:column headerText="Atributo">
+                            <h:outputText value="#{t.get(0)}" />
+                        </p:column>
+                        <p:column headerText="Costo">
+                            <h:outputText value="#{t.get(1)}" />
+                        </p:column>
+                    </p:dataTable> 
+                </p:tab>
+                <p:tab title="Esquema">
+                    <p:dataTable value="#{bd.horizontalMongo.esquema}" var="t">
+                        <p:column headerText="Fragmento">
+                            <h:outputText value="#{t.name}" />
+                        </p:column>
+                        <p:column headerText="Predicado">
+                            <h:outputText value="#{t.predicate}" />
+                        </p:column>
+                        <p:column headerText="Predicado traslape">
+                            <h:outputText value="#{t.predicadoTraslape}" />
+                        </p:column>
+                        <p:column headerText="Sitio">
+                            <h:outputText value="#{t.site}" />
+                        </p:column>
+                        <p:column headerText="Número de tuplas">
+                            <h:outputText value="#{t.tuples}" />
+                        </p:column>
+                        <p:column headerText="Valor de desempeño">
+                            <h:outputText value="#{t.performance}" />
+                        </p:column>
+                    </p:dataTable>
+                    <br />
+                    <p:progressBar widgetVar="pbAjax" ajax="true" value="#{bd.obj.progress1}" labelTemplate="{value}%" styleClass="animated" global="false">
+                        <p:ajax event="complete" listener="#{bd.onComplete}" update="dh2:growl" oncomplete="PF('startButton2').enable()"/>
+                    </p:progressBar>
+                    <br/>
+                    <p:commandButton widgetVar="startButton2" value="Let's do it" onclick="PF('pbAjax').start();PF('startButton2').disable();" action="#{bd.fragEstatica()}" update="dh2:growl d6" />
+                    <p:dialog id="d6" visible="#{bd.BToken}" header="Token">
+                        <h:outputText value="Dynamic fragmentation of this kind requires to be implemented in Java with the download files and to use this token" /><br />
+                        <p:inputText readonly="true" value="#{bd.obj.tabla.idTabla}" />
+                    </p:dialog>
+                </p:tab>
+            </p:tabView>
+        </h:form>
+    </h:body>
+</html>
+
