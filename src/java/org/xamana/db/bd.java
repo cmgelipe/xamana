@@ -64,6 +64,21 @@ public class bd implements Serializable {
     private HybridDesign HD;
     private HybridCBIRDesign HDC;
     private String sentencia = "";
+    private final SitioDAO sitioDAO = new SitioDAO();
+
+    /**
+     * Línea de conexión registrada para ese sitio (puerto, base de datos,
+     * usuario y contraseña propios), en vez de asumir los del sitio local.
+     * Se usa tanto para el origen (this.dirbd) como para cada destino.
+     */
+    private Sitio conexionSitio(String direccion) throws Exception {
+        Sitio sitio = sitioDAO.obtenerConexion(direccion);
+        if (sitio == null) {
+            throw new Exception("El sitio " + direccion + " no está registrado en Site registry; "
+                    + "no se conoce su puerto/usuario/contraseña.");
+        }
+        return sitio;
+    }
 
     public boolean conexionexterna() {
         boolean res = false;
@@ -369,8 +384,9 @@ public class bd implements Serializable {
             String qSitio = "";
             String idSitio = "";
             String[] u = this.getTabla().getAtributoMultimedia().split(":");
-            accexternomysql = new AccesoDatos(dirbd + ":" + this.portbd, nombd, usubd, passbd);
-            this.getTabla().setAtributoLlave(this.llaveMySQL(accexternomysql, nombd, this.getTabla().getNombre()));
+            Sitio conexionOrigen = conexionSitio(dirbd);
+            accexternomysql = new AccesoDatos(dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
+            this.getTabla().setAtributoLlave(this.llaveMySQL(accexternomysql, conexionOrigen.getBasedatos(), this.getTabla().getNombre()));
             Atributo attMultimedia = new Atributo();
             Atributo tamanio = new Atributo();
             attMultimedia.setNombre(u[0]);
@@ -399,7 +415,7 @@ public class bd implements Serializable {
             this.progress1 = 10;
             int t = 100 / e.size();
             for (esquemaHorMultimedia tupla : e) {
-                accexternomysql = new AccesoDatos(dirbd + ":" + this.portbd, nombd, usubd, passbd);
+                accexternomysql = new AccesoDatos(dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 ArrayList<String> idTuplas = null;
                 if (this.accexternomysql.conectar()) {
                     ArrayList resultado = null;
@@ -1480,7 +1496,8 @@ public class bd implements Serializable {
 
                 //SECCIÓN DE ELIMINAR
                 String sql = "";
-                AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                Sitio conexionOrigen = conexionSitio(this.dirbd);
+                AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (acc2.conectar()) {
                     sql = "create table " + this.getTabla().getNombre() + "_temp" + ((Double) Double.parseDouble(this.getTabla().getIdTabla())).intValue()
                             + " (primary key (" + this.getTabla().getAtributoLlave().getNombre() + "))"
@@ -1516,7 +1533,8 @@ public class bd implements Serializable {
 
                 //SECCIÓN DE ELIMINAR
                 String sql = "";
-                AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                Sitio conexionOrigen = conexionSitio(this.dirbd);
+                AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (acc2.conectar()) {
                     sql = "create table " + this.getTabla().getNombre() + "_temp" + ((Double) Double.parseDouble(this.getTabla().getIdTabla())).intValue() + " as"
                             + " select " + this.getTabla().getAtributoLlave().getNombre() + " from " + this.getTabla().getNombre();
@@ -1554,9 +1572,10 @@ public class bd implements Serializable {
                 }
 
                 //Origen
-                AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
+                Sitio conexionOrigen = conexionSitio(this.getDirbd());
+                AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), this.getTabla().getNombre(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (accOrigen.conectar()) {
-                    MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(nombd);
+                    MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(conexionOrigen.getBasedatos());
                     MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.getTabla().getNombre());
                     for (Atributo a : this.getTabla().getAtributos()) {
                         if (a.getNombre().compareTo("_id") != 0) {
@@ -1594,7 +1613,9 @@ public class bd implements Serializable {
         }
         att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
         try {
-            AccesoDatos acc = new AccesoDatos(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            Sitio conexionDestino = conexionSitio(frag.getSitio());
+            Sitio conexionOrigen = conexionSitio(this.dirbd);
+            AccesoDatos acc = new AccesoDatos(frag.getSitio() + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
             if (acc.conectar()) {
                 sql = "drop table if exists " + frag.getNombre() + ";";
                 acc.ejecutarComando(sql);
@@ -1604,7 +1625,7 @@ public class bd implements Serializable {
             }
             ArrayList atributos = null;
             ArrayList n = null;
-            AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            AccesoDatos acc2 = new AccesoDatos(this.dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
             if (acc2.conectar()) {
                 String numero = "Select count(*) from " + this.getTabla().getNombre() + ";";
                 n = acc2.ejecutarConsulta(numero);
@@ -1612,14 +1633,14 @@ public class bd implements Serializable {
             }
             int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
             for (int i = 0; i < num; i++) {
-                acc2 = new AccesoDatos(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                acc2 = new AccesoDatos(this.dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (acc2.conectar()) {
                     sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit 1 offset " + i;
                     atributos = acc2.ejecutarConsulta(sql);
                     acc2.desconectar();
                 }
                 if (atributos != null) {
-                    acc = new AccesoDatos(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                    acc = new AccesoDatos(frag.getSitio() + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
                     if (acc.conectar()) {
                         for (int k = 0; k < atributos.size(); k++) {
                             String valor = "";
@@ -1711,7 +1732,9 @@ public class bd implements Serializable {
         }
         att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
         try {
-            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            Sitio conexionDestino = conexionSitio(frag.getSitio());
+            Sitio conexionOrigen = conexionSitio(this.dirbd);
+            AccesoDatosPG acc = new AccesoDatosPG(frag.getSitio() + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
             if (acc.conectar()) {
                 sql = "drop table if exists " + frag.getNombre() + ";";
                 acc.ejecutarComando(sql);
@@ -1721,7 +1744,7 @@ public class bd implements Serializable {
             }
             ArrayList atributos = null;
             ArrayList n = null;
-            AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+            AccesoDatosPG acc2 = new AccesoDatosPG(this.dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
             if (acc2.conectar()) {
                 String numero = "Select count(*) from " + this.getTabla().getNombre() + ";";
                 n = acc2.ejecutarConsulta(numero);
@@ -1729,14 +1752,14 @@ public class bd implements Serializable {
             }
             int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
             for (int i = 0; i < num; i++) {
-                acc2 = new AccesoDatosPG(this.dirbd + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                acc2 = new AccesoDatosPG(this.dirbd + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (acc2.conectar()) {
                     sql = "Select " + frag.getAtributosxComa() + " from " + this.getTabla().getNombre() + " Limit 1 offset " + i;
                     atributos = acc2.ejecutarConsulta(sql);
                     acc2.desconectar();
                 }
                 if (atributos != null) {
-                    acc = new AccesoDatosPG(frag.getSitio() + ":" + this.portbd, this.nombd, this.usubd, this.passbd);
+                    acc = new AccesoDatosPG(frag.getSitio() + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
                     if (acc.conectar()) {
                         for (int k = 0; k < atributos.size(); k++) {
                             String valor = "";
@@ -1808,16 +1831,18 @@ public class bd implements Serializable {
     public void crearTablaVerticalMongo(TablaCosto frag) {
         try {
             String sql = "";
-            AccesoDatosMG accDestino = new AccesoDatosMG(frag.getSitio() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
-            AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + this.portbd, this.nombd, this.getTabla().getNombre(), this.usubd, this.passbd);
+            Sitio conexionDestino = conexionSitio(frag.getSitio());
+            Sitio conexionOrigen = conexionSitio(this.getDirbd());
+            AccesoDatosMG accDestino = new AccesoDatosMG(frag.getSitio() + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), this.getTabla().getNombre(), conexionDestino.getUsuario(), conexionDestino.getPassword());
+            AccesoDatosMG accOrigen = new AccesoDatosMG(this.getDirbd() + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), this.getTabla().getNombre(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
             if (accDestino.conectar() && accOrigen.conectar()) {
                 //Destino
-                MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(nombd);
+                MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(conexionDestino.getBasedatos());
                 MongoCollection<Document> docDestino = dbDestino.getCollection(frag.getNombre());
                 dbDestino.createCollection(frag.getNombre());
 
                 //Origen
-                MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(nombd);
+                MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(conexionOrigen.getBasedatos());
                 MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.getTabla().getNombre());
 
                 List<String> nombresAtt = new ArrayList<>();

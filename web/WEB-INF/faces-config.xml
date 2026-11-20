@@ -8,4 +8,9 @@
         <managed-bean-class>org.xamana.dbJB.BDJB</managed-bean-class>
         <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
+    <managed-bean>
+        <managed-bean-name>sitioBean</managed-bean-name>
+        <managed-bean-class>org.xamana.dbJB.SitioJB</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
 </faces-config>

@@ -8,6 +8,8 @@ package org.xamana.dhf.schema;
 import java.util.ArrayList;
 import java.util.List;
 import org.xamana.datos.AccesoDatosPG;
+import org.xamana.db.Sitio;
+import org.xamana.db.SitioDAO;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
 import org.xamana.dhf.model.MCRUD;
@@ -39,10 +41,15 @@ public class BuilderFragmentsPostgreSQL implements BuilderFraments {
         this.ACD = bd.getAccexternopost();
         this.table = bd.getTabla().getNombre();
         this.address = bd.getDirbd();
-        this.password = bd.getPassbd();
-        this.user = bd.getUsubd();
-        this.port = bd.getPortbd();
-        this.nameDatabase = bd.getNombd();
+        try {
+            Sitio conexionOrigen = new SitioDAO().obtenerConexion(this.address);
+            this.password = conexionOrigen.getPassword();
+            this.user = conexionOrigen.getUsuario();
+            this.port = conexionOrigen.getPuerto();
+            this.nameDatabase = conexionOrigen.getBasedatos();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         this.operations = new ArrayList<>();
     }
 

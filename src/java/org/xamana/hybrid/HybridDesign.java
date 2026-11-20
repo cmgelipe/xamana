@@ -28,6 +28,8 @@ import org.xamana.datos.AccesoDatos;
 import org.xamana.datos.AccesoDatosMG;
 import org.xamana.datos.AccesoDatosPG;
 import org.xamana.db.Atributo;
+import org.xamana.db.Sitio;
+import org.xamana.db.SitioDAO;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
 import org.xamana.dhf.schema.Schema;
@@ -44,10 +46,25 @@ public class HybridDesign implements Serializable {
     private ArrayList<HybridFragment> fragments;
     private int progress1;
     bd oBD;
+    private final SitioDAO sitioDAO = new SitioDAO();
 
     public HybridDesign(bd oBD) {
         fragments = new ArrayList<>();
         this.oBD = oBD;
+    }
+
+    /**
+     * Línea de conexión registrada de ese sitio (puerto, base de datos,
+     * usuario, contraseña), en vez de reutilizar la del sitio local para
+     * cualquier destino.
+     */
+    private Sitio conexionSitio(String direccion) throws Exception {
+        Sitio sitio = sitioDAO.obtenerConexion(direccion);
+        if (sitio == null) {
+            throw new Exception("El sitio " + direccion + " no está registrado en Site registry; "
+                    + "no se conoce su puerto/usuario/contraseña.");
+        }
+        return sitio;
     }
 
     public void mix(Schema schema, ArrayList<TablaCosto> esquemaVertical) {
@@ -1055,7 +1072,9 @@ public class HybridDesign implements Serializable {
             }
             att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
             try {
-                AccesoDatos acc = new AccesoDatos(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                Sitio conexionDestino = conexionSitio(sitio);
+                Sitio conexionOrigen = conexionSitio(this.oBD.getDirbd());
+                AccesoDatos acc = new AccesoDatos(sitio + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
                 if (acc.conectar()) {
                     sql = "drop table if exists " + frag.getNombre() + ";";
                     acc.ejecutarComando(sql);
@@ -1065,7 +1084,7 @@ public class HybridDesign implements Serializable {
                 }
                 ArrayList atributos = null;
                 ArrayList n = null;
-                AccesoDatos acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                AccesoDatos acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (acc2.conectar()) {
                     String numero = "Select count(*) from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + ";";
                     n = acc2.ejecutarConsulta(numero);
@@ -1073,14 +1092,14 @@ public class HybridDesign implements Serializable {
                 }
                 int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
                 for (int i = 0; i < num; i++) {
-                    acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                    acc2 = new AccesoDatos(this.oBD.getDirbd() + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                     if (acc2.conectar()) {
                         sql = "Select " + frag.getAtributosMostrar() + " from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + " Limit 1 offset " + i;
                         atributos = acc2.ejecutarConsulta(sql);
                         acc2.desconectar();
                     }
                     if (atributos != null) {
-                        acc = new AccesoDatos(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                        acc = new AccesoDatos(sitio + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
                         if (acc.conectar()) {
                             for (int k = 0; k < atributos.size(); k++) {
                                 String valor = "";
@@ -1265,7 +1284,9 @@ public class HybridDesign implements Serializable {
             }
             att_tipo = att_tipo.substring(0, att_tipo.length() - 2);
             try {
-                AccesoDatosPG acc = new AccesoDatosPG(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                Sitio conexionDestino = conexionSitio(sitio);
+                Sitio conexionOrigen = conexionSitio(this.oBD.getDirbd());
+                AccesoDatosPG acc = new AccesoDatosPG(sitio + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
                 if (acc.conectar()) {
                     sql = "drop table if exists " + frag.getNombre() + ";";
                     acc.ejecutarComando(sql);
@@ -1275,7 +1296,7 @@ public class HybridDesign implements Serializable {
                 }
                 ArrayList atributos = null;
                 ArrayList n = null;
-                AccesoDatosPG acc2 = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                AccesoDatosPG acc2 = new AccesoDatosPG(this.oBD.getDirbd() + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (acc2.conectar()) {
                     String numero = "Select count(*) from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + ";";
                     n = acc2.ejecutarConsulta(numero);
@@ -1283,14 +1304,14 @@ public class HybridDesign implements Serializable {
                 }
                 int num = ((Double) Double.parseDouble("" + ((ArrayList) n.get(0)).get(0))).intValue();
                 for (int i = 0; i < num; i++) {
-                    acc2 = new AccesoDatosPG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                    acc2 = new AccesoDatosPG(this.oBD.getDirbd() + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                     if (acc2.conectar()) {
                         sql = "Select " + frag.getAtributosMostrar() + " from " + this.oBD.getTabla().getNombre() + " where " + frag.getPredicado() + " Limit 1 offset " + i;
                         atributos = acc2.ejecutarConsulta(sql);
                         acc2.desconectar();
                     }
                     if (atributos != null) {
-                        acc = new AccesoDatosPG(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                        acc = new AccesoDatosPG(sitio + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), conexionDestino.getUsuario(), conexionDestino.getPassword());
                         if (acc.conectar()) {
                             for (int k = 0; k < atributos.size(); k++) {
                                 String valor = "";
@@ -1382,16 +1403,18 @@ public class HybridDesign implements Serializable {
                 this.progress1 += percent;
                 String sitio = (opc == 1) ? frag.getSitiov() : frag.getSitioh();
                 double costo = (opc == 1) ? frag.getCostoDesV() : frag.getCostoDesH();
-                AccesoDatosMG accDestino = new AccesoDatosMG(sitio + ":" + this.oBD.getPortbd(), this.oBD.getNombd(), this.oBD.getTabla().getNombre(), this.oBD.getUsubd(), this.oBD.getPassbd());
-                AccesoDatosMG accOrigen = new AccesoDatosMG(this.oBD.getDirbd() + ":" + this.oBD.getPortbd(), this.oBD.getPortbd(), this.oBD.getTabla().getNombre(), this.oBD.getUsubd(), this.oBD.getPassbd());
+                Sitio conexionDestino = conexionSitio(sitio);
+                Sitio conexionOrigen = conexionSitio(this.oBD.getDirbd());
+                AccesoDatosMG accDestino = new AccesoDatosMG(sitio + ":" + conexionDestino.getPuerto(), conexionDestino.getBasedatos(), this.oBD.getTabla().getNombre(), conexionDestino.getUsuario(), conexionDestino.getPassword());
+                AccesoDatosMG accOrigen = new AccesoDatosMG(this.oBD.getDirbd() + ":" + conexionOrigen.getPuerto(), conexionOrigen.getBasedatos(), this.oBD.getTabla().getNombre(), conexionOrigen.getUsuario(), conexionOrigen.getPassword());
                 if (accDestino.conectar() && accOrigen.conectar()) {
                     //Destino
-                    MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(this.oBD.getNombd());
+                    MongoDatabase dbDestino = accDestino.getMongoClient().getDatabase(conexionDestino.getBasedatos());
                     MongoCollection<Document> docDestino = dbDestino.getCollection(frag.getNombre());
                     dbDestino.createCollection(frag.getNombre());
 
                     //Origen
-                    MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(this.oBD.getNombd());
+                    MongoDatabase dbOrigen = accOrigen.getMongoClient().getDatabase(conexionOrigen.getBasedatos());
                     MongoCollection<Document> docOrigen = dbOrigen.getCollection(this.oBD.getTabla().getNombre());
 
                     List<String> nombresAtt = new ArrayList<>();

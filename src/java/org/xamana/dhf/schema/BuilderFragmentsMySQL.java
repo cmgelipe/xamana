@@ -9,6 +9,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import org.xamana.datos.AccesoDatos;
+import org.xamana.db.Sitio;
+import org.xamana.db.SitioDAO;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
 import org.xamana.dhf.model.MCRUD;
@@ -43,10 +45,15 @@ public class BuilderFragmentsMySQL implements BuilderFraments, Serializable {
         this.operations = new ArrayList<>();
         this.table = bd.getTabla().getNombre();
         this.address = bd.getDirbd();
-        this.password = bd.getPassbd();
-        this.user = bd.getUsubd();
-        this.port = bd.getPortbd();
-        this.nameDatabase = bd.getNombd();
+        try {
+            Sitio conexionOrigen = new SitioDAO().obtenerConexion(this.address);
+            this.password = conexionOrigen.getPassword();
+            this.user = conexionOrigen.getUsuario();
+            this.port = conexionOrigen.getPuerto();
+            this.nameDatabase = conexionOrigen.getBasedatos();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
     }
 

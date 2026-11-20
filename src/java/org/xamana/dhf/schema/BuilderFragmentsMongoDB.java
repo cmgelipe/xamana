@@ -12,6 +12,8 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.xamana.datos.AccesoDatosMG;
+import org.xamana.db.Sitio;
+import org.xamana.db.SitioDAO;
 import org.xamana.db.bd;
 import org.xamana.dhf.model.Fragment;
 import org.xamana.dhf.model.MCRUD;
@@ -27,14 +29,12 @@ public class BuilderFragmentsMongoDB implements BuilderFraments {
     List<Bson> operations;
     String table;
     String address;
-    String password;
-    String user;
-    String port;
     String nameDatabase;
     String regexOperations = ":\\$eq:|:\\$gt:|:\\$gte:"
             + "|:\\$lt:|:\\$lte:|:\\$ne:|:";
     String type;
     MCRUD attribute;
+    private final SitioDAO sitioDAO = new SitioDAO();
 
     public BuilderFragmentsMongoDB(bd bd) {
         db = bd.getAccexternomongo()
@@ -42,11 +42,22 @@ public class BuilderFragmentsMongoDB implements BuilderFraments {
         this.operations = new ArrayList<>();
         this.table = bd.getTabla().getNombre();
         this.address = bd.getDirbd();
-        this.password = bd.getPassbd();
-        this.user = bd.getUsubd();
-        this.port = bd.getPortbd();
         this.nameDatabase = bd.getNombd();
 
+    }
+
+    /**
+     * Línea de conexión registrada de ese sitio; cada sitio destino tiene su
+     * propio puerto, base de datos, usuario y contraseña en vez de reutilizar
+     * los del sitio de origen.
+     */
+    private Sitio conexionSitio(String direccion) throws Exception {
+        Sitio sitio = sitioDAO.obtenerConexion(direccion);
+        if (sitio == null) {
+            throw new Exception("El sitio " + direccion + " no está registrado en Site registry; "
+                    + "no se conoce su puerto/usuario/contraseña.");
+        }
+        return sitio;
     }
 
     @Override
@@ -94,11 +105,12 @@ public class BuilderFragmentsMongoDB implements BuilderFraments {
         AccesoDatosMG tempACD = null;
         int i =1;
         for (Fragment item : schema) {
-            tempACD = new AccesoDatosMG(item.getSite() + ":" + this.port,
-                    this.nameDatabase, this.table, this.user, this.password);
+            Sitio conexionDestino = conexionSitio(item.getSite());
+            tempACD = new AccesoDatosMG(item.getSite() + ":" + conexionDestino.getPuerto(),
+                    conexionDestino.getBasedatos(), this.table, conexionDestino.getUsuario(), conexionDestino.getPassword());
             if (tempACD.conectar()) {
-                item.setName(determineNameFragment(item.getName(),i,item.getSite()));
-                MongoDatabase mdb = tempACD.getMongoClient().getDatabase(this.nameDatabase);
+                item.setName(determineNameFragment(item.getName(),i,conexionDestino));
+                MongoDatabase mdb = tempACD.getMongoClient().getDatabase(conexionDestino.getBasedatos());
                 mdb.createCollection(item.getName());
                 mdb.getCollection(item.getName()).insertMany(getDocuments(item.getPredicate()));
                 register.fragment(item,this.attribute,this.type);
@@ -219,14 +231,14 @@ public class BuilderFragmentsMongoDB implements BuilderFraments {
         return tempValue;
     }
 
-    private String determineNameFragment(String fragment, int id, String site) throws Exception {
+    private String determineNameFragment(String fragment, int id, Sitio conexionDestino) throws Exception {
 
         String name = fragment;
 
-        AccesoDatosMG tempACD = new AccesoDatosMG(site + ":" + this.port,
-                this.nameDatabase, this.table, this.user, this.password);
+        AccesoDatosMG tempACD = new AccesoDatosMG(conexionDestino.getDireccion() + ":" + conexionDestino.getPuerto(),
+                conexionDestino.getBasedatos(), this.table, conexionDestino.getUsuario(), conexionDestino.getPassword());
         if (tempACD.conectar()) {
-            List<String> collections = tempACD.getMongoClient().getDatabase(this.nameDatabase).listCollectionNames().into(new ArrayList<>());
+            List<String> collections = tempACD.getMongoClient().getDatabase(conexionDestino.getBasedatos()).listCollectionNames().into(new ArrayList<>());
             while (collections.contains(name)) {
                 name += "_" + id;
             }

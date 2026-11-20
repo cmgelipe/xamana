@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -131,6 +132,47 @@ public class AccesoDatos implements Serializable {
             stmt = null;
         }
 
+        return ret;
+    }
+
+    public synchronized ArrayList ejecutarConsultaParam(String psQuery, Object... params) throws Exception {
+        PreparedStatement pstmt = null;
+        ResultSet rset = null;
+        ArrayList vrset = null;
+        ResultSetMetaData rsmd = null;
+        try {
+            pstmt = oConexion.prepareStatement(psQuery);
+            for (int i = 0; i < params.length; i++) {
+                pstmt.setObject(i + 1, params[i]);
+            }
+            rset = pstmt.executeQuery();
+            rsmd = rset.getMetaData();
+            vrset = convierteALista(rset, rsmd, rsmd.getColumnCount());
+        } finally {
+            if (rset != null) {
+                rset.close();
+            }
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        }
+        return vrset;
+    }
+
+    public synchronized int ejecutarComandoParam(String psStatement, Object... params) throws Exception {
+        PreparedStatement pstmt = null;
+        int ret;
+        try {
+            pstmt = oConexion.prepareStatement(psStatement);
+            for (int i = 0; i < params.length; i++) {
+                pstmt.setObject(i + 1, params[i]);
+            }
+            ret = pstmt.executeUpdate();
+        } finally {
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        }
         return ret;
     }
 

@@ -27,6 +27,7 @@ and open the template in the editor.
                 <text>Configuration</text>
                 <!--<p:commandButton action="#{bd.confNuevoFrag()}" style="width: 20%; position: absolute; left: 15px; top: 22px; font-size: 17px;" value="Agregar nuevos fragmentos" />
                 <p:commandButton style="width: 20%; position: absolute; right: 15px; top:22px; font-size: 17px;" value="Eliminar fragmentos" />-->
+                <p:commandButton value="Site registry" action="#{sitioBean.abrirRegistro()}" update="f3:dlSitios" style="width: 20%; position: absolute; right: 15px; top: 22px; font-size: 17px;" />
             </header>
             <div style="text-align: center">
                 <p:panelGrid  columns="2" style="margin: 0 auto; border: none">
@@ -120,6 +121,50 @@ and open the template in the editor.
                 </p:dataTable>
                 <p:commandButton value="Continue settings" action="#{bd.seleccionAtributos()}" update="f3:dtamanios f3:mensajes f3:dl5" />
                 <p:commandButton value="Cancel" action="#{bd.cancelarDTamanios()}" update="f3:dtamanios f3:sino" />
+            </p:dialog>
+            <p:dialog width="60%" id="dlSitios" header="Site registry" modal="true" visible="#{sitioBean.dsitio}" onHide="#{sitioBean.cerrarRegistro()}">
+                <p:dataTable value="#{sitioBean.sitios}" var="s" emptyMessage="No sites registered yet">
+                    <p:column headerText="Address">
+                        <h:outputText value="#{s.direccion}"/>
+                    </p:column>
+                    <p:column headerText="Port">
+                        <h:outputText value="#{s.puerto}"/>
+                    </p:column>
+                    <p:column headerText="Database">
+                        <h:outputText value="#{s.basedatos}"/>
+                    </p:column>
+                    <p:column headerText="DBMS">
+                        <h:outputText value="#{s.gestor}"/>
+                    </p:column>
+                    <p:column headerText="User">
+                        <h:outputText value="#{s.usuario}"/>
+                    </p:column>
+                    <p:column headerText="Actions">
+                        <p:commandButton value="Edit" action="#{sitioBean.editar(s)}" update="f3:dlSitios" />
+                        <p:commandButton value="Delete" action="#{sitioBean.eliminar(s)}" update="f3:dlSitios" />
+                    </p:column>
+                </p:dataTable>
+                <br />
+                <p:panelGrid columns="2">
+                    <p:outputLabel value="Address (IP/host)" />
+                    <p:inputText value="#{sitioBean.sitioEdicion.direccion}" placeholder="#.#.#.#" required="true" />
+                    <p:outputLabel value="Port" />
+                    <p:inputText value="#{sitioBean.sitioEdicion.puerto}" required="true" />
+                    <p:outputLabel value="Database name" />
+                    <p:inputText value="#{sitioBean.sitioEdicion.basedatos}" required="true" />
+                    <p:outputLabel value="DBMS" />
+                    <p:selectOneMenu value="#{sitioBean.sitioEdicion.gestor}">
+                        <f:selectItem itemLabel="Select a DBMS" itemValue="" noSelectionOption="true" />
+                        <f:selectItems value="#{sitioBean.gestores}" />
+                    </p:selectOneMenu>
+                    <p:outputLabel value="User" />
+                    <p:inputText value="#{sitioBean.sitioEdicion.usuario}" title="Si no aplica autenticación en este sitio, deje este campo y el siguiente vacíos"/>
+                    <p:outputLabel value="Password" />
+                    <p:password value="#{sitioBean.sitioEdicion.password}" feedback="false" redisplay="true"/>
+                </p:panelGrid>
+                <p:commandButton value="Save site" action="#{sitioBean.guardar()}" update="f3:dlSitios f3:mensajes" />
+                <p:commandButton value="New" action="#{sitioBean.nuevo()}" update="f3:dlSitios" />
+                <p:commandButton value="Close" action="#{sitioBean.cerrarRegistro()}" update="f3:dlSitios" />
             </p:dialog>
             <p:ajaxStatus onstart="PF('statusDialog').show()" onsuccess="PF('statusDialog').hide()"/>
 

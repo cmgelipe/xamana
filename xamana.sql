@@ -232,6 +232,26 @@ CREATE TABLE `sitio` (
   `direccion` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `sitio_conexion`
+--
+-- Registro de conexión por sitio (dirección/host, puerto, base de datos,
+-- gestor, usuario y contraseña). Reemplaza el supuesto de que todos los
+-- sitios comparten las credenciales y el puerto del sitio local.
+--
+
+CREATE TABLE `sitio_conexion` (
+  `direccion` varchar(255) NOT NULL,
+  `puerto` varchar(255) DEFAULT NULL,
+  `basedatos` varchar(255) DEFAULT NULL,
+  `gestor` varchar(2) DEFAULT NULL,
+  `usuario` varchar(255) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`direccion`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Volcado de datos para la tabla `sitio`
 --
